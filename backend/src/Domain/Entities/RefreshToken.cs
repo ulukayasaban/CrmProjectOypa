@@ -26,9 +26,14 @@ public class RefreshToken : BaseEntity
     public DateTime? RevokedAtUtc { get; private set; }
     public string? ReplacedByTokenHash { get; private set; }
 
-    public bool IsExpired => DateTime.UtcNow >= ExpiresAtUtc;
     public bool IsRevoked => RevokedAtUtc is not null;
-    public bool IsActive => !IsRevoked && !IsExpired;
+
+    /// <summary>Verilen ana göre süresi dolmuş mu. Statik saat yerine enjekte
+    /// edilen saatle çağrılır (test edilebilirlik + tutarlılık).</summary>
+    public bool IsExpiredAt(DateTime nowUtc) => nowUtc >= ExpiresAtUtc;
+
+    /// <summary>Verilen ana göre token aktif mi (iptal edilmemiş ve süresi dolmamış).</summary>
+    public bool IsActiveAt(DateTime nowUtc) => !IsRevoked && !IsExpiredAt(nowUtc);
 
     /// <summary>Token'ı iptal eder; rotasyonda yerine geçen token'ın hash'ini bağlar.</summary>
     public void Revoke(string? replacedByTokenHash = null)

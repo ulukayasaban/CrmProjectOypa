@@ -18,11 +18,14 @@ Sunucuda (Windows) **yönetici** PowerShell/CMD ile makine düzeyinde (`/M`) aya
 `setx` ileride başlayacak süreçler için geçerlidir; ayarladıktan sonra **API servisini
 yeniden başlatın**.
 
-### a) Veritabanı bağlantısı (DB parolası burada — dosyada DEĞİL)
-```cmd
-setx ConnectionStrings__DefaultConnection "Server=localhost;Database=OyakCrmDb;User Id=api_user;Password=<DB_PAROLANIZ>;TrustServerCertificate=True;MultipleActiveResultSets=True" /M
-```
-> `<DB_PAROLANIZ>` yerine gerçek parolayı yazın. Parolayı bu dokümana/koda yazmayın.
+### a) Veritabanı bağlantısı
+Connection string **`appsettings.Production.json`** içinde `ConnectionStrings:DefaultConnection`
+olarak tanımlıdır (kullanıcı tercihi — tam sürüm). Bu dosya `.gitignore`'dadır; GitHub'a gitmez.
+Ek bir ortam değişkeni gerekmez.
+> İstenirse parolayı dosyadan çıkarıp ortam değişkeniyle de verebilirsiniz (env, dosyayı ezer):
+> ```cmd
+> setx ConnectionStrings__DefaultConnection "Server=localhost;Database=OyakCrmDb;User Id=api_user;Password=<DB_PAROLANIZ>;TrustServerCertificate=True;MultipleActiveResultSets=True" /M
+> ```
 
 ### b) JWT imza anahtarı
 JWT secret artık **`appsettings.Production.json`** içinde `Jwt:Secret` olarak tutulmaktadır
@@ -79,7 +82,8 @@ Dosyadaki placeholder'ı **gerçek frontend adresinizle** değiştirin:
 3. `appsettings.Production.json` içinde CORS frontend adresini gerçek değerle değiştir — bkz. §2.
 4. API'yi yayımla: `dotnet publish backend/src/Api -c Release -o <yayın-klasörü>`
 5. Servisi/uygulamayı (yeniden) başlat → migration'lar otomatik uygulanır, API ayağa kalkar.
-6. Doğrula: `https://<api-host>/swagger` (Swagger yalnız Development'ta açıktır; production'da kapalıdır — sağlık için bir endpoint'e istek atın).
+6. Doğrula: Production'da **Swagger UI kök adreste açıktır** → `http://<api-host>/` (modern tarayıcı; IE'de Swagger UI çalışmaz). `POST /api/auth/login` ile DB bağlantısını da test edin.
+   > ⚠️ Güvenlik: Swagger production'da herkese açıktır (talep üzerine). İnternete açık dağıtımda IP kısıtı/Basic Auth eklemeyi ya da `Program.cs`'te yalnız Development'a almayı değerlendirin.
 
 ---
 

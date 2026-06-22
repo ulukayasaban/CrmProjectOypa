@@ -42,7 +42,7 @@ public sealed class AuthService(
             throw new UnauthorizedAppException("Refresh token yeniden kullanıldı; oturum güvenlik nedeniyle sonlandırıldı.");
         }
 
-        if (!existing.IsActive)
+        if (!existing.IsActiveAt(clock.UtcNow))
             throw new UnauthorizedAppException("Refresh token süresi dolmuş.");
 
         var user = await identityService.GetByIdAsync(existing.UserId, cancellationToken)
@@ -66,7 +66,7 @@ public sealed class AuthService(
     {
         var hash = jwtTokenService.HashToken(refreshToken);
         var existing = await refreshTokens.GetByHashAsync(hash, cancellationToken);
-        if (existing is { IsActive: true })
+        if (existing is not null && existing.IsActiveAt(clock.UtcNow))
         {
             existing.Revoke();
             await unitOfWork.SaveChangesAsync(cancellationToken);

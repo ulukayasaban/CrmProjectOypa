@@ -25,9 +25,11 @@ backend/src/Api/appsettings.Development.json
 backend/src/Api/appsettings.Production.json
 !backend/src/Api/appsettings.*.json.example
 
-# Publish çıktısı
+# Publish çıktısı (secret içerir)
 publish/
 **/publish/
+OypaCrm-publish.zip
+*.zip
 
 # OS / editor
 .DS_Store
