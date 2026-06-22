@@ -1,0 +1,9 @@
+{
+  "Jwt": {
+    "Secret": "REPLACE_WITH_PRODUCTION_JWT_SECRET_MIN_32_CHARS"
+  },
+  "Cors": {
+    "AllowedOrigins": [ "https://your-frontend-domain" ]
+  },
+  "AllowedHosts": "*"
+}

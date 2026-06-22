@@ -1,0 +1,31 @@
+# Build outputs
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# IDE / editor
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+
+# Local secrets & env
+**/*.env
+!**/*.env.example
+**/appsettings.*.local.json
+
+# Logs & misc
+**/*.log
+api-run.log
+
+# Frontend (not part of backend image)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Docker / git artifacts
+**/Dockerfile
+**/.dockerignore
+.git/
+.gitignore

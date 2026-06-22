@@ -1,0 +1,25 @@
+# Dependencies & build outputs
+node_modules/
+dist/
+.vite/
+
+# IDE / editor
+.vscode/
+.idea/
+*.log
+
+# Local env & secrets
+.env
+.env.local
+*.env
+!*.env.example
+
+# Docker / git artifacts
+Dockerfile
+.dockerignore
+.git/
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,35 @@
+# .NET
+bin/
+obj/
+*.user
+appsettings.*.local.json
+.vs/
+
+# EF / local db
+*.mdf
+*.ldf
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Env & secrets
+.env
+.env.local
+*.env
+!*.env.example
+
+# App secrets — JWT secret / prod DB içerir; ASLA commit'lenmez (.example şablonları repo'da)
+backend/src/Api/appsettings.Development.json
+backend/src/Api/appsettings.Production.json
+!backend/src/Api/appsettings.*.json.example
+
+# Publish çıktısı
+publish/
+**/publish/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/

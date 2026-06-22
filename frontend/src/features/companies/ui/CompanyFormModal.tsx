@@ -1,0 +1,195 @@
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Modal } from '../../../shared/components/Modal';
+import { SECTOR_OPTIONS, SOURCE_OPTIONS } from '../../../shared/constants/labels';
+import { getErrorMessage } from '../../../shared/lib/errorMessage';
+import { useCreateCompany } from '../model/useCompanies';
+import {
+  companySchema,
+  type CompanyFormValues,
+} from '../model/companySchema';
+import type { CompanyDto } from '../../../entities/company/model/company';
+
+/** Mevcut bir firmadan yeni fırsat oluştururken kopyalanabilecek alanlar. */
+export interface CompanyPrefill {
+  title: string;
+  phone: string;
+  email: string;
+  address: string;
+}
+
+interface CompanyFormModalProps {
+  onClose: () => void;
+  onCreated?: (company: CompanyDto) => void;
+  /** Verildiğinde modal "Yeni Fırsat" modunda açılır ve alanları kopyalama kutuları gösterir. */
+  prefill?: CompanyPrefill;
+}
+
+type CopyField = 'phone' | 'email' | 'address';
+
+const COPY_FIELDS: ReadonlyArray<{ field: CopyField; label: string; type?: string }> = [
+  { field: 'phone', label: 'Telefon' },
+  { field: 'email', label: 'E-posta', type: 'email' },
+  { field: 'address', label: 'Adres' },
+];
+
+export function CompanyFormModal({ onClose, onCreated, prefill }: CompanyFormModalProps) {
+  const createCompany = useCreateCompany();
+  const isOpportunity = Boolean(prefill);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<CompanyFormValues>({
+    resolver: zodResolver(companySchema),
+    defaultValues: prefill ? { title: prefill.title } : undefined,
+  });
+  const [copied, setCopied] = useState<Record<CopyField, boolean>>({
+    phone: false,
+    email: false,
+    address: false,
+  });
+
+  function toggleCopy(field: CopyField) {
+    const next = !copied[field];
+    setCopied((current) => ({ ...current, [field]: next }));
+    if (prefill) {
+      setValue(field, next ? prefill[field] : '', { shouldValidate: true });
+    }
+  }
+
+  const onSubmit = handleSubmit(async (values) => {
+    const company = await createCompany.mutateAsync({
+      title: values.title,
+      sector: values.sector,
+      phone: values.phone,
+      email: values.email,
+      address: values.address,
+      city: values.city || undefined,
+      website: values.website || undefined,
+      taxNumber: values.taxNumber || undefined,
+      source: values.source || undefined,
+    });
+    onCreated?.(company);
+    onClose();
+  });
+
+  return (
+    <Modal
+      title={isOpportunity ? 'Yeni Fırsat Ekle' : 'Yeni Firma / Fırsat'}
+      onClose={onClose}
+      width={600}
+    >
+      <form className="crm-form" onSubmit={onSubmit}>
+        {createCompany.isError && (
+          <div className="form-error">
+            {getErrorMessage(createCompany.error)}
+          </div>
+        )}
+        {isOpportunity && (
+          <p className="muted" style={{ fontSize: '0.8rem' }}>
+            <strong>{prefill?.title}</strong> firması için yeni bir fırsat
+            kaydı oluşturuluyor. Aynı iletişim bilgilerini kullanmak için
+            kutuları işaretleyin.
+          </p>
+        )}
+        <div className="form-group">
+          <label htmlFor="title">Firma Ünvanı</label>
+          <input id="title" {...register('title')} />
+          {errors.title && (
+            <span className="field-error">{errors.title.message}</span>
+          )}
+        </div>
+        <div className="form-group">
+          <label htmlFor="sector">Sektör</label>
+          <select id="sector" defaultValue="" {...register('sector')}>
+            <option value="" disabled>
+              Seçiniz
+            </option>
+            {SECTOR_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors.sector && (
+            <span className="field-error">{errors.sector.message}</span>
+          )}
+        </div>
+        {COPY_FIELDS.map(({ field, label, type }) => (
+          <div className="form-group" key={field}>
+            <label htmlFor={field}>{label}</label>
+            <input
+              id={field}
+              type={type ?? 'text'}
+              disabled={isOpportunity && copied[field]}
+              {...register(field)}
+            />
+            {isOpportunity && (
+              <label className="checkbox-inline">
+                <input
+                  type="checkbox"
+                  checked={copied[field]}
+                  onChange={() => toggleCopy(field)}
+                />
+                <span>Mevcutla aynı</span>
+              </label>
+            )}
+            {errors[field] && (
+              <span className="field-error">{errors[field]?.message}</span>
+            )}
+          </div>
+        ))}
+        <div className="form-group">
+          <label htmlFor="city">Şehir</label>
+          <input id="city" {...register('city')} />
+          {errors.city && (
+            <span className="field-error">{errors.city.message}</span>
+          )}
+        </div>
+        <div className="form-group">
+          <label htmlFor="website">Web Sitesi</label>
+          <input id="website" type="url" placeholder="https://" {...register('website')} />
+          {errors.website && (
+            <span className="field-error">{errors.website.message}</span>
+          )}
+        </div>
+        <div className="form-group">
+          <label htmlFor="taxNumber">Vergi No</label>
+          <input id="taxNumber" {...register('taxNumber')} />
+          {errors.taxNumber && (
+            <span className="field-error">{errors.taxNumber.message}</span>
+          )}
+        </div>
+        <div className="form-group">
+          <label htmlFor="source">Kaynak</label>
+          <select id="source" defaultValue="" {...register('source')}>
+            <option value="">Seçiniz (opsiyonel)</option>
+            {SOURCE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors.source && (
+            <span className="field-error">{errors.source.message}</span>
+          )}
+        </div>
+        <div className="modal-footer">
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
+            İptal
+          </button>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Kaydediliyor...' : 'Kaydet'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}

@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OYPA CRM Pro | Customer Relationship Management</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #E30613;
+            --primary-black: #1A1A1A;
+            --accent-red: #FF1A1A;
+            --bg-dark: #1A212B; /* Deep professional navy charcoal (Lightened from #0F0F0F) */
+            --bg-card: rgba(255, 255, 255, 0.05); /* Slightly more visible card backgrounds */
+            --text-main: #FFFFFF;
+            --text-muted: #CBD5E0; /* Slightly lighter muted text for better contrast on navy */
+            --success: #3498DB;
+            --warning: #F2C94C;
+            --error: #E30613;
+            --sidebar-width: 260px;
+            --header-height: 70px;
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(15px);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); overflow: hidden; height: 100vh; width: 100vw; }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-red); }
+
+        .app-container { display: flex; height: 100vh; width: 100vw; }
+        .glass { background: var(--bg-card); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); }
+
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: var(--transition-smooth); display: flex; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--primary-red); color: white; }
+        .btn-primary:hover { background: var(--accent-red); box-shadow: 0 0 15px rgba(227, 6, 19, 0.4); }
+        .btn-ghost { background: transparent; color: var(--text-main); border: 1px solid var(--glass-border); }
+        .btn-ghost:hover { background: var(--glass-border); }
+        .btn-sm { padding: 5px 10px; font-size: 0.75rem; }
+
+        h1, h2, h3 { color: white; letter-spacing: -0.02em; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .badge-lead { background: var(--warning); color: black; }
+        .badge-customer { background: var(--success); color: white; }
+        .badge-opportunity { background: var(--primary-red); color: white; }
+
+        .side-module { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); transition: var(--transition-smooth); font-size: 0.8rem; }
+        .side-module:hover { background: rgba(255, 255, 255, 0.05); }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: radial-gradient(circle at top right, #242E42, var(--bg-dark)); }
+        .sidebar { width: var(--sidebar-width); height: 100vh; display: flex; flex-direction: column; padding: 24px; z-index: 100; }
+        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 48px; cursor: pointer; }
+        .logo img { height: 60px; transition: transform 0.3s; }
+        .logo:hover img { transform: scale(1.05); }
+        .logo h1 { font-size: 1.3rem; }
+        .logo h1 span { color: var(--primary-red); font-weight: 300; margin-left: 4px; }
+
+        .nav-menu { display: flex; flex-direction: column; gap: 8px; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; color: var(--text-muted); transition: var(--transition-smooth); }
+        .nav-item:hover, .nav-item.active { background: var(--glass-border); color: white; }
+        .nav-item.active { border-left: 3px solid var(--primary-red); }
+
+        .main-header { height: var(--header-height); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; margin: 16px 24px; border-radius: 16px; }
+        .header-right { display: flex; align-items: center; gap: 24px; }
+        .avatar { width: 35px; height: 35px; background: var(--primary-red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+
+        .view-container { flex: 1; overflow-y: auto; padding: 0 24px 24px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
+        .stat-card { padding: 24px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-label { color: var(--text-muted); font-size: 0.9rem; }
+        .stat-value { font-size: 2rem; font-weight: 700; }
+        .full-width { grid-column: span 3; }
+
+        .data-table-container { margin-top: 24px; border-radius: 16px; overflow: hidden; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th, .data-table td { padding: 16px 24px; text-align: left; border-bottom: 1px solid var(--glass-border); }
+        .data-table th { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .data-table tbody tr:hover { background: rgba(255, 255, 255, 0.02); cursor: pointer; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-content { width: 500px; padding: 32px; border-radius: 20px; animation: modalAppear 0.3s ease-out; position: relative; }
+        @keyframes modalAppear { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .crm-form { display: flex; flex-direction: column; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-group label { font-size: 0.85rem; color: var(--text-muted); }
+        .form-group input, .form-group select, .form-group textarea { padding: 12px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); color: white; outline: none; width: 100%; }
+        .form-group select option { background: #1a1a1a; color: white; }
+        select { color-scheme: dark; } /* Modern browsers fix */
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary-red); }
+        .input-warning { font-size: 0.65rem; color: var(--primary-red); opacity: 0.8; margin-top: 2px; font-weight: 500; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: var(--primary-red); margin-top: -5px; }
+
+        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .calendar-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-top: 24px; }
+        .calendar-grid { padding: 24px; border-radius: 20px; }
+        .cal-header { text-align: center; font-size: 1.2rem; font-weight: 700; margin-bottom: 24px; color: var(--primary-red); }
+        .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .cal-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 12px; cursor: pointer; background: rgba(255, 255, 255, 0.03); transition: var(--transition-smooth); position: relative; }
+        .cal-cell:hover { background: rgba(255, 255, 255, 0.08); }
+        .cal-cell.today { border: 2px solid var(--primary-red); color: var(--primary-red); font-weight: 700; }
+        .cal-cell.has-event::after { content: ''; position: absolute; bottom: 6px; width: 4px; height: 4px; background: var(--primary-red); border-radius: 50%; }
+        .cal-cell.has-event { border-bottom: 2px solid var(--primary-red); }
+
+        .notification-bell { position: relative; cursor: pointer; font-size: 1.2rem; }
+        .badge-count { position: absolute; top: -5px; right: -10px; background: var(--error); color: white; font-size: 0.7rem; padding: 2px 5px; border-radius: 10px; }
+
+        .chart-container { height: 220px; position: relative; margin-top: 20px; }
+        .chart-bar { position: absolute; bottom: 0; background: linear-gradient(180deg, var(--primary-red) 0%, rgba(227, 6, 19, 0.2) 100%); width: 30px; border-radius: 4px 4px 0 0; transition: height 1s ease-out; cursor: pointer; }
+        .chart-bar:hover { filter: brightness(1.2); }
+        .list-modal-item { padding: 12px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; }
+        .list-modal-item:last-child { border-bottom: none; }
+
+        /* Custom DatePicker Styles */
+        .datepicker-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .datepicker-content { width: 320px; background: rgba(26, 26, 26, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .datepicker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .datepicker-title { font-weight: 700; color: var(--primary-red); font-size: 1.1rem; }
+        .datepicker-nav { display: flex; gap: 10px; }
+        .datepicker-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .datepicker-weekday { font-size: 0.7rem; font-weight: 700; opacity: 0.5; padding-bottom: 10px; }
+        .datepicker-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
+        .datepicker-day:hover { background: rgba(255, 255, 255, 0.1); }
+        .datepicker-day.today { border: 1px solid var(--primary-red); color: var(--primary-red); font-weight: 700; }
+        .datepicker-day.selected { background: var(--primary-red); color: white; font-weight: 700; }
+        .datepicker-day.empty { cursor: default; }
+        .datepicker-day.empty:hover { background: none; }
+    </style>
+</head>
+<body>
+    <div id="app" class="app-container"></div>
+
+    <script>
+        const Store = {
+            state: {
+                users: [
+                    { id: 'hasi', name: 'Admin', username: 'hasi', password: 'oypa123', position: 'System Administrator', email: 'admin@oypa.com.tr', role: 'admin', hasSetPassword: true }
+                ],
+                currentUser: null,
+                oypaAddress: 'Cevizli Mahallesi, Tugay Yolu Caddesi No: 10-C, İç Kapı No: 82 Dragos Plaza Kat: 12-13, 34846 Maltepe/İSTANBUL',
+                oypaFullTitle: 'OYAK PAZARLAMA HİZMET VE TURİZM A.S.',
+                reps: [
+                    { id: 'hasi', name: 'Admin', email: 'admin@oypa.com.tr' }
+                ],
+                leads: [
+                    { id: 1, type: 'lead', company: 'Global Energy Inc.', address: 'Ankara, Cankaya No:1', companySector: 'Enerji Üretimi', serviceSector: 'Tesis Yönetimi', phone: '0212 111 22 33', email: 'info@global.com', status: 'Yeni' },
+                    { id: 2, type: 'lead', company: 'AXA SİGORTA', address: 'İstanbul, Meclis-i Mebusan Cd. No:15', companySector: 'Sigortacılık ve Emeklilik', serviceSector: 'Tesis Yönetimi', phone: '+90 212 334 24 24', email: 'kurumsal@axa.com.tr', status: 'Yeni' }
+                ],
+                customers: [],
+                contacts: [], 
+                meetings: [], 
+                targets: {}, 
+                notifications: [],
+                mailDrafts: [],
+                notes: [] 
+            },
+            listeners: [],
+            init() {
+                const saved = localStorage.getItem('oypa_crm_data_v4');
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        // Oturumun kalıcı olmaması, her açılışta giriş yapılması için currentUser'ı yüklemiyoruz
+                        delete parsed.currentUser;
+                        this.state = { ...this.state, ...parsed };
+                    } catch (e) {
+                        console.error("Store init error:", e);
+                    }
+                }
+                this.notify();
+            },
+            save() {
+                localStorage.setItem('oypa_crm_data_v4', JSON.stringify(this.state));
+                this.notify();
+            },
+            subscribe(fn) { this.listeners.push(fn); },
+            notify() { this.listeners.forEach(fn => fn(this.state)); },
+            
+            addLead(lead, isDirectCustomer = false) {
+                const newEntity = { 
+                    ...lead, 
+                    id: Date.now(), 
+                    status: isDirectCustomer ? 'Aktif' : 'Yeni',
+                    type: isDirectCustomer ? 'customer' : 'lead',
+                    createdAt: new Date().toISOString().split('T')[0],
+                    activeDate: isDirectCustomer ? new Date().toISOString().split('T')[0] : null
+                };
+                if (isDirectCustomer) {
+                    this.state.customers.push(newEntity);
+                    this.addNotification(`${lead.company} doğrudan müşteri olarak portföye eklendi. 🎊`);
+                } else {
+                    this.state.leads.push(newEntity);
+                    this.addNotification(`${lead.company} sisteme lead olarak eklendi.`);
+                }
+                this.save();
+            },
+            
+            addNote(companyId, textOrData) {
+                const user = this.state.currentUser;
+                const data = typeof textOrData === 'string' ? { text: textOrData } : textOrData;
+                this.state.notes.push({
+                    id: Date.now(),
+                    companyId: Number(companyId),
+                    text: data.text,
+                    type: data.type || 'normal',
+                    tenderDate: data.tenderDate || null,
+                    authorName: user?.name || 'Unknown',
+                    authorTitle: user?.position || 'Sales Rep',
+                    date: new Date().toLocaleString()
+                });
+                this.save();
+            },
+
+            updateDraft(id, updates) {
+                const draft = this.state.mailDrafts.find(d => d.id === id);
+                if (draft) {
+                    Object.assign(draft, updates);
+                    this.save();
+                }
+            },
+            
+            addContact(contact) {
+                this.state.contacts.push({ ...contact, id: Date.now() });
+                this.save();
+            },
+
+            addRep(rep) {
+                const newRep = { ...rep, id: Date.now() };
+                this.state.reps.push(newRep);
+                this.save();
+                return newRep;
+            },
+
+            scheduleMeeting(meeting) {
+                const m = { ...meeting, id: Date.now(), status: 'Planlandı', comment: '' };
+                this.state.meetings.push(m);
+                
+                const rep = this.state.reps.find(r => r.id === Number(m.repId));
+                const company = [...this.state.leads, ...this.state.customers].find(c => c.id === Number(m.companyId));
+                const contact = this.state.contacts.find(c => c.id === Number(m.contactId));
+                
+                const bothEmails = [contact?.email, rep?.email]
+                    .filter(Boolean)
+                    .map(e => `<${e}>`)
+                    .join('; ');
+                
+                const draft = {
+                    id: Date.now() + 1,
+                    to: bothEmails,
+                    cc: '',
+                    subject: `${company?.company} X ${this.state.oypaFullTitle} ile Yaklaşan Etkinlik!`,
+                    body: `Sayın ${contact?.name || 'Yetkili'} & ${rep?.name || 'Yetkili'},\n\n${company?.company} X ${this.state.oypaFullTitle} ile yaklaşan etkinlik!\n\nDetaylar:\nKatılımcılar:\nFirma Tarafı: ${contact?.name || 'Belirtilmedi'} (${company?.company})\nOYPA Tarafı: ${rep?.name || 'Belirtilmedi'} (${this.state.oypaFullTitle})\nTarih: ${m.date}\nSaat: ${m.time}\nAdres: ${m.address}\n\nİyi çalışmalar dileriz.`,
+                    sent: false,
+                    date: new Date().toLocaleString(),
+                    repId: m.repId // Track which rep this draft belongs to
+                };
+                this.state.mailDrafts.unshift(draft);
+                
+                this.addNotification(`${m.date} tarihli görüşme planlandı ve mail taslağı oluşturuldu.`);
+                this.save();
+                return draft;
+            },
+
+            updateMeetingStatus(id, status, comment = '') {
+                const m = this.state.meetings.find(x => x.id === id);
+                if (m) {
+                    m.status = status;
+                    m.comment = comment;
+                    this.save();
+                }
+            },
+
+            convertLeadToCustomer(leadId, data) {
+                const idx = this.state.leads.findIndex(l => l.id === leadId);
+                if (idx !== -1) {
+                    const lead = this.state.leads[idx];
+                    this.state.customers.push({ 
+                        ...lead, 
+                        ...data,
+                        type: 'customer', 
+                        status: 'Aktif',
+                        activeDate: new Date().toISOString().split('T')[0]
+                    });
+                    this.state.leads.splice(idx, 1);
+                    this.addNotification(`${lead.company} artık aktif bir müşterimiz! 🎊`);
+                    this.save();
+                }
+            },
+
+            updateCompany(id, data) {
+                let company = this.state.leads.find(l => l.id === id) || this.state.customers.find(c => c.id === id);
+                if (company) {
+                    Object.assign(company, data);
+                    this.addNotification(`${company.company} bilgileri güncellendi.`);
+                    this.save();
+                }
+            },
+
+            deleteMeeting(id) {
+                if(!confirm('Bu görüşme kaydını silmek istediğinizden emin misiniz?')) return;
+                this.state.meetings = this.state.meetings.filter(m => m.id !== id);
+                this.save();
+                window.app.render();
+            },
+
+            deleteCompany(id) {
+                if(!confirm('Bu firmayı ve ona bağlı tüm görüşme, not ve mail kayıtlarını silmek istediğinizden emin misiniz?')) return;
+                
+                this.state.leads = this.state.leads.filter(l => l.id !== id);
+                this.state.customers = this.state.customers.filter(c => c.id !== id);
+                
+                this.state.meetings = this.state.meetings.filter(m => Number(m.companyId) !== id);
+                this.state.notes = this.state.notes.filter(n => Number(n.companyId) !== id);
+                
+                this.addNotification(`Firma ve bağlı tüm veriler silindi.`);
+                this.save();
+                window.app.setView('leads');
+            },
+
+            addNotification(message, userId = null) {
+                // If userId is null, it might be a global notification
+                this.state.notifications.unshift({ 
+                    id: Date.now(), 
+                    message, 
+                    userId: userId || this.state.currentUser?.id,
+                    time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) 
+                });
+                this.notify();
+            },
+
+            simulateSendDraft(id) {
+                const draft = this.state.mailDrafts.find(d => d.id === id);
+                if (draft) {
+                    draft.sent = true;
+                    this.addNotification(`Hatırlatma maili ${draft.to} adresine simüle olarak gönderildi.`);
+                    this.save();
+                }
+            },
+
+            updateUser(data) {
+                if (this.state.currentUser) {
+                    const idx = this.state.users.findIndex(u => u.id === this.state.currentUser.id);
+                    if (idx !== -1) {
+                        this.state.users[idx] = { ...this.state.users[idx], ...data };
+                        this.state.currentUser = { ...this.state.users[idx] };
+                    }
+                }
+                this.save();
+            },
+
+            login(username, password) {
+                const user = this.state.users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
+                if (user) {
+                    this.state.currentUser = { ...user };
+                    this.save();
+                    return true;
+                }
+                return false;
+            },
+
+            addUser(userData) {
+                const newUser = {
+                    ...userData,
+                    id: Date.now(),
+                    password: 'oypa123', // Default temporary password
+                    role: 'user',
+                    hasSetPassword: false
+                };
+                this.state.users.push(newUser);
+                // Also add to reps if they are a sales rep
+                this.state.reps.push({ id: newUser.id, name: newUser.name, email: newUser.email });
+                this.save();
+                this.addNotification(`${newUser.name} sisteme eklendi. Geçici şifre: oypa123`);
+            },
+
+            deleteUser(userId) {
+                this.state.users = this.state.users.filter(u => u.id !== userId);
+                this.state.reps = this.state.reps.filter(r => r.id !== userId);
+                this.save();
+                this.addNotification(`Kullanıcı sistemden silindi.`);
+            },
+
+            updatePassword(newPassword) {
+                const user = this.state.users.find(u => u.id === this.state.currentUser.id);
+                if (user) {
+                    user.password = newPassword;
+                    user.hasSetPassword = true;
+                    this.state.currentUser.hasSetPassword = true;
+                    this.save();
+                    this.addNotification(`Şifreniz başarıyla güncellendi.`);
+                }
+            },
+
+            logout() {
+                this.state.currentUser = null;
+                this.save();
+                window.location.reload();
+            },
+
+            updateWeeklyTarget(val) {
+                const userId = this.state.currentUser.id;
+                if (!this.state.targets) this.state.targets = {};
+                this.state.targets[userId] = Number(val);
+                this.addNotification(`Haftalık hedef ${val} görüşme olarak güncellendi.`);
+                this.save();
+            },
+
+            exportToCSV(reportData, filename) {
+                const headers = Object.keys(reportData[0]);
+                let csvContent = "\uFEFF"; 
+                csvContent += headers.join(';') + '\n';
+                
+                reportData.forEach(row => {
+                    csvContent += headers.map(h => {
+                        let val = row[h] ? String(row[h]).replace(/"/g, '""') : '';
+                        return `"${val}"`;
+                    }).join(';') + '\n';
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        };
+
+        const Icons = {
+            dashboard: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
+            users: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>',
+            calendar: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
+            mail: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>',
+            plus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
+            check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+            download: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
+            edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>'
+        };
+
+        class App {
+            constructor() {
+                this.appRef = document.getElementById('app');
+                this.currentView = 'dashboard';
+                this.selectedId = null;
+                this.tempDate = null;
+                this.history = []; // Navigation history
+                this.searchTerms = { leads: '', customers: '', portfolio: '', contacts: '', users: '', calendar: '', notes: '' };
+                
+                Store.init();
+                Store.subscribe(() => this.render());
+                this.render();
+            }
+
+            setView(view, id = null, saveToHistory = true) { 
+                if (saveToHistory && this.currentView !== view) {
+                    this.history.push({ view: this.currentView, id: this.selectedId });
+                }
+                this.currentView = view; 
+                this.selectedId = id;
+                this.render(); 
+                window.scrollTo(0,0);
+            }
+
+            goBack() {
+                if (this.history.length > 0) {
+                    const prev = this.history.pop();
+                    this.setView(prev.view, prev.id, false);
+                } else {
+                    this.setView('dashboard', null, false);
+                }
+            }
+
+            onSearch(type, val) {
+                this.searchTerms[type] = val;
+                this.render();
+                // Verimlilik için input focus'u kaybetmemek adına:
+                const input = document.getElementById(`search-${type}`);
+                if (input) {
+                    input.focus();
+                    input.setSelectionRange(val.length, val.length);
+                }
+            }
+
+            renderSearch(type, placeholder = 'Ara...') {
+                return `
+                    <div class="search-bar glass" style="margin: 15px 0; padding: 5px 15px; border-radius: 12px; display: flex; align-items: center; gap: 10px; border:1px solid rgba(255,255,255,0.05);">
+                        <span style="opacity:0.5;">🔍</span>
+                        <input type="text" id="search-${type}" 
+                            placeholder="${placeholder}" 
+                            value="${this.searchTerms[type]}" 
+                            oninput="window.app.onSearch('${type}', this.value)"
+                            style="background:transparent; border:none; color:white; width:100%; padding:10px 0; outline:none; font-size:0.9rem;">
+                        ${this.searchTerms[type] ? `<span onclick="window.app.onSearch('${type}', ''); window.app.render();" style="cursor:pointer; opacity:0.5;">&times;</span>` : ''}
+                    </div>
+                `;
+            }
+
+            render() {
+                if (!Store.state.currentUser) {
+                    this.appRef.innerHTML = this.renderLogin();
+                    return;
+                }
+                if (!this.appRef) return;
+                this.appRef.innerHTML = `
+                    <aside class="sidebar glass">
+                        <div class="logo" onclick="window.app.setView('dashboard')">
+                            <img src="oypa_logo_transparent.png" alt="OYPA Logo" style="height:40px; margin-right:10px;" onerror="this.src='https://placehold.co/40x44/E30613/FFFFFF?text=O'">
+                            <h1>OYPA<span>CRM</span></h1>
+                        </div>
+                        <nav class="nav-menu">
+                            <div class="nav-item ${this.currentView === 'dashboard' ? 'active' : ''}" onclick="window.app.setView('dashboard')">${Icons.dashboard}<span>Overview</span></div>
+                            <div class="nav-item ${this.currentView === 'leads' ? 'active' : ''}" onclick="window.app.setView('leads')">${Icons.users}<span>Leads & Opportunities</span></div>
+                            <div class="nav-item ${this.currentView === 'customers' ? 'active' : ''}" onclick="window.app.setView('customers')">${Icons.users}<span>Customers</span></div>
+                            <div class="nav-item ${this.currentView === 'calendar' ? 'active' : ''}" onclick="window.app.setView('calendar')">${Icons.calendar}<span>Visit Calendar</span></div>
+                            <div class="nav-item ${this.currentView === 'drafts' ? 'active' : ''}" onclick="window.app.setView('drafts')">${Icons.mail}<span>Mail Drafts</span></div>
+                            ${Store.state.currentUser.role === 'admin' ? `<div class="nav-item ${this.currentView === 'users' ? 'active' : ''}" onclick="window.app.setView('users')">${Icons.users}<span>User Management</span></div>` : ''}
+                        </nav>
+                        <div class="side-module glass" style="margin-top:auto; padding:15px; border-radius:12px;">
+                            <h4 style="font-size:0.7rem; margin-bottom:10px; color:var(--primary-red); text-transform:uppercase;">Upcoming</h4>
+                            <div id="upcoming-list">${this.renderUpcomingShort()}</div>
+                        </div>
+                    </aside>
+                    <main class="main-content">
+                        ${!Store.state.currentUser.hasSetPassword ? this.renderPasswordSetup() : `
+                        <header class="main-header glass">
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                ${['detail', 'profile', 'drafts', 'leads', 'customers', 'calendar', 'users'].includes(this.currentView) && this.currentView !== 'dashboard' ? `<button class="btn btn-ghost btn-sm" onclick="window.app.goBack()">← Geri</button>` : ''}
+                                <h2 style="font-size:1.1rem; color:var(--text-muted);">${this.getViewTitle()}</h2>
+                            </div>
+                            <div class="header-right">
+                                <div class="notification-bell" onclick="window.app.showNotifications()">🔔 <span class="badge-count">${Store.state.notifications.filter(n => !n.userId || n.userId === Store.state.currentUser.id).length}</span></div>
+                                <div class="user-profile" onclick="window.app.setView('profile')" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                                    <div style="text-align:right; line-height:1.2;">
+                                        <div style="font-size:0.85rem; font-weight:600;">${Store.state.currentUser.name}</div>
+                                        <div style="font-size:0.7rem; color:var(--text-muted);">${Store.state.currentUser.position}</div>
+                                    </div>
+                                    <div class="avatar">${Store.state.currentUser.name[0]}</div>
+                                </div>
+                            </div>
+                        </header>
+                        <div class="view-container">${this.renderCurrentView()}</div>
+                        `}
+                    </main>
+                `;
+            }
+
+            getViewTitle() {
+                const map = { dashboard: 'Dashboard', leads: 'Lead & Opportunity Management', customers: 'Customer Portfolio', calendar: 'Event Calendar', detail: 'Company Details', drafts: 'Mail Simulation Center', profile: 'My Profile', users: 'User & Personnel Management' };
+                return map[this.currentView] || 'OYPA';
+            }
+
+            renderUpcomingShort() {
+                const userId = Store.state.currentUser.id;
+                const now = new Date();
+                now.setHours(0,0,0,0);
+                const upcoming = Store.state.meetings
+                    .filter(m => {
+                        const mDate = new Date(m.date);
+                        mDate.setHours(0,0,0,0);
+                        return Number(m.repId) === userId && mDate >= now && m.status === 'Planlandı';
+                    })
+                    .sort((a,b) => new Date(a.date) - new Date(b.date))
+                    .slice(0, 3);
+                
+                if(!upcoming.length) return '<p style="color:var(--text-muted); font-size:0.7rem;">No scheduled events.</p>';
+                return upcoming.map(m => {
+                    const company = [...Store.state.leads, ...Store.state.customers].find(c => c.id === Number(m.companyId));
+                    return `<div onclick="window.app.setView('detail', ${m.companyId})" style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;">
+                        <strong style="color:white;">${company?.company || 'Company'}</strong><br/>
+                        <span style="opacity:0.7; font-size:0.7rem;">📅 ${m.date} - 🕒 ${m.time}</span>
+                    </div>`;
+                }).join('');
+            }
+
+            renderCurrentView() {
+                if (this.currentView === 'leads') return this.renderLeads();
+                if (this.currentView === 'customers') return this.renderCustomers();
+                if (this.currentView === 'calendar') return this.renderCalendar();
+                if (this.currentView === 'detail') return this.renderCompanyDetail(this.selectedId);
+                if (this.currentView === 'drafts') return this.renderDrafts();
+                if (this.currentView === 'profile') return this.renderProfile();
+                if (this.currentView === 'users') return this.renderUsers();
+                return this.renderDashboard();
+            }
+
+            renderPasswordSetup() {
+                return `
+                <div style="height:100%; display:flex; align-items:center; justify-content:center; padding:20px;">
+                    <div class="glass" style="width:450px; padding:40px; border-radius:24px; text-align:center;">
+                        <h2 style="margin-bottom:15px; color:var(--primary-red);">Şifrenizi Belirleyin</h2>
+                        <p style="color:var(--text-muted); margin-bottom:30px; font-size:0.9rem;">Güvenliğiniz için lütfen sistem giriş şifrenizi kendiniz belirleyin. Bu şifreyi Admin dahil kimse bilmeyecektir.</p>
+                        <form onsubmit="event.preventDefault(); window.app.handlePasswordSetup(this);" class="crm-form">
+                            <div class="form-group">
+                                <label>Yeni Şifre</label>
+                                <input type="password" name="password" required minlength="6" placeholder="En az 6 karakter...">
+                            </div>
+                            <div class="form-group">
+                                <label>Şifre Tekrar</label>
+                                <input type="password" name="confirm" required minlength="6" placeholder="Tekrar yazın...">
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px;">Şifreyi Kaydet ve Başla</button>
+                        </form>
+                    </div>
+                </div>`;
+            }
+
+            handlePasswordSetup(form) {
+                const fd = new FormData(form);
+                if (fd.get('password') !== fd.get('confirm')) {
+                    alert('Şifreler birbiriyle eşleşmiyor!');
+                    return;
+                }
+                Store.updatePassword(fd.get('password'));
+            }
+
+            renderUsers() {
+                const query = this.searchTerms.users.toLowerCase();
+                const filtered = Store.state.users.filter(u => 
+                    u.name.toLowerCase().includes(query) || 
+                    u.username.toLowerCase().includes(query) ||
+                    u.position.toLowerCase().includes(query)
+                );
+
+                return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                        <h3>Sistemdeki Tüm Kullanıcılar</h3>
+                        <button class="btn btn-primary" onclick="window.app.showModal('m-user')">${Icons.plus} Yeni Personel Ekle</button>
+                    </div>
+                    ${this.renderSearch('users', 'İsim, kullanıcı adı veya pozisyon ara...')}
+                    <div class="data-table-container glass">
+                        <table class="data-table">
+                            <thead><tr><th>Personel</th><th>Kullanıcı Adı</th><th>E-Mail / Pozisyon</th><th>Durum</th><th>İşlem</th></tr></thead>
+                            <tbody>
+                                ${filtered.length ? filtered.map(u => `
+                                    <tr>
+                                        <td><strong>${u.name}</strong></td>
+                                        <td><code>${u.username}</code></td>
+                                        <td>
+                                            <div style="font-size:0.8rem;">${u.email}</div>
+                                            <div style="font-size:0.7rem; color:var(--text-muted);">${u.position}</div>
+                                        </td>
+                                        <td>
+                                            ${u.hasSetPassword ? '<span class="badge" style="background:#2ecc71; color:white;">AKTİF</span>' : '<span class="badge" style="background:var(--warning); color:black;">ŞİFRE BEKLENİYOR</span>'}
+                                        </td>
+                                        <td>
+                                            ${u.role === 'admin' ? '<small style="opacity:0.5;">Admin Silinemez</small>' : `<button class="btn btn-ghost btn-sm" onclick="Store.deleteUser('${u.id}'); window.app.render();">🗑️ Sil</button>`}
+                                        </td>
+                                    </tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted);">Kullanıcı bulunamadı.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="m-user" class="modal-overlay" style="display:none">
+                        <div class="modal-content glass">
+                            <div class="modal-header"><h3>Sisteme Yeni Personel Tanımla</h3><button class="btn btn-ghost btn-sm" onclick="window.app.closeModal('m-user')">&times;</button></div>
+                            <form onsubmit="event.preventDefault(); window.app.saveNewUser(this);" class="crm-form">
+                                <div class="form-group"><label>Tam İsim</label><input name="name" required placeholder="Örn: Caner Öztuna">${this.renderWarning()}</div>
+                                <div class="form-group"><label>Kullanıcı Adı</label><input name="username" required placeholder="Örn: caner">${this.renderWarning()}</div>
+                                <div class="form-group"><label>E-Mail</label><input type="email" name="email" required placeholder="caner@oypa.com"></div>
+                                <div class="form-group"><label>Pozisyon/Ünvan</label><input name="position" required placeholder="Sales Manager"></div>
+                                <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px;">
+                                    <button type="button" class="btn btn-ghost" onclick="window.app.closeModal('m-user')">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Personeli Ekle</button>
+                                </div>
+                                <p style="font-size:0.75rem; text-align:center; opacity:0.6; margin-top:10px;">Not: Sizin belirlediğiniz kullanıcı adıyla giriş yapacak, <br/><b>oypa123</b> olan geçici şifresini ilk girişte değiştirecektir.</p>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            }
+
+            saveNewUser(form) {
+                const fd = new FormData(form);
+                const data = Object.fromEntries(fd);
+                Store.addUser(data);
+                this.closeModal('m-user');
+                this.render();
+            }
+
+            renderDashboard() {
+                const now = new Date();
+                const startOfWeek = new Date(now);
+                const day = now.getDay();
+                const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday
+                startOfWeek.setDate(diff);
+                startOfWeek.setHours(0,0,0,0);
+                
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                endOfWeek.setHours(23,59,59,999);
+
+                const userId = Store.state.currentUser.id;
+                const weeklyMeetings = Store.state.meetings.filter(m => {
+                    const d = new Date(m.date);
+                    return Number(m.repId) === userId && d >= startOfWeek && d <= endOfWeek;
+                });
+
+                const doneCount = weeklyMeetings.filter(m => m.status === 'Yapıldı').length;
+                const totalTarget = Store.state.targets[userId] || 30;
+                const percent = Math.min(100, Math.round((doneCount/totalTarget)*100));
+
+                return `
+                    <div class="dashboard-grid">
+                        <div class="stat-card glass" style="border-left: 4px solid var(--warning);" onclick="window.app.setView('leads')">
+                            <span class="stat-label">Active Leads</span>
+                            <span class="stat-value">${Store.state.leads.length}</span>
+                        </div>
+                        <div class="stat-card glass" style="border-left: 4px solid var(--success);" onclick="window.app.setView('customers')">
+                            <span class="stat-label">Total Customers</span>
+                            <span class="stat-value">${Store.state.customers.length}</span>
+                        </div>
+                        <div class="stat-card glass" style="border-left: 4px solid var(--primary-red);" onclick="window.app.setView('calendar')">
+                            <span class="stat-label">My Scheduled Visits</span>
+                            <span class="stat-value">${Store.state.meetings.filter(m => Number(m.repId) === userId && (m.status === 'Planlandı' || m.status === 'Scheduled')).length}</span>
+                        </div>
+                        
+                        <div class="stat-card glass full-width" style="border-top: 4px solid var(--primary-red); flex-direction:row; justify-content:space-between; align-items:center;">
+                            <div>
+                                <h3 style="margin-bottom:10px;">Weekly Target Tracker</h3>
+                                <p style="color:var(--text-muted)">
+                                    <strong>${doneCount}</strong> out of <strong>${totalTarget}</strong> planned meetings this week have been completed. 
+                                    <button class="btn btn-ghost btn-sm" style="display:inline-flex; margin-left:10px; padding:2px 5px;" onclick="window.app.showTargetEditModal()">✎ Hedef Düzenle</button>
+                                </p>
+                                <div style="display:flex; gap:20px; margin-top:10px;">
+                                    <div style="padding:10px 15px; background:rgba(52, 152, 219, 0.2); border-radius:10px; border:1px solid var(--success); cursor:pointer; min-width:120px;" onclick="window.app.showTargetDetails('new')">
+                                        <span style="font-size:0.7rem; display:block; opacity:0.7; margin-bottom:4px;">NEW CUSTOMERS</span>
+                                        <span style="font-weight:700; color:var(--success); font-size:1.2rem;">${Store.state.customers.filter(c => {
+                                            const active = new Date(c.activeDate);
+                                            const now = new Date();
+                                            const diff = (now - active) / (1000*60*60*24);
+                                            return Number(c.ownerId) === userId && diff <= 7;
+                                        }).length}</span>
+                                    </div>
+                                    <div style="padding:10px 15px; background:rgba(255,255,255,0.05); border-radius:10px; cursor:pointer; min-width:120px;" onclick="window.app.showTargetDetails('existing')">
+                                        <span style="font-size:0.7rem; display:block; opacity:0.7; margin-bottom:4px;">EXISTING CUSTOMERS</span>
+                                        <span style="font-weight:700; font-size:1.2rem;">${Store.state.customers.filter(c => {
+                                            const active = new Date(c.activeDate);
+                                            const now = new Date();
+                                            const diff = (now - active) / (1000*60*60*24);
+                                            return Number(c.ownerId) === userId && diff > 7;
+                                        }).length}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:2.5rem; font-weight:800; color:var(--primary-red);">${percent}%</div>
+                                <div style="width:250px; height:8px; background:rgba(255,255,255,0.05); border-radius:10px; margin-top:10px; overflow:hidden;">
+                                    <div style="width:${percent}%; height:100%; background:var(--primary-red); box-shadow: 0 0 10px var(--primary-red);"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass full-width" style="padding:24px; border-radius:16px;">
+                            <h3>Weekly Meeting Intensity</h3>
+                            <div class="chart-container" id="dashboard-chart">
+                                ${this.renderChart()}
+                            </div>
+                        </div>
+                    </div>`;
+            }
+
+            renderChart() {
+                const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                const values = [2, 5, 3, 8, 4, 1, 0]; 
+                const max = Math.max(...values, 10);
+                return days.map((day, i) => {
+                    const height = (values[i] / max) * 100;
+                    const left = (i * (100 / 7)) + 5;
+                    return `
+                        <div class="chart-bar" style="height:${height}%; left:${left}%; width:40px;" onclick="window.app.showDayMeetings(${i}, '${day}')"></div>
+                        <div style="position:absolute; bottom:-30px; left:${left}%; width:40px; text-align:center; font-size:0.7rem; color:var(--text-muted);">${day}</div>
+                    `;
+                }).join('');
+            }
+
+            renderWarning() {
+                return '<div class="input-warning">⚠️ BÜYÜK HARF VE İNGİLİZCE KARAKTER / KLAVYE KULLANIN.</div>';
+            }
+
+            renderLeads() {
+                const query = this.searchTerms.leads.toLowerCase();
+                const filtered = Store.state.leads.filter(l => 
+                    l.company.toLowerCase().includes(query) || 
+                    (l.companySector && l.companySector.toLowerCase().includes(query)) ||
+                    (l.serviceSector && l.serviceSector.toLowerCase().includes(query)) ||
+                    (l.ownerName && l.ownerName.toLowerCase().includes(query))
+                );
+
+                return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                        <h3>Lead & Opportunity List</h3>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-ghost" onclick="window.app.openExportModal('leads')">${Icons.download} Rapor Çek</button>
+                            <button class="btn btn-primary" onclick="window.app.showModal('m-lead')">${Icons.plus} Yeni Firma/Fırsat</button>
+                        </div>
+                    </div>
+                    ${this.renderSearch('leads', 'Firma adı, sektör veya sorumlu ara...')}
+                    <div class="data-table-container glass">
+                        <table class="data-table">
+                            <thead><tr><th>Company</th><th>Our Service</th><th>Owner</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${filtered.length ? filtered.map(l => `
+                                    <tr>
+                                        <td>
+                                            <strong>${l.company}</strong>
+                                            ${l.isNewCustomer ? `<div class="badge-new" style="display:inline-block; font-size:0.6rem; background:var(--primary-red); color:white; padding:2px 6px; border-radius:4px; margin-left:8px; vertical-align:middle; font-weight:700;">NEW</div>` : ''}
+                                            <div style="font-size:0.7rem; opacity:0.5; margin-top:2px;">(${l.companySector || '-'})</div>
+                                        </td>
+                                        <td><span class="badge" style="background:var(--success); color:white; padding:6px 12px; font-size:0.75rem;">${l.serviceSector || '-'}</span></td>
+                                        <td style="font-size:0.85rem;">${l.ownerName || 'OYPA'}</td>
+                                        <td><span class="badge badge-lead">${l.status}</span></td>
+                                        <td><button class="btn btn-ghost btn-sm" onclick="window.app.setView('detail', ${l.id})">Detay / Aksiyon</button></td>
+                                    </tr>`).join('') : `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted);">${query ? 'Arama sonucu bulunamadı.' : 'Sistemde aktif lead bulunmuyor.'}</td></tr>`}
+                            </tbody>
+                        </table>
+                    </div>
+                    ${this.renderLeadModal()}
+                    <div id="export-modal-container"></div>`;
+            }
+
+            renderLeadModal(prefillData = null, isDirectCustomer = false, isEdit = false) {
+                return `
+                    <div id="m-lead" class="modal-overlay" style="display:none">
+                        <div class="modal-content glass" style="width:600px;">
+                            <div class="modal-header"><h3>${isEdit ? 'Firma Bilgilerini Düzenle' : (isDirectCustomer ? 'Yeni Müşteri Kaydı' : (prefillData ? 'Yeni Fırsat Ekle' : 'Yeni Firma Kaydı'))}</h3><button class="btn btn-ghost btn-sm" onclick="window.app.closeModal('m-lead')">&times;</button></div>
+                            <form onsubmit="event.preventDefault(); ${isEdit ? `window.app.saveCompanyEdit(this, ${prefillData.id})` : `window.app.saveLead(this, ${isDirectCustomer})`};" class="crm-form">
+                                <div class="form-group">
+                                    <label>Firma Ünvanı</label>
+                                    <input name="company" required value="${prefillData?.company || ''}">
+                                    ${this.renderWarning()}
+                                    ${prefillData && !isEdit ? `<div class="checkbox-group"><input type="checkbox" checked disabled> <span>${prefillData.company} ile aynı</span></div>` : ''}
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Firmanın Kendi Sektörü</label>
+                                        <input name="companySector" required placeholder="Örn: Otomotiv, Gıda..." value="${prefillData?.companySector || ''}">
+                                        ${this.renderWarning()}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Hizmet Vereceğimiz Sektör</label>
+                                        <select name="serviceSector" required onchange="this.nextElementSibling.style.display = (this.value === 'Diğer' ? 'block' : 'none')">
+                                            <option value="" disabled ${!prefillData ? 'selected' : ''}>Seçiniz:</option>
+                                            <option value="Turizm" ${prefillData?.serviceSector === 'Turizm' ? 'selected' : ''}>Turizm</option>
+                                            <option value="Perakende" ${prefillData?.serviceSector === 'Perakende' ? 'selected' : ''}>Perakende</option>
+                                            <option value="Tesis Yönetimi" ${prefillData?.serviceSector === 'Tesis Yönetimi' ? 'selected' : ''}>Tesis Yönetimi</option>
+                                            <option value="Diğer" ${prefillData?.serviceSector === 'Diğer' ? 'selected' : ''}>Diğer</option>
+                                        </select>
+                                        <input name="serviceSectorDetail" placeholder="Sektör detayı yazın..." style="display:${prefillData?.serviceSector === 'Diğer' ? 'block' : 'none'}; margin-top:5px;" value="${prefillData?.serviceSectorDetail || ''}">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Sorumlu Portföy Yöneticisi / Temsilci</label>
+                                    <select name="ownerId" required>
+                                        <option value="" disabled ${!prefillData ? 'selected' : ''}>Temsilci Seçiniz:</option>
+                                        ${Store.state.reps.map(r => `
+                                            <option value="${r.id}" ${prefillData?.ownerId == r.id ? 'selected' : ''}>${r.name} (${r.title})</option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Telefon</label>
+                                        <input name="phone" required value="${prefillData?.phone || '+90 '}">
+                                        ${prefillData && !isEdit ? `<div class="checkbox-group"><input type="checkbox" onchange="window.app.handlePrefill(this, 'phone', '${prefillData.phone}')"> <span>Mevcutla aynı</span></div>` : ''}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>E-Mail</label>
+                                        <input name="email" required value="${prefillData?.email || ''}">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Adres</label>
+                                    <input name="address" required value="${prefillData?.address || ''}">
+                                    ${this.renderWarning()}
+                                    ${prefillData && !isEdit ? `<div class="checkbox-group"><input type="checkbox" onchange="window.app.handlePrefill(this, 'address', '${prefillData.address}')"> <span>Mevcutla aynı</span></div>` : ''}
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Firma Kaynağı / Referans</label>
+                                        <select name="dataSource" required onchange="this.nextElementSibling.style.display = (this.value ? 'block' : 'none')">
+                                            <option value="" disabled ${!prefillData ? 'selected' : ''}>Seçiniz:</option>
+                                            <option value="OYAK Grup Network" ${prefillData?.dataSource === 'OYAK Grup Network' ? 'selected' : ''}>OYAK Grup Network</option>
+                                            <option value="Şahsi Network" ${prefillData?.dataSource === 'Şahsi Network' ? 'selected' : ''}>Şahsi Network</option>
+                                            <option value="Linkedin / Sosyal Medya" ${prefillData?.dataSource === 'Linkedin / Sosyal Medya' ? 'selected' : ''}>Linkedin / Sosyal Medya</option>
+                                            <option value="İhale / Web Araştırma" ${prefillData?.dataSource === 'İhale / Web Araştırma' ? 'selected' : ''}>İhale / Web Araştırma</option>
+                                            <option value="Diğer" ${prefillData?.dataSource === 'Diğer' ? 'selected' : ''}>Diğer</option>
+                                        </select>
+                                        <input name="dataSourceDetail" placeholder="Referans detayını girin (Şirket, İsim vb.)..." style="display:${prefillData?.dataSource ? 'block' : 'none'}; margin-top:5px;" value="${prefillData?.dataSourceDetail || ''}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Firma Grubu (İç/Dış)</label>
+                                        <select name="isInternal" required>
+                                            <option value="false" ${prefillData?.isInternal === false ? 'selected' : ''}>Dış Firma (Müşteri)</option>
+                                            <option value="true" ${prefillData?.isInternal === true ? 'selected' : ''}>İç Firma (OYAK Grubu/İştiraki)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-top:10px;">
+                                    <label class="checkbox-group">
+                                        <input type="checkbox" name="isNewCustomer" ${prefillData?.isNewCustomer ? 'checked' : ''}>
+                                        <span style="font-weight:700; color:var(--primary-red);">NEW CUSTOMER (Yeni Müşteri mi?)</span>
+                                    </label>
+                                </div>
+                                <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                                    ${isEdit ? `<button type="button" class="btn btn-ghost btn-sm" style="color:var(--primary-red); margin-right:auto;" onclick="window.app.closeModal('m-lead'); Store.deleteCompany(${prefillData.id});">🗑️ Firmayı Sil</button>` : ''}
+                                    <button type="button" class="btn btn-ghost" onclick="window.app.closeModal('m-lead')">İptal</button>
+                                    <button type="submit" class="btn btn-primary">${isEdit ? 'Güncelle' : 'Kaydet'}</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>`;
+            }
+
+            openEditCompanyModal(id) {
+                const company = [...Store.state.leads, ...Store.state.customers].find(c => c.id === id);
+                document.getElementById('opp-modal-container').innerHTML = this.renderLeadModal(company, false, true);
+                this.showModal('m-lead');
+            }
+
+            saveCompanyEdit(form, id) {
+                const fd = new FormData(form);
+                const data = Object.fromEntries(fd);
+                data.isNewCustomer = fd.get('isNewCustomer') === 'on';
+                data.isInternal = fd.get('isInternal') === 'true';
+                
+                // Owner ismini ID'den bulup ekleyelim (Tablolarda göstermek için)
+                if (data.ownerId) {
+                    const rep = Store.state.reps.find(r => r.id == data.ownerId);
+                    if (rep) data.ownerName = rep.name;
+                }
+                
+                Store.updateCompany(id, data);
+                this.closeModal('m-lead');
+                this.render();
+            }
+
+            handlePrefill(cb, fieldName, value) {
+                const input = cb.closest('.form-group').querySelector('input');
+                if (cb.checked) {
+                    input.value = value;
+                    input.readOnly = true;
+                } else {
+                    input.readOnly = false;
+                }
+            }
+
+            saveLead(form, isDirectCustomer = false) { 
+                const data = Object.fromEntries(new FormData(form));
+                Store.addLead(data, isDirectCustomer); 
+                this.closeModal('m-lead');
+                this.render();
+            }
+
+            renderCustomers() {
+                const query = this.searchTerms.customers.toLowerCase();
+                const filtered = Store.state.customers.filter(c => 
+                    c.company.toLowerCase().includes(query) || 
+                    (c.companySector && c.companySector.toLowerCase().includes(query)) ||
+                    (c.serviceSector && c.serviceSector.toLowerCase().includes(query))
+                );
+
+                return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                        <h3>Active Customer Portfolio</h3>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-ghost" onclick="window.app.openExportModal('customers')">${Icons.download} Rapor Çek</button>
+                            <button class="btn btn-primary" onclick="window.app.openNewCustomerModal()">${Icons.plus} Yeni Müşteri Ekle</button>
+                        </div>
+                    </div>
+                    ${this.renderSearch('customers', 'Firma adı veya sektör ara...')}
+                    <div class="data-table-container glass">
+                        <table class="data-table">
+                            <thead><tr><th>Company</th><th>Our Service</th><th>Active Since</th><th>Owner</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${filtered.length ? filtered.map(c => `
+                                    <tr>
+                                        <td>
+                                            <strong>${c.company}</strong>
+                                            ${c.isNewCustomer ? `<div class="badge-new" style="display:inline-block; font-size:0.6rem; background:var(--primary-red); color:white; padding:2px 6px; border-radius:4px; margin-left:8px; vertical-align:middle; font-weight:700;">NEW</div>` : ''}
+                                            <div style="font-size:0.7rem; opacity:0.5; margin-top:2px;">(${c.companySector || '-'})</div>
+                                        </td>
+                                        <td><span class="badge" style="background:var(--success); color:white; padding:6px 12px; font-size:0.75rem;">${c.serviceSector || '-'}</span></td>
+                                        <td style="font-size:0.85rem;">${c.activeDate || '-'}</td>
+                                        <td style="font-size:0.85rem;">${c.ownerName || 'OYPA'}</td>
+                                        <td><button class="btn btn-ghost btn-sm" onclick="window.app.setView('detail', ${c.id})">Dosyayı Aç</button></td>
+                                    </tr>`).join('') : `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted);">${query ? 'Arama sonucu bulunamadı.' : 'Henüz aktif müşterimiz bulunmuyor.'}</td></tr>`}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="new-cust-modal-container"></div>
+                    <div id="export-modal-container"></div>`;
+            }
+
+            openNewCustomerModal() {
+                const container = document.getElementById('new-cust-modal-container');
+                container.innerHTML = this.renderLeadModal(null, true);
+                this.showModal('m-lead');
+            }
+
+            renderCompanyDetail(id) {
+                const company = [...Store.state.leads, ...Store.state.customers].find(c => c.id === id);
+                if(!company) return '<div style="padding:40px; text-align:center;">Firma bulunamadı.</div>';
+                
+                const contacts = Store.state.contacts.filter(c => Number(c.companyId) === id);
+                const meetings = Store.state.meetings.filter(m => Number(m.companyId) === id).sort((a,b) => b.id - a.id);
+                const companyNotes = Store.state.notes.filter(n => n.companyId === id).sort((a,b) => b.id - a.id);
+
+                return `
+                    <div class="detail-page" style="display:grid; grid-template-columns: 1fr 2fr; gap:24px; margin-top:20px;">
+                        <div style="display:flex; flex-direction:column; gap:20px;">
+                            <div class="glass" style="padding:24px; border-radius:16px; position:relative;">
+                                <button class="btn btn-ghost btn-sm" style="position:absolute; top:20px; right:20px;" onclick="window.app.openEditCompanyModal(${id})">${Icons.edit} Edit</button>
+                                <h3 style="margin-bottom:10px;">${company.company}</h3>
+                                <div style="margin-bottom:15px;">
+                                    <div style="font-size:0.75rem; opacity:0.6;">Firmanın Sektörü: ${company.companySector || '-'}</div>
+                                    <div style="font-size:0.75rem; color:var(--success);">Hizmet Sektörümüz: ${company.serviceSector}${company.serviceSector === 'Diğer' ? ` (${company.serviceSectorDetail || '-'})` : ''}</div>
+                                </div>
+                                <div style="margin-top:15px; display:flex; flex-direction:column; gap:8px;">
+                                    ${company.type === 'customer' ? '<span class="badge badge-customer">Aktif Müşteri</span>' : '<span class="badge badge-lead">Potansiyel (Lead)</span>'}
+                                    <div style="font-size:0.75rem; color:var(--text-muted);"><strong>Sorumlu (Owner):</strong> ${company.ownerName || 'OYPA'}</div>
+                                </div>
+                                <hr style="opacity:0.1; margin:20px 0;">
+                                <div style="font-size:0.85rem; display:flex; flex-direction:column; gap:12px;">
+                                    <span>📍 <strong>Adres:</strong> <br/>${company.address}</span>
+                                    <span>📧 <strong>E-Mail:</strong> <br/>${company.email}</span>
+                                    <span>📞 <strong>Telefon:</strong> <br/>${company.phone}</span>
+                                    <span>🔍 <strong>Referans:</strong> <br/>${company.dataSource || 'Belirtilmedi'}${company.dataSourceDetail ? ` (${company.dataSourceDetail})` : ''}</span>
+                                    <span>🏢 <strong>Firma Tipi:</strong> <br/>${company.isInternal ? 'İç Firma (OYAK Grubu)' : 'Dış Firma'}</span>
+                                </div>
+                                <div style="margin-top:30px; display:flex; flex-direction:column; gap:10px;">
+                                    ${company.type !== 'customer' ? `<button class="btn btn-primary" onclick="window.app.openConvertModal(${id})">Müşteriye Dönüştür</button>` : ''}
+                                    <button class="btn btn-ghost" onclick="window.app.openOpportunityModal(${id})">${Icons.plus} Yeni Fırsat Ekle</button>
+                                    <button class="btn btn-ghost" onclick="window.app.openMeetingModal(${id})">📅 Randevu Planla</button>
+                                </div>
+                            </div>
+                            
+                            <div class="glass" style="padding:24px; border-radius:16px;">
+                                <h4 style="margin-bottom:15px;">Notlar & Bekleyen İşler</h4>
+                                <form onsubmit="event.preventDefault(); window.app.saveNote(this, ${id});" class="crm-form">
+                                    <div class="form-group" style="margin-bottom:10px;">
+                                        <select name="noteType" onchange="this.nextElementSibling.style.display = (this.value === 'ihale' ? 'inline-block' : 'none')" required style="width:auto; display:inline-block; margin-right:10px; padding:8px; border-radius:6px; background:rgba(0,0,0,0.5);">
+                                            <option value="normal">Genel Not / Yorum</option>
+                                            <option value="ihale">İhale / Beklenen Potansiyel İş</option>
+                                        </select>
+                                        <input type="date" name="tenderDate" style="display:none; width:auto; padding:8px; border-radius:6px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:white;">
+                                    </div>
+                                    <textarea name="note" placeholder="Ziyaret notu, firma hakkında bilgi veya beklenen iş detayını girin..." required style="min-height:80px;"></textarea>
+                                    ${this.renderWarning()}
+                                    <button type="submit" class="btn btn-primary btn-sm" style="align-self:flex-end;">Notu Kaydet</button>
+                                </form>
+                                <div style="margin-top:20px;">
+                                    ${this.renderSearch('notes', 'Notlarda kelime ara (Örn: ihale)...')}
+                                </div>
+                                <div style="margin-top:15px; display:flex; flex-direction:column; gap:12px; max-height:400px; overflow-y:auto; padding-right:5px;">
+                                    ${(() => {
+                                        const query = this.searchTerms.notes.toLowerCase();
+                                        const filteredNotes = companyNotes.filter(n => n.text.toLowerCase().includes(query) || (n.type === 'ihale' && 'ihale'.includes(query)));
+                                        return filteredNotes.length ? filteredNotes.map(n => `
+                                            <div style="padding:12px; background:rgba(255,255,255,0.02); border-radius:8px; font-size:0.8rem; border-left:2px solid ${n.type === 'ihale' ? 'var(--warning)' : 'var(--primary-red)'};">
+                                                ${n.type === 'ihale' ? `<div style="font-weight:700; color:var(--warning); margin-bottom:5px; font-size:0.7rem;"><span style="background:rgba(242, 201, 76, 0.2); padding:2px 6px; border-radius:4px;">İHALE / POTANSİYEL İŞ</span> ${n.tenderDate ? `<span style="margin-left:10px; opacity:0.8;">🗓️ Tarih: ${n.tenderDate}</span>` : ''}</div>` : ''}
+                                                <p style="margin-bottom:8px; white-space:pre-wrap;">${n.text}</p>
+                                                <div style="display:flex; justify-content:space-between; font-size:0.65rem; opacity:0.5;">
+                                                    <span>${n.authorName} (${n.authorTitle})</span>
+                                                    <span>${n.date}</span>
+                                                </div>
+                                            </div>
+                                        `).join('') : '<p style="font-size:0.75rem; opacity:0.4; text-align:center;">' + (query ? 'Arama sonucu bulunamadı.' : 'Henüz not eklenmemiş.') + '</p>';
+                                    })()}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:24px;">
+                            <div class="glass" style="padding:24px; border-radius:16px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                    <h4>İlgili Kişiler</h4>
+                                    <button class="btn btn-ghost btn-sm" onclick="window.app.showModal('m-contact')">+ Yeni Kişi</button>
+                                </div>
+                                ${this.renderSearch('contacts', 'Kişi araması...')}
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; max-height:300px; overflow-y:auto; padding-top:10px;">
+                                    ${(() => {
+                                        const query = this.searchTerms.contacts.toLowerCase();
+                                        const filteredContacts = contacts.filter(c => 
+                                            c.name.toLowerCase().includes(query) || 
+                                            (c.email && c.email.toLowerCase().includes(query)) ||
+                                            (c.phone && c.phone.toLowerCase().includes(query))
+                                        );
+                                        return filteredContacts.length ? filteredContacts.map(c => `
+                                            <div class="glass" style="padding:15px; border-radius:12px; font-size:0.85rem; border:1px solid rgba(255,255,255,0.05);">
+                                                <div style="font-weight:700; margin-bottom:5px;">${c.name}</div>
+                                                <div style="opacity:0.6;">${c.email}</div>
+                                                <div style="opacity:0.6;">${c.phone}</div>
+                                            </div>`).join('') : `<p style="grid-column: span 2; text-align:center; padding:20px; opacity:0.3; font-size:0.85rem;">${query ? 'Arama sonucu yok.' : 'Henüz kontak eklenmemiş.'}</p>`;
+                                    })()}
+                                </div>
+                            </div>
+                            <div class="glass" style="padding:24px; border-radius:16px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                    <h4>Meeting History</h4>
+                                    <button class="btn btn-ghost btn-sm" onclick="window.app.openExportModal('meetings')">${Icons.download} Rapor Çek</button>
+                                </div>
+                                <div class="data-table-container" style="background:none; border:none; margin-top:15px;">
+                                    <table class="data-table" style="font-size:0.85rem;">
+                                        <thead><tr><th>Date</th><th>Rep</th><th>Method</th><th>Status</th><th>Action</th></tr></thead>
+                                        <tbody>
+                                            ${meetings.map(m => {
+                                                const rep = Store.state.reps.find(r => r.id === Number(m.repId));
+                                                return `<tr>
+                                                    <td>${m.date}<br/>${m.time}</td>
+                                                    <td>${rep?.name || 'Unknown'}</td>
+                                                    <td style="text-transform:capitalize;">${m.method}</td>
+                                                    <td><span class="badge ${m.status === 'Yapıldı' ? 'badge-customer' : 'badge-lead'}" style="font-size:0.65rem;">${m.status}</span></td>
+                                                    <td>
+                                                        <button class="btn btn-ghost btn-sm" onclick="window.app.openStatusModal(${m.id})">Güncelle</button>
+                                                    </td>
+                                                </tr>`;
+                                            }).join('')}
+                                            ${!meetings.length ? '<tr><td colspan="5" style="text-align:center; opacity:0.5;">Kayıt bulunamadı.</td></tr>' : ''}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="m-convert-container"></div>
+                    ${this.renderContactModal(id)}
+                    ${this.renderMeetingModal(id, company)}
+                    <div id="opp-modal-container"></div>
+                `;
+            }
+
+            openConvertModal(leadId) {
+                const container = document.getElementById('m-convert-container');
+                const lead = Store.state.leads.find(l => l.id === leadId);
+                container.innerHTML = `
+                <div id="m-convert" class="modal-overlay">
+                    <div class="modal-content glass">
+                        <div class="modal-header"><h3>Müşteriye Dönüştür: ${lead.company}</h3></div>
+                        <form onsubmit="event.preventDefault(); window.app.saveConversion(this, ${leadId});" class="crm-form">
+                            <div class="form-group">
+                                <label>Hangi Sektör İçin Aktif Oldu?</label>
+                                <select name="serviceSector" required onchange="this.nextElementSibling.style.display = (this.value === 'Diğer' ? 'block' : 'none')">
+                                    <option value="Turizm" ${lead.serviceSector === 'Turizm' ? 'selected' : ''}>Turizm</option>
+                                    <option value="Perakende" ${lead.serviceSector === 'Perakende' ? 'selected' : ''}>Perakende</option>
+                                    <option value="Tesis Yönetimi" ${lead.serviceSector === 'Tesis Yönetimi' ? 'selected' : ''}>Tesis Yönetimi</option>
+                                    <option value="Diğer" ${lead.serviceSector === 'Diğer' ? 'selected' : ''}>Diğer</option>
+                                </select>
+                                <input name="serviceSectorDetail" placeholder="Sektör detayı yazın..." style="display:${lead.serviceSector === 'Diğer' ? 'block' : 'none'}; margin-top:5px;" value="${lead.serviceSectorDetail || ''}">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Firma Kaynağı / Referans</label>
+                                    <select name="dataSource" required onchange="this.nextElementSibling.style.display = (this.value ? 'block' : 'none')">
+                                        <option value="OYAK Grup Network" ${lead.dataSource === 'OYAK Grup Network' ? 'selected' : ''}>OYAK Grup Network</option>
+                                        <option value="Şahsi Network" ${lead.dataSource === 'Şahsi Network' ? 'selected' : ''}>Şahsi Network</option>
+                                        <option value="Linkedin / Sosyal Medya" ${lead.dataSource === 'Linkedin / Sosyal Medya' ? 'selected' : ''}>Linkedin / Sosyal Medya</option>
+                                        <option value="İhale / Web Araştırma" ${lead.dataSource === 'İhale / Web Araştırma' ? 'selected' : ''}>İhale / Web Araştırma</option>
+                                        <option value="Diğer" ${lead.dataSource === 'Diğer' ? 'selected' : ''}>Diğer</option>
+                                    </select>
+                                    <input name="dataSourceDetail" placeholder="Referans detayını girin (Şirket, İsim vb.)..." style="display:${lead.dataSource ? 'block' : 'none'}; margin-top:5px;" value="${lead.dataSourceDetail || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Firma Grubu (İç/Dış)</label>
+                                    <select name="isInternal" required>
+                                        <option value="false" ${lead.isInternal === false ? 'selected' : ''}>Dış Firma (Müşteri)</option>
+                                        <option value="true" ${lead.isInternal === true ? 'selected' : ''}>İç Firma (OYAK Grubu/İştiraki)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Sorumlu (Owner) Seçin</label>
+                                <select name="ownerId" required>
+                                    <option value="OYPA">OYPA (Kurumsal)</option>
+                                    ${Store.state.reps.map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-top:10px;">
+                                <label class="checkbox-group">
+                                    <input type="checkbox" name="isNewCustomer" checked>
+                                    <span style="font-weight:700; color:var(--primary-red);">NEW CUSTOMER (Yeni Müşteri mi?)</span>
+                                </label>
+                            </div>
+                            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px;">
+                                <button type="button" class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">İptal</button>
+                                <button type="submit" class="btn btn-primary">Dönüştür ve Kaydet</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>`;
+            }
+
+            saveConversion(form, leadId) {
+                const fd = new FormData(form);
+                const data = Object.fromEntries(fd);
+                data.isNewCustomer = fd.get('isNewCustomer') === 'on';
+                data.isInternal = fd.get('isInternal') === 'true';
+                const owner = data.ownerId === 'OYPA' ? { ownerId: 'OYPA', ownerName: 'OYPA' } : { ownerId: Number(data.ownerId), ownerName: Store.state.reps.find(r => r.id === Number(data.ownerId)).name };
+                Store.convertLeadToCustomer(leadId, { ...data, ...owner });
+                this.setView('customers');
+            }
+
+            openOpportunityModal(id) {
+                const company = [...Store.state.leads, ...Store.state.customers].find(c => c.id === id);
+                const container = document.getElementById('opp-modal-container');
+                container.innerHTML = this.renderLeadModal(company);
+                this.showModal('m-lead');
+            }
+
+            renderContactModal(id) {
+                return `
+                <div id="m-contact" class="modal-overlay" style="display:none">
+                    <div class="modal-content glass">
+                        <div class="modal-header"><h3>Yeni Kontak Ekle</h3></div>
+                        <form onsubmit="event.preventDefault(); window.app.saveContact(this, ${id});" class="crm-form">
+                            <input name="companyId" type="hidden" value="${id}">
+                            <div class="form-group"><label>İsim Soyisim</label><input name="name" required>${this.renderWarning()}</div>
+                            <div class="form-group"><label>E-Mail</label><input type="email" name="email"></div>
+                            <div class="form-group"><label>Telefon</label><input name="phone" value="+90 "></div>
+                            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px;"><button type="button" class="btn btn-ghost" onclick="window.app.closeModal('m-contact')">İptal</button><button type="submit" class="btn btn-primary">Kaydet</button></div>
+                        </form>
+                    </div>
+                </div>`;
+            }
+
+            renderMeetingModal(id, company = null) {
+                const contacts = Store.state.contacts.filter(c => Number(c.companyId) === Number(id));
+                const companies = company ? [company] : [...Store.state.leads, ...Store.state.customers];
+                return `
+                <div id="m-meeting" class="modal-overlay" style="display:none">
+                    <div class="modal-content glass" style="width:600px;">
+                        <div class="modal-header"><h3>Randevu / Görüşme Planla</h3></div>
+                        <form onsubmit="event.preventDefault(); window.app.saveMeeting(this);" class="crm-form">
+                            <div class="form-group">
+                                <label>Hedef Firma</label>
+                                <select name="companyId" required ${company ? 'readonly' : ''} onchange="window.app.updateContactList(this.value)">
+                                    ${companies.map(c => `<option value="${c.id}">${c.company} (${c.sector})</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Firma Temsilcisi</label>
+                                <select name="contactId" id="contactSelect" required>
+                                    <option value="">Seçiniz...</option>
+                                    ${contacts.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>OYPA Temsilcisi</label>
+                                    <select name="repId" required>
+                                        ${Store.state.reps.map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Yöntem</label>
+                                    <select name="method" onchange="this.nextElementSibling.style.display = (this.value === 'Diğer' ? 'block' : 'none')">
+                                        <option value="visit">Yüz Yüze Ziyaret</option>
+                                        <option value="phone">Telefon Görüşmesi</option>
+                                        <option value="email">E-mail / Teklif</option>
+                                        <option value="Diğer">Diğer</option>
+                                    </select>
+                                    <input name="methodDetail" placeholder="Yöntem detayı yazın..." style="display:none; margin-top:5px;">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label>Tarih</label><input type="date" name="date" required value="${this.tempDate || ''}"></div>
+                                <div class="form-group"><label>Saat</label><input type="time" name="time" required></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Görüşme Adresi</label>
+                                <input name="address" id="meetingAddress" required value="${company?.address || ''}">
+                                ${this.renderWarning()}
+                                <div style="display:flex; gap:10px; margin-top:5px;">
+                                    <button type="button" class="btn btn-ghost btn-sm" onclick="window.app.fillAddress('customer', '${company?.address || ''}')">🏠 Müşteri Adresi</button>
+                                    <button type="button" class="btn btn-ghost btn-sm" onclick="window.app.fillAddress('oypa', '')">🏢 OYPA Adresi</button>
+                                </div>
+                            </div>
+                            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px;"><button type="button" class="btn btn-ghost" onclick="window.app.closeModal('m-meeting')">İptal</button><button type="submit" class="btn btn-primary">Kaydet ve Mail Oluştur</button></div>
+                        </form>
+                    </div>
+                </div>`;
+            }
+
+            fillAddress(type, custAddr) {
+                const input = document.getElementById('meetingAddress');
+                if (type === 'customer') input.value = custAddr;
+                else input.value = Store.state.oypaAddress;
+            }
+
+            saveNote(form, id) {
+                const fd = new FormData(form);
+                const data = {
+                    text: fd.get('note'),
+                    type: fd.get('noteType'),
+                    tenderDate: fd.get('tenderDate')
+                };
+                Store.addNote(id, data);
+                form.reset();
+                const dateInput = form.querySelector('input[type="date"]');
+                if(dateInput) dateInput.style.display = 'none';
+                this.render();
+            }
+
+            saveContact(form, id) { 
+                Store.addContact(Object.fromEntries(new FormData(form))); 
+                this.render(); 
+            }
+
+            saveMeeting(form) {
+                const d = Object.fromEntries(new FormData(form));
+                const draft = Store.scheduleMeeting(d);
+                this.closeModal('m-meeting');
+                this.render();
+                this.openDraftModal(draft.id);
+            }
+
+            changeToCustomer(id) {
+                this.openConvertModal(id);
+            }
+
+            updateM(id, status) { Store.updateMeetingStatus(id, status); this.render(); }
+
+            renderCalendar() {
+                const userId = Store.state.currentUser.id;
+                const query = this.searchTerms.calendar.toLowerCase();
+                // Filter events based on role (Admin sees all, User sees only their own)
+                const upcomingRaw = Store.state.meetings.filter(m => 
+                    (m.status === 'Planlandı' || m.status === 'Scheduled') && 
+                    (Store.state.currentUser.role === 'admin' || Number(m.repId) === userId)
+                ).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+                const upcoming = upcomingRaw.filter(m => {
+                    const company = [...Store.state.leads, ...Store.state.customers].find(c => c.id === Number(m.companyId));
+                    return company?.company.toLowerCase().includes(query) || 
+                           m.date.toLowerCase().includes(query) ||
+                           m.method.toLowerCase().includes(query);
+                });
+
+                return `
+                    <div class="calendar-layout">
+                        <div class="calendar-grid glass">
+                            <div class="cal-header">
+                                ${new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+                            </div>
+                            <div class="cal-days">
+                                ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => `<div style="text-align:center; font-size:0.75rem; font-weight:700; opacity:0.5; padding:10px 0;">${d}</div>`).join('')}
+                                ${this.renderCalendarCells()}
+                            </div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:20px;">
+                            <div class="glass" style="padding:24px; border-radius:20px; flex:1;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                                    <h3>Upcoming Visits</h3>
+                                    <button class="btn btn-primary btn-sm" onclick="window.app.showModal('m-meeting')">${Icons.plus} Planla</button>
+                                </div>
+                                ${this.renderSearch('calendar', 'Firma veya tarih ara...')}
+                                <div id="upcoming-list-detailed" style="display:flex; flex-direction:column; gap:12px; max-height:500px; overflow-y:auto;">
+                                    ${upcoming.length ? upcoming.map(m => {
+                                        const company = [...Store.state.leads, ...Store.state.customers].find(c => c.id === Number(m.companyId));
+                                        const rep = Store.state.reps.find(r => r.id === Number(m.repId));
+                                        return `
+                                            <div class="side-module glass" style="padding:15px; border-radius:12px; cursor:pointer;" onclick="window.app.setView('detail', ${m.companyId})">
+                                                <div style="font-weight:700; margin-bottom:5px;">${company?.company}</div>
+                                                <div style="font-size:0.75rem; opacity:0.7;">🗓️ ${m.date} - 🕒 ${m.time}</div>
+                                                <div style="font-size:0.7rem; color:var(--primary-red); margin-top:5px;">Method: ${m.method} ${Store.state.currentUser.role === 'admin' ? `| Personel: ${rep?.name || 'OYPA'}` : ''}</div>
+                                            </div>
+                                        `;
+                                    }).join('') : `<p style="text-align:center; padding:20px; opacity:0.3;">${query ? 'Arama sonucu bulunamadı.' : 'Yaklaşan randevu yok.'}</p>`}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ${this.renderMeetingModal()}`;
+            }
+
+            renderCalendarCells() {
+                return Array.from({length: 31}, (_, i) => {
+                    const day = i+1;
+                    const dateStr = `2026-03-${day.toString().padStart(2,'0')}`;
+                    const hasMeeting = Store.state.meetings.some(m => m.date === dateStr && (Store.state.currentUser.role === 'admin' || Number(m.repId) === Store.state.currentUser.id));
+                    return `<div class="cal-cell ${day===17?'today':''} ${hasMeeting?'has-event':''}" onclick="window.app.handleDateClick('${dateStr}')">${day}</div>`;
+                }).join('');
+            }
+
+            handleDateClick(date) {
+                this.tempDate = date;
+                this.render();
+            }
+
+            renderDrafts() {
+                const userId = Store.state.currentUser.id;
+                const userDrafts = Store.state.mailDrafts.filter(d => Number(d.repId) === userId);
+                return `
+                    <div style="margin-top:20px;">
+                        <h3>Mail Simulation Center</h3>
+                        <p style="color:var(--text-muted); font-size:0.9rem;">Sistem tarafından oluşturulan otomatik hatırlatma maillerini buradan yönetebilirsiniz.</p>
+                    </div>
+                    <div class="data-table-container glass">
+                        <table class="data-table">
+                            <thead><tr><th>Created At</th><th>Recipient</th><th>Subject</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody>
+                                ${userDrafts.length ? userDrafts.map(d => `
+                                    <tr>
+                                        <td style="font-size:0.8rem;">${d.date}</td>
+                                        <td><strong>${d.to}</strong></td>
+                                        <td style="font-size:0.85rem;">${d.subject}</td>
+                                        <td>${d.sent ? '<span class="badge badge-customer">SENT</span>' : '<span class="badge badge-lead">PENDING</span>'}</td>
+                                        <td>
+                                            <button class="btn btn-ghost btn-sm" onclick="window.app.openDraftModal(${d.id})">Görüntüle / Düzenle</button>
+                                            ${!d.sent ? `<button class="btn btn-primary btn-sm" onclick="window.app.sendMailViaOutlook(${d.id})">Outlook ile Gönder</button>` : ''}
+                                        </td>
+                                    </tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:40px;">Henüz taslak oluşturulmamış.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="m-draft-container"></div>`;
+            }
+
+            openDraftModal(id) {
+                const draft = Store.state.mailDrafts.find(d => d.id === id);
+                if (!draft) return;
+                const modalId = `m-edit-draft-${id}`;
+                
+                const div = document.createElement('div');
+                div.id = modalId;
+                div.className = 'modal-overlay';
+                div.innerHTML = `
+                    <div class="modal-content glass" style="width:600px;">
+                        <div class="modal-header"><h3>Mail Taslağını Düzenle</h3><button class="btn btn-ghost btn-sm" onclick="this.closest('.modal-overlay').remove()">&times;</button></div>
+                        <form onsubmit="event.preventDefault(); window.app.saveDraftUpdate(this, ${id});" class="crm-form">
+                            <div class="form-group"><label>Alıcı (To)</label><input name="to" value="${draft.to}" required></div>
+                            <div class="form-group"><label>Bilgi (CC)</label><input name="cc" value="${draft.cc || ''}" placeholder="virgül ile ayırın..."></div>
+                            <div class="form-group"><label>Konu (Subject)</label><input name="subject" value="${draft.subject}" required></div>
+                            <div class="form-group"><label>İçerik (Body)</label><textarea name="body" rows="10" required>${draft.body}</textarea></div>
+                            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px;">
+                                <button type="button" class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">Kapat</button>
+                                <button type="submit" class="btn btn-primary">Taslağı Güncelle</button>
+                                <div style="display:flex; gap:5px;">
+                                    <button type="button" class="btn btn-primary" style="background:#2ecc71" onclick="window.app.sendMailViaOutlook(${id})">Outlook'u Aç</button>
+                                    <button type="button" class="btn btn-primary" style="background:#3498db" onclick="window.app.copyAndMarkSent(${id})">İçeriği Kopyala & Gönder</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                `;
+                document.body.appendChild(div);
+            }
+
+            saveDraftUpdate(form, id) {
+                const data = Object.fromEntries(new FormData(form));
+                Store.updateDraft(id, data);
+                form.closest('.modal-overlay').remove();
+                this.render();
+            }
+
+            sendMailViaOutlook(id) {
+                const draft = Store.state.mailDrafts.find(d => d.id === id);
+                if (!draft) return;
+                
+                // Outlook klasik için virgül yerine noktalı virgül (;) daha iyidir
+                // Recipient format: <email1>; <email2>
+                const recipients = draft.to.replace(/,/g, '; ');
+                let mailto = `mailto:${recipients}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`;
+                if (draft.cc) {
+                    const ccRecips = draft.cc.split(',').map(e => e.trim().includes('<') ? e.trim() : `<${e.trim()}>`).join('; ');
+                    mailto += `&cc=${encodeURIComponent(ccRecips)}`;
+                }
+
+                // Bazı sistemlerde link üzerinden tetiklemek daha güvenli 
+                const link = document.createElement('a');
+                link.href = mailto;
+                // Outlook Deskstop için bazen _blank gerekebilir ama genelde varsayılan açılır
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                setTimeout(() => document.body.removeChild(link), 100);
+                
+                Store.simulateSendDraft(id);
+                this.render();
+                // Modalı kapat
+                const modal = document.querySelector('.modal-overlay');
+                if (modal) modal.remove();
+            }
+
+            sendDraft(id) { 
+                Store.simulateSendDraft(id); 
+                this.render(); 
+            }
+
+            copyAndMarkSent(id) {
+                const draft = Store.state.mailDrafts.find(d => d.id === id);
+                if (!draft) return;
+                
+                const textToCopy = `Alıcı: ${draft.to}\nBilgi: ${draft.cc || '-'}\nKonu: ${draft.subject}\n\n${draft.body}`;
+                
+                const selBox = document.createElement('textarea');
+                selBox.style.position = 'fixed';
+                selBox.style.left = '0';
+                selBox.style.top = '0';
+                selBox.style.opacity = '0';
+                selBox.value = textToCopy;
+                document.body.appendChild(selBox);
+                selBox.focus();
+                selBox.select();
+                document.execCommand('copy');
+                document.body.removeChild(selBox);
+
+                alert('Mail bilgileri ve içeriği kopyalandı! \n\nŞimdi Outlook\'ta "Yeni İleti" açıp yapıştırabilirsiniz.');
+                Store.simulateSendDraft(id);
+                this.render();
+                const modal = document.querySelector('.modal-overlay');
+                if (modal) modal.remove();
+            }
+
+            renderProfile() {
+                const user = Store.state.currentUser;
+                const query = this.searchTerms.portfolio.toLowerCase();
+                const portfolioRaw = Store.state.customers.filter(c => Number(c.ownerId) === user.id);
+                const userPortfolio = portfolioRaw.filter(c => 
+                    c.company.toLowerCase().includes(query) || 
+                    (c.serviceSector && c.serviceSector.toLowerCase().includes(query)) ||
+                    (c.companySector && c.companySector.toLowerCase().includes(query))
+                );
+
+                return `
+                    <div style="display:grid; grid-template-columns: 1fr 1.5fr; gap:24px; margin-top:20px;">
+                        <div class="glass" style="padding:40px; border-radius:20px; text-align:center; position:relative;">
+                            <button class="btn btn-ghost btn-sm" style="position:absolute; top:20px; right:20px;" onclick="window.app.showModal('m-profile')">✎ Düzenle</button>
+                            <div class="avatar" style="width:100px; height:100px; font-size:3rem; margin: 0 auto 20px;">${user.name[0]}</div>
+                            <h2>${user.name}</h2>
+                            <p style="color:var(--primary-red); margin-bottom:20px;">${user.position}</p>
+                            <div style="text-align:left; background:rgba(0,0,0,0.2); padding:20px; border-radius:12px; font-size:0.9rem; display:flex; flex-direction:column; gap:10px;">
+                                <span>📧 <strong>E-Mail:</strong> ${user.email}</span>
+                                <span>📞 <strong>Telefon:</strong> ${user.phone}</span>
+                                <span>📍 <strong>OYPA Ofis:</strong> <br/><small style="opacity:0.8;">${user.address || Store.state.oypaAddress}</small></span>
+                            </div>
+                            <button class="btn btn-ghost btn-sm" style="width:100%; margin-top:20px; color:var(--primary-red); border:1px solid rgba(227, 6, 19, 0.2);" onclick="Store.logout()">🚪 Çıkış Yap</button>
+                        </div>
+                        <div class="glass" style="padding:24px; border-radius:20px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                <h3>Portfolio (${portfolioRaw.length})</h3>
+                                <button class="btn btn-ghost btn-sm" onclick="window.app.openExportModal('portfolio')">${Icons.download} Rapor Çek</button>
+                            </div>
+                            ${this.renderSearch('portfolio', 'Firma adı veya sektör ara...')}
+                            <div class="data-table-container" style="background:none; border:none; margin-top:0;">
+                                <table class="data-table" style="font-size:0.85rem;">
+                                    <thead><tr><th>Firma</th><th>Sektörler</th><th>İşlem</th></tr></thead>
+                                    <tbody>
+                                        ${userPortfolio.length ? userPortfolio.map(c => `
+                                            <tr>
+                                                <td><strong>${c.company}</strong></td>
+                                                <td>
+                                                    <div style="font-size:0.7rem; opacity:0.6;">Firma: ${c.companySector || '-'}</div>
+                                                    <div style="font-size:0.7rem; color:var(--success);">Biz: ${c.serviceSector || '-'}</div>
+                                                </td>
+                                                <td><button class="btn btn-ghost btn-sm" onclick="window.app.setView('detail', ${c.id})">Aç</button></td>
+                                            </tr>`).join('') : `<tr><td colspan="3" style="text-align:center; padding:30px; opacity:0.5;">${query ? 'Arama sonucu bulunamadı.' : 'Henüz size atanmış bir müşteri bulunmuyor.'}</td></tr>`}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    ${this.renderProfileModal()}`;
+            }
+
+            renderProfileModal() {
+                const u = Store.state.currentUser;
+                return `
+                <div id="m-profile" class="modal-overlay" style="display:none">
+                    <div class="modal-content glass">
+                        <div class="modal-header"><h3>Profilini Düzenle</h3><button class="btn btn-ghost btn-sm" onclick="window.app.closeModal('m-profile')">&times;</button></div>
+                        <form onsubmit="event.preventDefault(); window.app.saveProfile(this);" class="crm-form">
+                            <div class="form-group"><label>İsim Soyisim</label><input name="name" value="${u.name}" required>${this.renderWarning()}</div>
+                            <div class="form-group"><label>Pozisyon</label><input name="position" value="${u.position}" required></div>
+                            <div class="form-group"><label>E-Mail</label><input name="email" value="${u.email}" required></div>
+                            <div class="form-group"><label>Telefon</label><input name="phone" value="${u.phone || '+90 '}" required></div>
+                            <div class="form-group"><label>Adres</label><textarea name="address" rows="3" style="width:100%; padding:10px; border-radius:8px; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--glass-border);">${u.address}</textarea>${this.renderWarning()}</div>
+                            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px;">
+                                <button type="button" class="btn btn-ghost" onclick="window.app.closeModal('m-profile')">İptal</button>
+                                <button type="submit" class="btn btn-primary">Güncelle</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>`;
+            }
+
+            saveProfile(form) {
+                const data = Object.fromEntries(new FormData(form));
+                Store.updateUser(data);
+                this.closeModal('m-profile');
+                this.render();
+            }
+
+            // Modal Helpers
+            showModal(id) { document.getElementById(id).style.display = 'flex'; }
+            closeModal(id) { document.getElementById(id).style.display = 'none'; }
+            openMeetingModal(id) { 
+                if(id) this.selectedId = id;
+                this.showModal('m-meeting'); 
+            }
+
+            updateContactList(companyId) {
+                const select = document.getElementById('contactSelect');
+                const contacts = Store.state.contacts.filter(c => Number(c.companyId) === Number(companyId));
+                select.innerHTML = '<option value="">Seçiniz...</option>' + contacts.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            }
+
+            showNotifications() {
+                const userId = Store.state.currentUser.id;
+                const notifications = Store.state.notifications.filter(n => !n.userId || n.userId === userId);
+                const div = document.createElement('div');
+                div.className = 'modal-overlay';
+                div.innerHTML = `
+                    <div class="modal-content glass" style="width:500px;">
+                        <div class="modal-header"><h3>Bildirimler</h3><button class="btn btn-ghost btn-sm" onclick="this.closest('.modal-overlay').remove()">&times;</button></div>
+                        <div style="max-height:400px; overflow-y:auto; padding:10px;">
+                            ${notifications.length ? notifications.map(n => `
+                                <div class="list-modal-item" style="cursor:pointer;" onclick="this.closest('.modal-overlay').remove()">
+                                    <div style="flex:1;">
+                                        <div style="font-size:0.85rem;">${n.message}</div>
+                                        <div style="font-size:0.7rem; opacity:0.5; margin-top:4px;">${n.time}</div>
+                                    </div>
+                                    <div style="color:var(--primary-red); font-size:1.2rem;">&rsaquo;</div>
+                                </div>
+                            `).join('') : '<p style="text-align:center; padding:20px; opacity:0.5;">Bildirim bulunmuyor.</p>'}
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(div);
+            }
+
+            openStatusModal(id) {
+                const m = Store.state.meetings.find(m => m.id === id);
+                if(!m) return;
+                const company = [...Store.state.leads, ...Store.state.customers].find(c => c.id === Number(m.companyId));
+                
+                const div = document.createElement('div');
+                div.className = 'modal-overlay';
+                div.innerHTML = `
+                    <div class="modal-content glass" style="width:400px;">
+                        <div class="modal-header"><h3>Görüşme Durumunu Güncelle</h3><button class="btn btn-ghost btn-sm" onclick="this.closest('.modal-overlay').remove()">&times;</button></div>
+                        <form onsubmit="event.preventDefault(); window.app.saveMeetingStatus(this, ${id});" class="crm-form">
+                            <div style="margin-bottom:15px;">
+                                <strong>${company?.company}</strong><br/>
+                                <small style="opacity:0.6;">${m.date} - ${m.time}</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Durum</label>
+                                <select name="status">
+                                    <option value="Planlandı" ${m.status === 'Planlandı' ? 'selected' : ''}>Planlandı / Bekliyor</option>
+                                    <option value="Yapıldı" ${m.status === 'Yapıldı' ? 'selected' : ''}>Yapıldı / Tamamlandı</option>
+                                    <option value="İptal" ${m.status === 'İptal' ? 'selected' : ''}>İptal Edildi</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Notlar / Sonuç</label>
+                                <textarea name="comment" rows="3" placeholder="Görüşme nasıl geçti?">${m.comment || ''}</textarea>
+                                ${this.renderWarning()}
+                            </div>
+                            <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+                                <button type="button" class="btn btn-ghost btn-sm" style="color:var(--primary-red)" onclick="this.closest('.modal-overlay').remove(); Store.deleteMeeting(${id});">🗑️ Bu Görüşmeyi Sil</button>
+                                <div style="display:flex; gap:10px;">
+                                    <button type="button" class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">Kapat</button>
+                                    <button type="submit" class="btn btn-primary">Durumu Güncelle</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                `;
+                document.body.appendChild(div);
+            }
+
+            saveMeetingStatus(form, id) {
+                const fd = new FormData(form);
+                const status = fd.get('status');
+                const comment = fd.get('comment');
+                
+                const m = Store.state.meetings.find(m => m.id === id);
+                if (m) {
+                    m.status = status;
+                    m.comment = comment;
+                    
+                    // Otomatik not ekleme: Eğer durum "Yapıldı" ise notlara ekle
+                    if (status === 'Yapıldı' && comment) {
+                        Store.addNote(m.companyId, `[OTOMATİK GÖRÜŞME NOTU] - ${comment}`);
+                    }
+                    
+                    Store.save();
+                }
+                
+                form.closest('.modal-overlay').remove();
+                this.render();
+            }
+
+            showDayMeetings(dayIndex, dayName) {
+                const daysMap = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                const dayFull = daysMap[dayIndex];
+                const userId = Store.state.currentUser.id;
+                
+                const meetings = Store.state.meetings.filter(m => {
+                   const d = new Date(m.date).getDay();
+                   const adjustedDay = d === 0 ? 6 : d - 1; // Mon=0, Sun=6
+                   return Number(m.repId) === userId && adjustedDay === dayIndex;
+                });
+
+                const div = document.createElement('div');
+                div.className = 'modal-overlay';
+                div.innerHTML = `
+                    <div class="modal-content glass" style="width:500px;">
+                        <div class="modal-header"><h3>${dayName} - Görüşme Detayları</h3><button class="btn btn-ghost btn-sm" onclick="this.closest('.modal-overlay').remove()">&times;</button></div>
+                        <div style="padding:15px;">
+                            ${meetings.length ? meetings.map(m => {
+                                const company = [...Store.state.leads, ...Store.state.customers].find(c => c.id === Number(m.companyId));
+                                const isDone = m.status === 'Yapıldı';
+                                return `
+                                    <div class="list-modal-item">
+                                        <div>
+                                            <div style="font-weight:700;">${company?.company}</div>
+                                            <div style="font-size:0.75rem; opacity:0.6;">${m.time} - ${m.method}</div>
+                                        </div>
+                                        <div>
+                                            ${isDone ? '<span class="badge" style="background:#2ecc71; font-size:0.7rem;">COMPLETED</span>' : '<span class="badge" style="background:#e74c3c; font-size:0.7rem;">NOT COMPLETED</span>'}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('') : '<p style="text-align:center; opacity:0.5;">Bu güne ait kayıt bulunamadı.</p>'}
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(div);
+            }
+
+            renderLogin() {
+                return `
+                <div class="login-page" style="height:100vh; display:flex; align-items:center; justify-content:center; background: #ffffff; color: #1a1a1a;">
+                    <div class="login-card" style="width:400px; padding:40px; border-radius:24px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); animation: slideUp 0.6s ease-out; border: 1px solid rgba(0,0,0,0.05);">
+                        <div style="text-align:center; margin-bottom:30px;">
+                            <img src="oypa_logo_v3.png" style="width:220px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.05));">
+                            <h2 style="margin-top:20px; letter-spacing:1px; font-weight:800; color:#1a1a1a;">OYPA CRM</h2>
+                            <p style="opacity:0.6; font-size:0.9rem; color:#666;">Multi-User Corporate Access</p>
+                        </div>
+                        <form onsubmit="event.preventDefault(); window.app.handleLogin(this);" class="crm-form">
+                            <div class="form-group">
+                                <label style="color:#1a1a1a; font-weight:600;">Kullanıcı Adı</label>
+                                <input name="username" placeholder="Örn: helin" required style="background:#f9f9f9; border:1px solid #ddd; color:#1a1a1a;">
+                            </div>
+                            <div class="form-group">
+                                <label style="color:#1a1a1a; font-weight:600;">Şifre</label>
+                                <input type="password" name="password" placeholder="••••••••" required style="background:#f9f9f9; border:1px solid #ddd; color:#1a1a1a;">
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px; padding:14px; font-weight:700; background:linear-gradient(45deg, var(--primary-red), #ff4d4d); border:none; box-shadow: 0 4px 15px rgba(227, 6, 19, 0.3);">Giriş Yap</button>
+                            <div id="login-error" style="color:var(--primary-red); font-size:0.8rem; text-align:center; margin-top:15px; display:none; font-weight:600;">Hatalı kullanıcı adı veya şifre!</div>
+                        </form>
+                    </div>
+                </div>`;
+            }
+
+            handleLogin(form) {
+                const fd = new FormData(form);
+                const success = Store.login(fd.get('username'), fd.get('password'));
+                if (success) {
+                    this.render();
+                } else {
+                    document.getElementById('login-error').style.display = 'block';
+                    form.password.value = '';
+                }
+            }
+
+            showTargetEditModal() {
+                const userId = Store.state.currentUser.id;
+                const target = Store.state.targets[userId] || 30;
+                const div = document.createElement('div');
+                div.className = 'modal-overlay';
+                div.innerHTML = `
+                    <div class="modal-content glass" style="width:350px;">
+                        <div class="modal-header"><h3>Haftalık Hedefi Güncelle</h3><button class="btn btn-ghost btn-sm" onclick="this.closest('.modal-overlay').remove()">&times;</button></div>
+                        <form onsubmit="event.preventDefault(); Store.updateWeeklyTarget(this.target.value); this.closest('.modal-overlay').remove(); window.app.render();" class="crm-form">
+                            <div class="form-group">
+                                <label>Yeni Haftalık Toplantı Hedefi</label>
+                                <input type="number" name="target" value="${target}" required min="1">
+                            </div>
+                            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px;">
+                                <button type="button" class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">İptal</button>
+                                <button type="submit" class="btn btn-primary">Hedefi Kaydet</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+                document.body.appendChild(div);
+            }
+
+            showTargetDetails(type) {
+                const userId = Store.state.currentUser.id;
+                const title = type === 'new' ? 'New Customers (This Week)' : 'Existing Customers';
+                const list = Store.state.customers.filter(c => {
+                    if (Number(c.ownerId) !== userId) return false;
+                    const active = new Date(c.activeDate);
+                    const now = new Date();
+                    const diff = (now - active) / (1000*60*60*24);
+                    return type === 'new' ? diff <= 7 : diff > 7;
+                });
+
+                const div = document.createElement('div');
+                div.className = 'modal-overlay';
+                div.innerHTML = `
+                    <div class="modal-content glass" style="width:500px;">
+                        <div class="modal-header"><h3>${title}</h3><button class="btn btn-ghost btn-sm" onclick="this.closest('.modal-overlay').remove()">&times;</button></div>
+                        <div style="padding:15px;">
+                            ${list.length ? list.map(c => `
+                                <div class="list-modal-item">
+                                    <div>
+                                        <div style="font-weight:700;">${c.company}</div>
+                                        <div style="font-size:0.75rem; opacity:0.6;">${c.serviceSector}</div>
+                                    </div>
+                                    <button class="btn btn-ghost btn-sm" onclick="window.app.setView('detail', ${c.id}); document.querySelector('.modal-overlay').remove();">Dosyayı Aç</button>
+                                </div>
+                            `).join('') : '<p style="text-align:center; opacity:0.5;">Liste boş.</p>'}
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(div);
+            }
+
+            openExportModal(type) {
+                const container = document.getElementById('export-modal-container') || document.body;
+                const modalId = `m-export`;
+                
+                const div = document.createElement('div');
+                div.id = modalId;
+                div.className = 'modal-overlay';
+                div.innerHTML = `
+                    <div class="modal-content glass" style="width:400px;">
+                        <div class="modal-header"><h3>Excel Raporu Al</h3><button class="btn btn-ghost btn-sm" onclick="this.closest('.modal-overlay').remove()">&times;</button></div>
+                        <form onsubmit="event.preventDefault(); window.app.generateReport(this, '${type}');" class="crm-form">
+                            <div class="form-group">
+                                <label>Başlangıç Tarihi</label>
+                                <input type="text" name="start" required readonly placeholder="Seçiniz..." 
+                                    onclick="window.app.openDatePicker('start')"
+                                    value="${new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]}">
+                            </div>
+                            <div class="form-group">
+                                <label>Bitiş Tarihi</label>
+                                <input type="text" name="end" required readonly placeholder="Seçiniz..." 
+                                    onclick="window.app.openDatePicker('end')"
+                                    value="${new Date().toISOString().split('T')[0]}">
+                            </div>
+                            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px;">
+                                <button type="button" class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">İptal</button>
+                                <button type="submit" class="btn btn-primary">Raporu Excel'e Aktar</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+                document.body.appendChild(div);
+            }
+
+            generateReport(form, type) {
+                const fd = new FormData(form);
+                const start = fd.get('start');
+                const end = fd.get('end');
+                
+                let entities = [];
+                if (type === 'leads') {
+                    entities = [...Store.state.leads];
+                } else if (type === 'portfolio') {
+                    // Portfolyo için hem mevcut müşteriler hem de atanmış yetkiliye göre filtrele
+                    entities = Store.state.customers.filter(c => Number(c.ownerId) === Store.state.currentUser.id);
+                } else {
+                    entities = [...Store.state.customers];
+                }
+                
+                // Sıralama: Sisteme son eklenenden (en yeni) ilk eklenene (en eski) doğru
+                entities.sort((a, b) => b.id - a.id);
+                
+                const reportData = entities.map(company => {
+                    // Firma bazlı rapor: Her firma için en son gerçekleştirilen görüşmeyi bul
+                    const companyMeetings = Store.state.meetings
+                        .filter(m => Number(m.companyId) === company.id)
+                        .sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    const lastMeeting = companyMeetings[0];
+                    const rep = lastMeeting ? Store.state.reps.find(r => r.id === Number(lastMeeting.repId)) : null;
+                    
+                    return {
+                        'Firma Ünvanı': company.company,
+                        'Referans / Kaynak': `${company.dataSource || '-'}${company.dataSourceDetail ? ` (${company.dataSourceDetail})` : ''}`,
+                        'Firma Tipi': company.isInternal ? 'İç Firma (OYAK)' : 'Dış Firma',
+                        'Firmanın Kendi Sektörü': company.companySector || '-',
+                        'Hizmet Sektörümüz': `${company.serviceSector || '-'}${company.serviceSector === 'Diğer' ? ` (${company.serviceSectorDetail || '-'})` : ''}`,
+                        'Son Görüşme Tarihi': lastMeeting ? lastMeeting.date : 'Görüşme yok',
+                        'Son Görüşme Temsilcisi': rep?.name || '-',
+                        'Müşteri Durumu': company.isNewCustomer ? 'New Customer' : 'Existing Customer'
+                    };
+                });
+
+                if (reportData.length === 0) {
+                    alert('Sistemde raporlanacak firma bulunamadı.');
+                    return;
+                }
+                
+                Store.exportToCSV(reportData, `${type}_raporu_${start}_${end}.csv`);
+                document.getElementById('m-export').remove();
+            }
+
+            openDatePicker(inputName) {
+                const now = new Date();
+                this.renderDatePicker(now.getFullYear(), now.getMonth(), inputName);
+            }
+
+            renderDatePicker(year, month, inputName) {
+                let overlay = document.getElementById('dp-overlay');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'dp-overlay';
+                    overlay.className = 'datepicker-overlay';
+                    overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+                    document.body.appendChild(overlay);
+                }
+
+                const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const firstDay = new Date(year, month, 1).getDay(); // 0 is Sunday
+                const startDay = firstDay === 0 ? 6 : firstDay - 1; // Align PT=0
+
+                overlay.innerHTML = `
+                    <div class="datepicker-content">
+                        <div class="datepicker-header">
+                            <div class="datepicker-title">${monthNames[month]} ${year}</div>
+                            <div class="datepicker-nav">
+                                <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); window.app.renderDatePicker(${month === 0 ? year - 1 : year}, ${month === 0 ? 11 : month - 1}, '${inputName}')">&lt;</button>
+                                <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); window.app.renderDatePicker(${month === 11 ? year + 1 : year}, ${month === 11 ? 0 : month + 1}, '${inputName}')">&gt;</button>
+                            </div>
+                        </div>
+                        <div class="datepicker-grid">
+                            <div class="datepicker-weekday">PT</div>
+                            <div class="datepicker-weekday">SA</div>
+                            <div class="datepicker-weekday">ÇA</div>
+                            <div class="datepicker-weekday">PE</div>
+                            <div class="datepicker-weekday">CU</div>
+                            <div class="datepicker-weekday">CT</div>
+                            <div class="datepicker-weekday">PA</div>
+                            ${Array(startDay).fill('<div class="datepicker-day empty"></div>').join('')}
+                            ${Array.from({length: daysInMonth}, (_, i) => i + 1).map(d => {
+                                const isToday = new Date().toDateString() === new Date(year, month, d).toDateString();
+                                return `<div class="datepicker-day ${isToday ? 'today' : ''}" onclick="event.stopPropagation(); window.app.selectDatePickerDate(${d}, ${month}, ${year}, '${inputName}')">${d}</div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            selectDatePickerDate(d, m, y, inputName) {
+                const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const input = document.querySelector(`input[name="${inputName}"]`);
+                if (input) {
+                    input.value = dateStr;
+                }
+                document.getElementById('dp-overlay').remove();
+            }
+        }
+
+        window.app = new App();
+    </script>
+</body>
+</html>

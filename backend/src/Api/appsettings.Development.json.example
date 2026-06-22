@@ -1,0 +1,12 @@
+{
+  "Jwt": {
+    "Secret": "REPLACE_WITH_DEV_JWT_SECRET_MIN_32_CHARS"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Information",
+      "Microsoft.EntityFrameworkCore.Database.Command": "Warning"
+    }
+  }
+}

@@ -1,0 +1,259 @@
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useMeetings } from '../features/meetings/model/useMeetings';
+import { useTenders } from '../features/tenders/model/useTenders';
+import { MeetingFormModal } from '../features/meetings/ui/MeetingFormModal';
+import { Spinner } from '../shared/components/Spinner';
+import { StateBlock } from '../shared/components/StateBlock';
+import { PlusIcon } from '../shared/components/icons';
+import { MEETING_METHOD_LABELS } from '../shared/constants/labels';
+import { formatTime } from '../shared/lib/format';
+import { getErrorMessage } from '../shared/lib/errorMessage';
+
+const WEEKDAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+const MONTH_NAMES = [
+  'Ocak',
+  'Şubat',
+  'Mart',
+  'Nisan',
+  'Mayıs',
+  'Haziran',
+  'Temmuz',
+  'Ağustos',
+  'Eylül',
+  'Ekim',
+  'Kasım',
+  'Aralık',
+];
+
+function toDateKey(year: number, month: number, day: number): string {
+  const mm = String(month + 1).padStart(2, '0');
+  const dd = String(day).padStart(2, '0');
+  return `${year}-${mm}-${dd}`;
+}
+
+export default function CalendarPage() {
+  const navigate = useNavigate();
+  const meetings = useMeetings();
+  const tenders = useTenders();
+  const today = new Date();
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const [selectedDate, setSelectedDate] = useState<string>(
+    toDateKey(today.getFullYear(), today.getMonth(), today.getDate()),
+  );
+  const [meetingModal, setMeetingModal] = useState(false);
+
+  const isLoading = meetings.isLoading || tenders.isLoading;
+  const isError = meetings.isError || tenders.isError;
+  const loadError = meetings.error ?? tenders.error;
+
+  // Build a combined map of dates that have any event (meeting or tender)
+  const eventsByDate = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const meeting of meetings.data ?? []) {
+      const key = meeting.date.slice(0, 10);
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    for (const tender of tenders.data ?? []) {
+      const key = tender.tenderDate.slice(0, 10);
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return map;
+  }, [meetings.data, tenders.data]);
+
+  const dayMeetings = useMemo(
+    () => (meetings.data ?? []).filter((m) => m.date.slice(0, 10) === selectedDate),
+    [meetings.data, selectedDate],
+  );
+
+  const dayTenders = useMemo(
+    () => (tenders.data ?? []).filter((t) => t.tenderDate.slice(0, 10) === selectedDate),
+    [tenders.data, selectedDate],
+  );
+
+  if (isLoading) return <Spinner />;
+  if (isError) return <StateBlock message={getErrorMessage(loadError)} />;
+
+  const firstDay = new Date(viewYear, viewMonth, 1);
+  // Convert Sunday-based getDay() to a Monday-based offset.
+  const startOffset = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const todayKey = toDateKey(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+
+  function goPrevMonth() {
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear((y) => y - 1);
+    } else {
+      setViewMonth((m) => m - 1);
+    }
+  }
+
+  function goNextMonth() {
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear((y) => y + 1);
+    } else {
+      setViewMonth((m) => m + 1);
+    }
+  }
+
+  return (
+    <>
+      <div className="page-head">
+        <div>
+          <h3>Ziyaret Takvimi</h3>
+          <p className="muted" style={{ fontSize: '0.9rem' }}>
+            Planlarınızı yönetmek için günlere tıklayın.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setMeetingModal(true)}
+        >
+          <PlusIcon /> Yeni Randevu
+        </button>
+      </div>
+
+      <div className="calendar-layout">
+        <div className="calendar-grid glass">
+          <div className="cal-header">
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={goPrevMonth}
+            >
+              ‹
+            </button>
+            <span>
+              {MONTH_NAMES[viewMonth]} {viewYear}
+            </span>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={goNextMonth}
+            >
+              ›
+            </button>
+          </div>
+          <div className="cal-weekdays">
+            {WEEKDAYS.map((day) => (
+              <div className="cal-weekday" key={day}>
+                {day}
+              </div>
+            ))}
+          </div>
+          <div className="cal-days">
+            {Array.from({ length: startOffset }).map((_, index) => (
+              <div className="cal-cell empty" key={`empty-${index}`} />
+            ))}
+            {Array.from({ length: daysInMonth }).map((_, index) => {
+              const day = index + 1;
+              const key = toDateKey(viewYear, viewMonth, day);
+              const classes = ['cal-cell'];
+              if (key === todayKey) classes.push('today');
+              if (key === selectedDate) classes.push('selected');
+              if (eventsByDate.has(key)) classes.push('has-event');
+              return (
+                <div
+                  key={key}
+                  className={classes.join(' ')}
+                  onClick={() => setSelectedDate(key)}
+                >
+                  {day}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="glass card">
+          <h4>Seçili Gün Etkinlikleri</h4>
+          <p className="muted" style={{ fontSize: '0.8rem', marginTop: 4 }}>
+            {selectedDate}
+          </p>
+          <div
+            style={{
+              marginTop: 20,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}
+          >
+            {dayMeetings.length === 0 && dayTenders.length === 0 && (
+              <p className="muted" style={{ fontSize: '0.85rem' }}>
+                Bu tarihte planlı görüşme veya ihale yok.
+              </p>
+            )}
+            {dayMeetings.map((meeting) => (
+              <div
+                key={meeting.id}
+                className="glass"
+                style={{
+                  padding: 12,
+                  borderRadius: 8,
+                  borderLeft: '3px solid var(--accent-gold)',
+                }}
+              >
+                <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>
+                  {meeting.companyTitle}
+                </div>
+                <div className="muted" style={{ fontSize: '0.75rem' }}>
+                  {formatTime(meeting.time)} ·{' '}
+                  {MEETING_METHOD_LABELS[meeting.method]}
+                </div>
+              </div>
+            ))}
+            {dayTenders.map((tender) => (
+              <div
+                key={tender.id}
+                className="glass"
+                style={{
+                  padding: 12,
+                  borderRadius: 8,
+                  borderLeft: '3px solid var(--accent-blue, #4a90e2)',
+                  cursor: 'pointer',
+                }}
+                onClick={() => navigate(`/tenders/detay/${tender.id}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    navigate(`/tenders/detay/${tender.id}`);
+                  }
+                }}
+              >
+                <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>
+                  İhale: {tender.title}
+                </div>
+                <div className="muted" style={{ fontSize: '0.75rem' }}>
+                  {tender.companyTitle}
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm btn-block"
+              onClick={() => setMeetingModal(true)}
+            >
+              + Randevu Ekle
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {meetingModal && (
+        <MeetingFormModal
+          defaultDate={selectedDate}
+          onClose={() => setMeetingModal(false)}
+        />
+      )}
+    </>
+  );
+}

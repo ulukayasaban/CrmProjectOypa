@@ -1,0 +1,6 @@
+@Oypa.Crm.Api_HostAddress = http://localhost:5022
+
+GET {{Oypa.Crm.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
