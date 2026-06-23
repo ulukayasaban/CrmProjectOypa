@@ -1,7 +1,9 @@
+import { Suspense, useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { NotificationsRealtimeProvider } from './providers/NotificationsRealtimeProvider';
+import { Spinner } from '../shared/components/Spinner';
 
 function resolveTitle(pathname: string): string {
   if (pathname === '/') return 'Genel Bakış';
@@ -29,16 +31,35 @@ function resolveTitle(pathname: string): string {
 
 export function AppLayout() {
   const location = useLocation();
+  // Mobil off-canvas sidebar durumu. Rota değişince otomatik kapanır.
+  const [navOpen, setNavOpen] = useState(false);
+
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname]);
 
   return (
     <NotificationsRealtimeProvider>
       <div className="app-container">
-        <Sidebar />
+        <Sidebar open={navOpen} />
+        {navOpen && (
+          <div
+            className="sidebar-overlay"
+            role="presentation"
+            onClick={() => setNavOpen(false)}
+          />
+        )}
         <main className="main-content">
-          <Header title={resolveTitle(location.pathname)} />
-          <div className="view-container">
-            <Outlet />
-          </div>
+          <Header
+            title={resolveTitle(location.pathname)}
+            onMenuToggle={() => setNavOpen((prev) => !prev)}
+          />
+          {/* Lazy yüklenen sayfa bileşenleri için Suspense fallback */}
+          <Suspense fallback={<Spinner />}>
+            <div className="view-container">
+              <Outlet />
+            </div>
+          </Suspense>
         </main>
       </div>
     </NotificationsRealtimeProvider>

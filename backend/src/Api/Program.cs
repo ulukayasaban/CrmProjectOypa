@@ -7,6 +7,7 @@ using Oypa.Crm.Api.BackgroundServices;
 using Oypa.Crm.Api.Common;
 using Oypa.Crm.Api.Extensions;
 using Oypa.Crm.Api.Filters;
+using Oypa.Crm.Api.HealthChecks;
 using Oypa.Crm.Api.Hubs;
 using Oypa.Crm.Api.Middlewares;
 using Oypa.Crm.Application;
@@ -45,6 +46,10 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddAppRateLimiting();
 builder.Services.AddAppSwagger();
+
+// Sağlık kontrolü: liveness + DB hazırlık kontrolü (ek NuGet paketi gerektirmez).
+builder.Services.AddHealthChecks()
+    .AddCheck<DbHealthCheck>("db");
 
 // SignalR — custom IUserIdProvider: sub claim → string UserId
 builder.Services.AddSignalR();
@@ -100,6 +105,9 @@ app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
+    // JSON tanımını mutlak yoldan ver; RoutePrefix boşken (kök) göreli yol
+    // "/v1/swagger.json"a çözülüp 404 verir. Mutlak yol her iki ortamda da doğru.
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Oypa.Crm.Api v1");
     if (!app.Environment.IsDevelopment())
         options.RoutePrefix = string.Empty; // Production: Swagger UI index (kök)
 });
@@ -114,6 +122,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 // SignalR hub endpoint'i
 app.MapHub<NotificationsHub>("/hubs/notifications");

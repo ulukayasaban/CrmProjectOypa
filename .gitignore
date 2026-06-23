@@ -14,10 +14,12 @@ node_modules/
 frontend/dist/
 frontend/.vite/
 
-# Env & secrets
+# Env & secrets (.env.production gibi varyantlar dahil; .example şablonları hariç)
 .env
 .env.local
+.env.*
 *.env
+!.env.example
 !*.env.example
 
 # App secrets — JWT secret / prod DB içerir; ASLA commit'lenmez (.example şablonları repo'da)

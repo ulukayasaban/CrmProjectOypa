@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useTenders } from '../features/tenders/model/useTenders';
 import { useChangeTenderStatus, useDeleteTender } from '../features/tenders/model/useTenders';
 import { TenderFormModal } from '../features/tenders/ui/TenderFormModal';
+import { Modal } from '../shared/components/Modal';
 import { Spinner } from '../shared/components/Spinner';
 import { StateBlock } from '../shared/components/StateBlock';
 import { PlusIcon } from '../shared/components/icons';
@@ -14,6 +15,7 @@ import {
 } from '../shared/constants/labels';
 import { formatDate } from '../shared/lib/format';
 import { getErrorMessage } from '../shared/lib/errorMessage';
+import { toSectorFilter, isTenderStatus } from '../shared/lib/narrowing';
 import type { TenderDto, TenderStatus } from '../entities/tender/model/tender';
 import type { Sector } from '../shared/types/enums';
 
@@ -92,7 +94,8 @@ function TendersContent({ segment }: TendersContentProps) {
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <select
             value={sectorFilter}
-            onChange={(event) => setSectorFilter(event.target.value as Sector | '')}
+            aria-label="İş koluna göre filtrele"
+            onChange={(event) => setSectorFilter(toSectorFilter(event.target.value))}
             style={{ minWidth: 160 }}
           >
             <option value="">Tüm İş Kolları</option>
@@ -142,7 +145,7 @@ function TendersContent({ segment }: TendersContentProps) {
                 <td style={{ fontSize: '0.8rem' }}>
                   {tender.tenderNumber ?? '-'}
                 </td>
-                <td>
+                <td className="cell-wrap">
                   <strong>{tender.title}</strong>
                 </td>
                 <td style={{ fontSize: '0.85rem' }}>{tender.companyTitle}</td>
@@ -272,61 +275,43 @@ function TenderStatusModal({
   const [selected, setSelected] = useState<TenderStatus>(tender.status);
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="presentation">
-      <div
-        className="modal-content glass"
-        style={{ width: 400 }}
-        onClick={(event) => event.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Durum Değiştir"
-      >
-        <div className="modal-header">
-          <h3>Durum Değiştir</h3>
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={onClose}
-            aria-label="Kapat"
-          >
-            &times;
-          </button>
-        </div>
-        <div style={{ padding: '0 20px 20px' }}>
-          <p className="muted" style={{ fontSize: '0.85rem', marginBottom: 16 }}>
-            {tender.title}
-          </p>
-          <div className="form-group">
-            <label htmlFor="tenderStatus">Yeni Durum</label>
-            <select
-              id="tenderStatus"
-              value={selected}
-              onChange={(event) =>
-                setSelected(event.target.value as TenderStatus)
-              }
-            >
-              {TENDER_STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="modal-footer">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>
-              İptal
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={isPending}
-              onClick={() => onSave(selected)}
-            >
-              {isPending ? 'Kaydediliyor...' : 'Kaydet'}
-            </button>
-          </div>
-        </div>
+    <Modal title="Durum Değiştir" onClose={onClose} width={400}>
+      <p className="muted" style={{ fontSize: '0.85rem', marginBottom: 16 }}>
+        {tender.title}
+      </p>
+      <div className="form-group">
+        <label htmlFor="tenderStatus">Yeni Durum</label>
+        <select
+          id="tenderStatus"
+          value={selected}
+          onChange={(event) => {
+            // TENDER_STATUS_OPTIONS yalnızca geçerli TenderStatus değerlerini içerir;
+            // narrowing helper ile runtime güvenliği sağlanır.
+            if (isTenderStatus(event.target.value)) {
+              setSelected(event.target.value);
+            }
+          }}
+        >
+          {TENDER_STATUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
-    </div>
+      <div className="modal-footer">
+        <button type="button" className="btn btn-ghost" onClick={onClose}>
+          İptal
+        </button>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={isPending}
+          onClick={() => onSave(selected)}
+        >
+          {isPending ? 'Kaydediliyor...' : 'Kaydet'}
+        </button>
+      </div>
+    </Modal>
   );
 }

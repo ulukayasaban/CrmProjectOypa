@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   title: string;
@@ -8,7 +9,10 @@ interface ModalProps {
 }
 
 export function Modal({ title, onClose, children, width = 500 }: ModalProps) {
-  return (
+  // Portal ile body'ye render edilir: aksi halde modal, header gibi
+  // backdrop-filter'lı bir atanın içinde kaldığında `position: fixed`
+  // overlay viewport yerine o atanın kutusuna hapsolup tam ekranı kaplamıyor.
+  return createPortal(
     <div
       className="modal-overlay"
       onClick={onClose}
@@ -35,6 +39,7 @@ export function Modal({ title, onClose, children, width = 500 }: ModalProps) {
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

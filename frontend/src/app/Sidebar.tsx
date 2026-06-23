@@ -53,6 +53,16 @@ const NAV_ITEMS: NavEntry[] = [
   { to: '/hedefler', label: 'Hedefler', icon: <SettingsIcon /> },
 ];
 
+/**
+ * `item.children` alanının var olup olmadığını runtime'da kontrol eden tip guard.
+ * `as` cast yerine yapısal kontrol kullanılır.
+ */
+function hasChildren(
+  item: NavEntry,
+): item is NavEntry & { children: NavEntry[] } {
+  return Array.isArray(item.children) && item.children.length > 0;
+}
+
 function isChildActive(children: NavEntry[], pathname: string): boolean {
   return children.some(
     (child) => pathname === child.to || pathname.startsWith(child.to + '/'),
@@ -99,7 +109,12 @@ function ExpandableNavGroup({ item }: ExpandableNavGroupProps) {
   );
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  /** Mobil off-canvas çekmece açık mı (yalnız dar ekranda etkili). */
+  open?: boolean;
+}
+
+export function Sidebar({ open = false }: SidebarProps) {
   const navigate = useNavigate();
   const { hasRole } = useAuth();
   const meetings = useMeetings();
@@ -124,8 +139,17 @@ export function Sidebar() {
     .slice(0, 3);
 
   return (
-    <aside className="sidebar glass">
-      <div className="logo" onClick={() => navigate('/')}>
+    <aside className={`sidebar glass${open ? ' sidebar--open' : ''}`}>
+      <div
+        className="logo"
+        role="button"
+        tabIndex={0}
+        aria-label="Ana sayfaya git"
+        onClick={() => navigate('/')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') navigate('/');
+        }}
+      >
         <div className="logo-mark">O</div>
         <h1>
           OYPA<span>CRM</span>
@@ -133,11 +157,11 @@ export function Sidebar() {
       </div>
       <nav className="nav-menu">
         {items.map((item) => {
-          if (item.children && item.children.length > 0) {
+          if (hasChildren(item)) {
             return (
               <ExpandableNavGroup
                 key={item.to}
-                item={item as NavEntry & { children: NavEntry[] }}
+                item={item}
               />
             );
           }
@@ -180,7 +204,13 @@ export function Sidebar() {
               <div
                 key={meeting.id}
                 className="upcoming-item"
+                role="button"
+                tabIndex={0}
+                aria-label={`${meeting.companyTitle} randevusuna git`}
                 onClick={() => navigate('/calendar')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') navigate('/calendar');
+                }}
               >
                 <strong>{meeting.companyTitle}</strong>
                 <span className="muted">

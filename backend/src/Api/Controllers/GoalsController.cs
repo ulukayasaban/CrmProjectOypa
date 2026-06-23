@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Oypa.Crm.Api.Extensions;
 using Oypa.Crm.Application.Features.Goals;
 using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Goals;
@@ -19,6 +21,7 @@ public sealed class GoalsController(IGoalService goalService) : ControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
     public async Task<IActionResult> Create(CreateGoalRequest request, CancellationToken cancellationToken)
     {
         var data = await goalService.CreateAsync(request, cancellationToken);
@@ -26,6 +29,7 @@ public sealed class GoalsController(IGoalService goalService) : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
     public async Task<IActionResult> Update(Guid id, UpdateGoalRequest request, CancellationToken cancellationToken)
     {
         var data = await goalService.UpdateAsync(id, request, cancellationToken);
@@ -33,6 +37,7 @@ public sealed class GoalsController(IGoalService goalService) : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         await goalService.DeleteAsync(id, cancellationToken);

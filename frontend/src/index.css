@@ -220,12 +220,17 @@ h4 {
   padding: 0 32px;
   margin: 16px 24px;
   border-radius: 16px;
+  /* Stacking bağlamı: backdrop-filter kullanan dashboard kartlarının üstünde kalır */
+  position: relative;
+  z-index: 50;
 }
 .header-right {
   display: flex;
   align-items: center;
   gap: 24px;
   position: relative;
+  /* Kendi stacking context'ini oluşturur; popover tüm kart içeriklerinin üstünde olur */
+  z-index: 1000;
 }
 .avatar {
   width: 35px;
@@ -328,6 +333,9 @@ h4 {
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  /* Çok kolonlu tablolarda (İhale 11 kolon) kolonlar ezilmesin; sığmazsa
+     .data-table-container yatay kaydırma çubuğu gösterir. */
+  min-width: 760px;
 }
 .data-table th,
 .data-table td {
@@ -342,6 +350,13 @@ h4 {
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  /* Başlıklar tek satırda kalsın (okunabilirlik). */
+  white-space: nowrap;
+}
+/* Uzun metinli hücreler (örn. ihale başlığı) için sarma istisnası. */
+.data-table td.cell-wrap {
+  white-space: normal;
+  min-width: 220px;
 }
 .data-table tbody tr.clickable:hover {
   background: rgba(255, 255, 255, 0.02);
@@ -565,6 +580,7 @@ select option {
   overflow-y: auto;
   border-radius: 16px;
   padding: 16px;
+  /* .header-right stacking context içinde kalır; 200 yeterli — modal (1000) altında */
   z-index: 200;
   /* Floating popover OPAK olmalı; aksi halde --bg-card (%95 saydam) yüzünden
      arkadaki sayfa içeriği görünüp üst üste biniyordu. */
@@ -788,6 +804,8 @@ select option {
 .row-actions {
   display: flex;
   gap: 8px;
+  /* Çok aksiyonlu hücrelerde (Detay/Düzenle/Durum/Sil) dar alanda sar. */
+  flex-wrap: wrap;
 }
 
 /* Yeni Fırsat formundaki "Mevcutla aynı" satır-içi onay kutusu */
@@ -829,4 +847,143 @@ select option {
 }
 .upcoming-item .muted {
   font-size: 0.68rem;
+}
+
+/* Görüşme notları (CompanyDetailPage + MeetingHistoryPage) */
+.meeting-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.meeting-notes__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+.meeting-notes__item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.meeting-notes__meta {
+  font-size: 0.72rem;
+  display: block;
+}
+.meeting-notes__content {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  /* Uzun/boşluksuz metin hücreden taşmasın. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.meeting-notes__form {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--glass-border);
+}
+
+/* Mobil navigasyon: hamburger butonu (varsayılan gizli, yalnız dar ekranda) */
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-right: 4px;
+}
+/* Mobil sidebar açıkken arka plan karartması */
+.sidebar-overlay {
+  display: none;
+}
+
+/* ============================================================
+   Responsive — Tablet (<=1024px)
+   ============================================================ */
+@media (max-width: 1024px) {
+  :root {
+    --sidebar-width: 210px;
+  }
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .calendar-layout {
+    grid-template-columns: 1fr;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  .full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ============================================================
+   Responsive — Mobil (<=640px): dikey akış + off-canvas sidebar
+   ============================================================ */
+@media (max-width: 640px) {
+  body {
+    overflow: auto;
+  }
+  .app-container {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+  .main-content {
+    overflow: visible;
+  }
+  .view-container {
+    overflow: visible;
+    padding: 0 16px 16px;
+  }
+
+  /* Hamburger görünür olur */
+  .nav-toggle {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Sidebar artık ekranın solundan açılan çekmece */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1200;
+  }
+  .sidebar--open {
+    transform: translateX(0);
+  }
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1100;
+  }
+
+  .main-header {
+    margin: 8px 12px;
+    padding: 0 16px;
+  }
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .page-head,
+  .cal-header {
+    flex-wrap: wrap;
+  }
 }

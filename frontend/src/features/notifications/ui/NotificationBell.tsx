@@ -10,6 +10,7 @@ import { formatDateTime } from '../../../shared/lib/format';
 import { useAuth } from '../../../app/providers/useAuth';
 import { useManagedEmployees } from '../../employees/model/useEmployees';
 import { NotificationComposeModal } from './NotificationComposeModal';
+import { getErrorMessage } from '../../../shared/lib/errorMessage';
 import type { NotificationDto } from '../../../entities/notification/model/notification';
 
 function notificationTypeLabel(type: string): string {
@@ -152,6 +153,12 @@ export function NotificationBell() {
                 </button>
               </div>
             </div>
+            {/* markAllRead hata geri bildirimi — popover içinde küçük hata satırı */}
+            {markAllRead.isError && (
+              <p className="form-error" style={{ margin: '4px 0', fontSize: '0.78rem' }}>
+                {getErrorMessage(markAllRead.error)}
+              </p>
+            )}
             {notifications.isLoading && <p className="muted">Yükleniyor...</p>}
             {notifications.data && notifications.data.length === 0 && (
               <p className="muted">Bildirim yok.</p>

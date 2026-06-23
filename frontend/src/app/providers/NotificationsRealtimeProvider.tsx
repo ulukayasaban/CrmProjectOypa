@@ -60,8 +60,13 @@ export function NotificationsRealtimeProvider({
     const startConnection = async () => {
       try {
         await connection.start();
-      } catch {
-        // Connection failures are non-fatal; polling acts as fallback.
+      } catch (err) {
+        // Bağlantı hatası kritik değildir; polling fallback devreye girer.
+        // Geliştirici araçlarında izlenebilir, kullanıcı arayüzünü etkilemez.
+        console.warn(
+          '[NotificationsRealtime] SignalR hub bağlantısı kurulamadı — polling fallback aktif.',
+          err instanceof Error ? err.message : err,
+        );
       }
     };
 

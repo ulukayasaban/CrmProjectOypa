@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Oypa.Crm.Api.Extensions;
 using Oypa.Crm.Application.Features.Employees;
 using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Employees;
@@ -29,6 +31,7 @@ public sealed class EmployeesController(IEmployeeService employeeService) : Cont
 
     /// <summary>Yeni personel oluşturur. CreateAccount == true ise geçici kimlik bilgilerini döndürür.</summary>
     [HttpPost]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
     public async Task<IActionResult> Create(CreateEmployeeRequest request, CancellationToken cancellationToken)
     {
         var result = await employeeService.CreateAsync(request, cancellationToken);
@@ -37,6 +40,7 @@ public sealed class EmployeesController(IEmployeeService employeeService) : Cont
 
     /// <summary>Personel ünvan/ad/e-posta güncelleme.</summary>
     [HttpPut("{id:guid}")]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
     public async Task<IActionResult> Update(Guid id, UpdateEmployeeRequest request, CancellationToken cancellationToken)
     {
         var data = await employeeService.UpdateAsync(id, request, cancellationToken);
@@ -45,6 +49,7 @@ public sealed class EmployeesController(IEmployeeService employeeService) : Cont
 
     /// <summary>Personeli siler (astı varsa 409 döner).</summary>
     [HttpDelete("{id:guid}")]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         await employeeService.DeleteAsync(id, cancellationToken);
@@ -53,6 +58,7 @@ public sealed class EmployeesController(IEmployeeService employeeService) : Cont
 
     /// <summary>Yönetici atar veya kaldırır (null = kök düğüm).</summary>
     [HttpPut("{id:guid}/manager")]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
     public async Task<IActionResult> AssignManager(Guid id, AssignManagerRequest request, CancellationToken cancellationToken)
     {
         var data = await employeeService.AssignManagerAsync(id, request.ManagerId, cancellationToken);
@@ -61,6 +67,7 @@ public sealed class EmployeesController(IEmployeeService employeeService) : Cont
 
     /// <summary>Hesapsız personele hesap ve rol oluşturur; geçici kimlik bilgilerini döndürür.</summary>
     [HttpPost("{id:guid}/account")]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
     public async Task<IActionResult> CreateAccount(Guid id, CreateAccountRequest request, CancellationToken cancellationToken)
     {
         var data = await employeeService.CreateAccountAsync(id, request, cancellationToken);
@@ -69,6 +76,7 @@ public sealed class EmployeesController(IEmployeeService employeeService) : Cont
 
     /// <summary>Mevcut hesaba rol atar.</summary>
     [HttpPut("{id:guid}/role")]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
     public async Task<IActionResult> AssignRole(Guid id, AssignRoleRequest request, CancellationToken cancellationToken)
     {
         var data = await employeeService.AssignRoleAsync(id, request, cancellationToken);
@@ -77,6 +85,7 @@ public sealed class EmployeesController(IEmployeeService employeeService) : Cont
 
     /// <summary>Parolayı sıfırlar; yeni geçici kimlik bilgilerini döndürür.</summary>
     [HttpPost("{id:guid}/reset-password")]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
     public async Task<IActionResult> ResetPassword(Guid id, CancellationToken cancellationToken)
     {
         var data = await employeeService.ResetPasswordAsync(id, cancellationToken);
@@ -85,6 +94,7 @@ public sealed class EmployeesController(IEmployeeService employeeService) : Cont
 
     /// <summary>Kimlik hesabı bağlantısını personelden kaldırır.</summary>
     [HttpDelete("{id:guid}/account")]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
     public async Task<IActionResult> UnlinkAccount(Guid id, CancellationToken cancellationToken)
     {
         var data = await employeeService.UnlinkAccountAsync(id, cancellationToken);

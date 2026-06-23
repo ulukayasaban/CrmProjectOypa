@@ -23,30 +23,39 @@ export default function DashboardPage() {
 
   return (
     <div className="dashboard-grid">
-      <div
+      {/* Tıklanabilir stat kartları: erişilebilirlik için <button> olarak işaretlendi.
+          .stat-card görsel stili korunur; tarayıcı varsayılan button stilini sıfırlamak
+          için inline style eklenir (CSS sınıfı yeterli değilse). */}
+      <button
+        type="button"
         className="stat-card glass"
-        style={{ borderLeft: '4px solid var(--warning)' }}
+        style={{ borderLeft: '4px solid var(--warning)', textAlign: 'left' }}
         onClick={() => navigate('/leads')}
+        aria-label="Aktif leadleri görüntüle"
       >
         <span className="stat-label">Aktif Leadler</span>
         <span className="stat-value">{data.activeLeads}</span>
-      </div>
-      <div
+      </button>
+      <button
+        type="button"
         className="stat-card glass"
-        style={{ borderLeft: '4px solid var(--success)' }}
+        style={{ borderLeft: '4px solid var(--success)', textAlign: 'left' }}
         onClick={() => navigate('/customers')}
+        aria-label="Müşterileri görüntüle"
       >
         <span className="stat-label">Toplam Müşteri</span>
         <span className="stat-value">{data.totalCustomers}</span>
-      </div>
-      <div
+      </button>
+      <button
+        type="button"
         className="stat-card glass"
-        style={{ borderLeft: '4px solid var(--primary-light)' }}
+        style={{ borderLeft: '4px solid var(--primary-light)', textAlign: 'left' }}
         onClick={() => navigate('/calendar')}
+        aria-label="Ziyaret takvimine git"
       >
         <span className="stat-label">Planlı Ziyaretler</span>
         <span className="stat-value">{data.plannedMeetings}</span>
-      </div>
+      </button>
 
       {data.goals.length === 0 ? (
         <div

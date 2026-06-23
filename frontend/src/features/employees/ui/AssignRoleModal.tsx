@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
 import { USER_ROLE_OPTIONS } from '../../../shared/constants/labels';
 import { getErrorMessage } from '../../../shared/lib/errorMessage';
+import { toUserRole } from '../../../shared/lib/narrowing';
 import { useAssignEmployeeRole } from '../model/useEmployees';
 import { assignRoleSchema, type AssignRoleFormValues } from '../model/employeeSchema';
 import type { EmployeeDto } from '../../../entities/employee/model/employee';
@@ -20,7 +21,8 @@ export function AssignRoleModal({ employee, onClose }: AssignRoleModalProps) {
     formState: { errors, isSubmitting },
   } = useForm<AssignRoleFormValues>({
     resolver: zodResolver(assignRoleSchema),
-    defaultValues: { role: (employee.role as AssignRoleFormValues['role']) ?? undefined },
+    // employee.role string | null olarak gelir; toUserRole ile güvenli daraltma yapılır.
+    defaultValues: { role: toUserRole(employee.role) },
   });
 
   const onSubmit = handleSubmit(async (values) => {

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Oypa.Crm.Api.Extensions;
 using Oypa.Crm.Application.Features.Notifications;
 using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Notifications;
@@ -48,6 +50,7 @@ public sealed class NotificationsController(INotificationService notificationSer
     /// Yetki: Admin veya astı olan yönetici.
     /// </summary>
     [HttpPost("send")]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
     public async Task<IActionResult> Send(
         [FromBody] SendNotificationRequest request,
         CancellationToken cancellationToken)

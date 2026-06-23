@@ -92,6 +92,78 @@ public static class DbSeeder
 
         // --- Örnek İhale seed'i ---
         await SeedTendersAsync(db, logger);
+
+        // --- SalesRep'lere giriş hesabı (idempotent) ---
+        await EnsureSalesRepLoginAccountsAsync(db, userManager, logger);
+    }
+
+    /// <summary>
+    /// Belirli SalesRep'lere kimlik hesabı (giriş) ve Sales rolü verir; varsa atlar.
+    /// Hesap oluşturulduktan sonra ilgili SalesRep, e-posta eşleşmesiyle Employee'ye
+    /// bağlanır (notification/atama zinciri için) — eşleşen Employee yoksa yalnız giriş eklenir.
+    /// </summary>
+    private static async Task EnsureSalesRepLoginAccountsAsync(
+        AppDbContext db,
+        UserManager<ApplicationUser> userManager,
+        ILogger<AppDbContext> logger)
+    {
+        // Org seed parolasıyla aynı (demo). Production'da ilk girişten sonra değiştirilmeli.
+        const string salesRepPassword = "Oypa!2026";
+
+        (string Email, string FullName)[] accounts =
+        [
+            ("hasi@oypa.com.tr", "Helin Zin Ası"),
+            ("hasan.aksoy@oypa.com", "Hasan Aksoy"),
+            ("ayse.yilmaz@oypa.com", "Ayşe Yılmaz")
+        ];
+
+        foreach (var (email, fullName) in accounts)
+        {
+            var existing = await userManager.FindByEmailAsync(email);
+            if (existing is not null)
+            {
+                // Hesap zaten varsa: demo parolasını bilinen değere sabitle ve
+                // Sales rolünü garanti et (eski/farklı parolalı kayıtlarda da giriş çalışsın).
+                // Not: AddIdentityCore default token provider eklemediği için
+                // GeneratePasswordResetToken kullanılamaz; parola hash'i doğrudan set edilir.
+                existing.PasswordHash = userManager.PasswordHasher.HashPassword(existing, salesRepPassword);
+                var upd = await userManager.UpdateAsync(existing);
+                if (!upd.Succeeded)
+                {
+                    logger.LogWarning(
+                        "SalesRep login seed: {Email} parola güncellenemedi. Hatalar: {Errors}",
+                        email,
+                        string.Join("; ", upd.Errors.Select(e => e.Description)));
+                }
+
+                if (!await userManager.IsInRoleAsync(existing, "Sales"))
+                    await userManager.AddToRoleAsync(existing, "Sales");
+
+                continue;
+            }
+
+            var user = new ApplicationUser
+            {
+                UserName = email,
+                Email = email,
+                FullName = fullName,
+                Position = "Satış Temsilcisi",
+                EmailConfirmed = true
+            };
+
+            var result = await userManager.CreateAsync(user, salesRepPassword);
+            if (!result.Succeeded)
+            {
+                logger.LogWarning(
+                    "SalesRep login seed: {Email} için hesap oluşturulamadı. Hatalar: {Errors}",
+                    email,
+                    string.Join("; ", result.Errors.Select(e => e.Description)));
+                continue;
+            }
+
+            await userManager.AddToRoleAsync(user, "Sales");
+            logger.LogInformation("SalesRep login seed: {Email} (Sales) hesabı oluşturuldu.", email);
+        }
     }
 
     /// <summary>

@@ -4,9 +4,10 @@ import { NotificationBell } from '../features/notifications/ui/NotificationBell'
 
 interface HeaderProps {
   title: string;
+  onMenuToggle?: () => void;
 }
 
-export function Header({ title }: HeaderProps) {
+export function Header({ title, onMenuToggle }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -14,7 +15,17 @@ export function Header({ title }: HeaderProps) {
 
   return (
     <header className="main-header glass">
-      <h2 style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>{title}</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <button
+          type="button"
+          className="nav-toggle"
+          onClick={onMenuToggle}
+          aria-label="Menüyü aç/kapat"
+        >
+          ☰
+        </button>
+        <h2 style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>{title}</h2>
+      </div>
       <div className="header-right">
         <NotificationBell />
         <div

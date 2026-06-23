@@ -26,7 +26,15 @@ jobs:
         run: dotnet build backend/OypaCrm.sln --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test backend/OypaCrm.sln --configuration Release --no-build --verbosity normal
+        run: dotnet test backend/OypaCrm.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: "**/TestResults/*.trx"
+          if-no-files-found: ignore
 
   frontend:
     name: Frontend (Node 22)

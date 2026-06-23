@@ -1,21 +1,24 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import { AppLayout } from '../app/AppLayout';
 import { ProtectedRoute } from './ProtectedRoute';
-import LoginPage from '../pages/LoginPage';
-import DashboardPage from '../pages/DashboardPage';
-import LeadsPage from '../pages/LeadsPage';
-import CustomersPage from '../pages/CustomersPage';
-import CompanyDetailPage from '../pages/CompanyDetailPage';
-import CalendarPage from '../pages/CalendarPage';
-import MailDraftsPage from '../pages/MailDraftsPage';
-import ProfilePage from '../pages/ProfilePage';
-import ManagementPage from '../pages/ManagementPage';
-import OrgChartPage from '../pages/OrgChartPage';
-import EmployeeManagementPage from '../pages/EmployeeManagementPage';
-import MeetingHistoryPage from '../pages/MeetingHistoryPage';
-import ReportsPage from '../pages/ReportsPage';
+import { Spinner } from '../shared/components/Spinner';
 
+// Tüm sayfa bileşenleri lazy import ile code-splitting uygulanır.
+// Suspense fallback AppLayout içinde Outlet'i sarar.
+const LoginPage = lazy(() => import('../pages/LoginPage'));
+const DashboardPage = lazy(() => import('../pages/DashboardPage'));
+const LeadsPage = lazy(() => import('../pages/LeadsPage'));
+const CustomersPage = lazy(() => import('../pages/CustomersPage'));
+const CompanyDetailPage = lazy(() => import('../pages/CompanyDetailPage'));
+const CalendarPage = lazy(() => import('../pages/CalendarPage'));
+const MailDraftsPage = lazy(() => import('../pages/MailDraftsPage'));
+const ProfilePage = lazy(() => import('../pages/ProfilePage'));
+const ManagementPage = lazy(() => import('../pages/ManagementPage'));
+const OrgChartPage = lazy(() => import('../pages/OrgChartPage'));
+const EmployeeManagementPage = lazy(() => import('../pages/EmployeeManagementPage'));
+const MeetingHistoryPage = lazy(() => import('../pages/MeetingHistoryPage'));
+const ReportsPage = lazy(() => import('../pages/ReportsPage'));
 const GoalsPage = lazy(() => import('../pages/GoalsPage'));
 const TendersPage = lazy(() => import('../pages/TendersPage'));
 const TenderDetailPage = lazy(() => import('../pages/TenderDetailPage'));
@@ -23,7 +26,12 @@ const TenderDetailPage = lazy(() => import('../pages/TenderDetailPage'));
 export const router = createBrowserRouter([
   {
     path: '/login',
-    element: <LoginPage />,
+    // LoginPage AppLayout dışında olduğu için kendi Suspense sargısını alır.
+    element: (
+      <Suspense fallback={<Spinner />}>
+        <LoginPage />
+      </Suspense>
+    ),
   },
   {
     element: <ProtectedRoute />,

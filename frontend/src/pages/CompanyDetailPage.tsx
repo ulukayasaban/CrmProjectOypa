@@ -29,7 +29,7 @@ import {
   SOURCE_LABELS,
 } from '../shared/constants/labels';
 import { queryKeys } from '../shared/api/queryKeys';
-import type { LeadStatus } from '../shared/types/enums';
+import { toLeadStatus } from '../shared/lib/narrowing';
 import { formatDate, formatTime } from '../shared/lib/format';
 import { getErrorMessage } from '../shared/lib/errorMessage';
 import { openInOutlook, saveEml } from '../shared/lib/outlook';
@@ -156,11 +156,16 @@ export default function CompanyDetailPage() {
                 <label htmlFor="leadStatus">Lead Durumu</label>
                 <select
                   id="leadStatus"
+                  aria-label="Lead durumu seç"
                   value={data.leadStatus ?? ''}
                   disabled={updateLeadStatus.isPending}
-                  onChange={(event) =>
-                    updateLeadStatus.mutate(event.target.value as LeadStatus)
-                  }
+                  onChange={(event) => {
+                    // LEAD_STATUS_OPTIONS'tan gelen değer; narrowing ile runtime güvenli daraltma.
+                    const status = toLeadStatus(event.target.value);
+                    if (status !== undefined) {
+                      updateLeadStatus.mutate(status);
+                    }
+                  }}
                 >
                   {LEAD_STATUS_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
