@@ -9,6 +9,7 @@ import { PlusIcon } from '../shared/components/icons';
 import { MEETING_METHOD_LABELS } from '../shared/constants/labels';
 import { formatTime } from '../shared/lib/format';
 import { getErrorMessage } from '../shared/lib/errorMessage';
+import type { MeetingDto } from '../entities/meeting/model/meeting';
 
 const WEEKDAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 const MONTH_NAMES = [
@@ -43,6 +44,8 @@ export default function CalendarPage() {
     toDateKey(today.getFullYear(), today.getMonth(), today.getDate()),
   );
   const [meetingModal, setMeetingModal] = useState(false);
+  // Düzenleme modunda açmak için seçili görüşme; undefined → yeni randevu
+  const [editingMeeting, setEditingMeeting] = useState<MeetingDto | undefined>(undefined);
 
   const isLoading = meetings.isLoading || tenders.isLoading;
   const isError = meetings.isError || tenders.isError;
@@ -115,7 +118,10 @@ export default function CalendarPage() {
         <button
           type="button"
           className="btn btn-primary"
-          onClick={() => setMeetingModal(true)}
+          onClick={() => {
+            setEditingMeeting(undefined);
+            setMeetingModal(true);
+          }}
         >
           <PlusIcon /> Yeni Randevu
         </button>
@@ -199,6 +205,21 @@ export default function CalendarPage() {
                   padding: 12,
                   borderRadius: 8,
                   borderLeft: '3px solid var(--accent-gold)',
+                  cursor: 'pointer',
+                }}
+                role="button"
+                tabIndex={0}
+                title="Düzenlemek için tıklayın"
+                onClick={() => {
+                  // Seçili görüşmeyle düzenleme modalını aç
+                  setEditingMeeting(meeting);
+                  setMeetingModal(true);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    setEditingMeeting(meeting);
+                    setMeetingModal(true);
+                  }
                 }}
               >
                 <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>
@@ -240,7 +261,10 @@ export default function CalendarPage() {
             <button
               type="button"
               className="btn btn-ghost btn-sm btn-block"
-              onClick={() => setMeetingModal(true)}
+              onClick={() => {
+                setEditingMeeting(undefined);
+                setMeetingModal(true);
+              }}
             >
               + Randevu Ekle
             </button>
@@ -250,8 +274,12 @@ export default function CalendarPage() {
 
       {meetingModal && (
         <MeetingFormModal
-          defaultDate={selectedDate}
-          onClose={() => setMeetingModal(false)}
+          defaultDate={editingMeeting ? undefined : selectedDate}
+          meeting={editingMeeting}
+          onClose={() => {
+            setMeetingModal(false);
+            setEditingMeeting(undefined);
+          }}
         />
       )}
     </>

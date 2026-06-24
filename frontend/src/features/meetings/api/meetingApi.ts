@@ -31,6 +31,12 @@ export const meetingApi = {
     const { data } = await httpClient.post<MeetingDto>('/meetings', payload);
     return data;
   },
+
+  /** Mevcut görüşmeyi günceller. PUT /meetings/{id} */
+  async update(id: string, payload: MeetingPayload): Promise<MeetingDto> {
+    const { data } = await httpClient.put<MeetingDto>(`/meetings/${id}`, payload);
+    return data;
+  },
   async updateStatus(
     id: string,
     status: MeetingStatus,

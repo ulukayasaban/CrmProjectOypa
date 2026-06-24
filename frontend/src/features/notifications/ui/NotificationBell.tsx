@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  useDeleteNotification,
   useMarkAllRead,
   useMarkRead,
   useNotifications,
@@ -33,9 +34,10 @@ function notificationTypeLabel(type: string): string {
 interface NotificationItemProps {
   item: NotificationDto;
   onRead: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-function NotificationItem({ item, onRead }: NotificationItemProps) {
+function NotificationItem({ item, onRead, onDelete }: NotificationItemProps) {
   const navigate = useNavigate();
 
   function handleClick() {
@@ -56,17 +58,45 @@ function NotificationItem({ item, onRead }: NotificationItemProps) {
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') handleClick();
       }}
-      style={{ cursor: item.link || !item.isRead ? 'pointer' : 'default' }}
+      style={{ cursor: item.link || !item.isRead ? 'pointer' : 'default', position: 'relative' }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
           {notificationTypeLabel(item.type)}
         </span>
-        {item.senderName && (
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-            {item.senderName}
-          </span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {item.senderName && (
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+              {item.senderName}
+            </span>
+          )}
+          {/* Sil butonu — item'ın navigate davranışını tetiklememek için stopPropagation */}
+          <button
+            type="button"
+            aria-label="Bildirimi sil"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '0 2px',
+              lineHeight: 1,
+              color: 'var(--text-muted)',
+              fontSize: '0.85rem',
+            }}
+            onClick={(e) => {
+              e.stopPropagation(); // navigate / read tetikleme
+              onDelete(item.id);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
+                onDelete(item.id);
+              }
+            }}
+          >
+            ×
+          </button>
+        </div>
       </div>
       {item.title && (
         <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{item.title}</div>
@@ -91,6 +121,7 @@ export function NotificationBell() {
   const notifications = useNotifications(open);
   const markRead = useMarkRead();
   const markAllRead = useMarkAllRead();
+  const deleteNotification = useDeleteNotification();
 
   // Gönderme yetkisi = Admin VEYA en az bir astı olan yönetici.
   // GetManagedAsync kapsamı kullanıcının kendisini de içerir; bu yüzden > 1
@@ -168,6 +199,7 @@ export function NotificationBell() {
                 key={item.id}
                 item={item}
                 onRead={(id) => markRead.mutate(id)}
+                onDelete={(id) => deleteNotification.mutate(id)}
               />
             ))}
           </div>

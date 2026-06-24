@@ -132,6 +132,38 @@ export function useCreateContact(id: string) {
   });
 }
 
+/** İlgili kişiyi günceller; başarı durumunda ilgili şirketin contact listesi yenilenir. */
+export function useUpdateContact(companyId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      contactId,
+      payload,
+    }: {
+      contactId: string;
+      payload: ContactPayload;
+    }) => companyApi.updateContact(contactId, payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.companyContacts(companyId),
+      });
+    },
+  });
+}
+
+/** İlgili kişiyi siler; başarı durumunda ilgili şirketin contact listesi yenilenir. */
+export function useDeleteContact(companyId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (contactId: string) => companyApi.deleteContact(contactId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.companyContacts(companyId),
+      });
+    },
+  });
+}
+
 export function useAssignSalesRep(id: string) {
   const queryClient = useQueryClient();
   return useMutation({

@@ -40,4 +40,10 @@ public interface INotificationService
         Guid? senderUserId = null,
         string? senderName = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Geçerli kullanıcının belirtilen bildirimini siler.
+    /// Bildirim başkasına aitse NotFoundException fırlatır (gizleme davranışı).
+    /// </summary>
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

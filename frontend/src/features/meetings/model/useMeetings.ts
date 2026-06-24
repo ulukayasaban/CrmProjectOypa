@@ -45,6 +45,26 @@ export function useCreateMeeting() {
   });
 }
 
+/**
+ * Mevcut görüşmeyi günceller.
+ * Başarı durumunda meetings + dashboard + hedefler invalidate edilir.
+ */
+export function useUpdateMeeting() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: MeetingPayload }) =>
+      meetingApi.update(id, payload),
+    onSuccess: (meeting) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.meetings });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.goals });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.companyMeetings(meeting.companyId),
+      });
+    },
+  });
+}
+
 interface UpdateMeetingStatusVars {
   id: string;
   status: MeetingStatus;

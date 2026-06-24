@@ -27,4 +27,33 @@ public sealed class ContactService(
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return contact.ToDto();
     }
+
+    public async Task<ContactDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var contact = await contacts.GetByIdAsync(id, cancellationToken)
+            ?? throw NotFoundException.For("İlgili kişi", id);
+
+        return contact.ToDto();
+    }
+
+    public async Task<ContactDto> UpdateAsync(Guid id, UpdateContactRequest request, CancellationToken cancellationToken = default)
+    {
+        // Güncelleme için takipli (tracked) çekilir.
+        var contact = await contacts.GetByIdAsync(id, cancellationToken)
+            ?? throw NotFoundException.For("İlgili kişi", id);
+
+        contact.Update(request.Name, request.Email, request.Phone);
+        contacts.Update(contact);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return contact.ToDto();
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var contact = await contacts.GetByIdAsync(id, cancellationToken)
+            ?? throw NotFoundException.For("İlgili kişi", id);
+
+        contacts.Remove(contact);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
 }

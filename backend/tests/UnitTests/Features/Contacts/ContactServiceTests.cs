@@ -76,4 +76,94 @@ public sealed class ContactServiceTests
         captured!.Compile()(match).ShouldBeTrue();
         captured.Compile()(other).ShouldBeFalse();
     }
+
+    // -----------------------------------------------------------------------
+    // GetByIdAsync
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task GetByIdAsync_ExistingContact_ReturnsDto()
+    {
+        var companyId = Guid.NewGuid();
+        var contact = new Contact(companyId, "Zeynep", "z@x.com", "555");
+        _contacts.GetByIdAsync(contact.Id, Arg.Any<CancellationToken>()).Returns(contact);
+        var sut = CreateSut();
+
+        var result = await sut.GetByIdAsync(contact.Id);
+
+        result.Id.ShouldBe(contact.Id);
+        result.Name.ShouldBe("Zeynep");
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_NotFound_ThrowsNotFoundException()
+    {
+        _contacts.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns((Contact?)null);
+        var sut = CreateSut();
+
+        await Should.ThrowAsync<NotFoundException>(() => sut.GetByIdAsync(Guid.NewGuid()));
+    }
+
+    // -----------------------------------------------------------------------
+    // UpdateAsync
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task UpdateAsync_ExistingContact_UpdatesAndSaves()
+    {
+        var companyId = Guid.NewGuid();
+        var contact = new Contact(companyId, "Eski Ad", "eski@x.com", "111");
+        _contacts.GetByIdAsync(contact.Id, Arg.Any<CancellationToken>()).Returns(contact);
+        var sut = CreateSut();
+
+        var result = await sut.UpdateAsync(contact.Id, new UpdateContactRequest("Yeni Ad", "yeni@x.com", "222"));
+
+        result.Name.ShouldBe("Yeni Ad");
+        result.Email.ShouldBe("yeni@x.com");
+        result.Phone.ShouldBe("222");
+        _contacts.Received(1).Update(Arg.Is<Contact>(c => c.Name == "Yeni Ad"));
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_NotFound_ThrowsNotFoundAndDoesNotSave()
+    {
+        _contacts.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns((Contact?)null);
+        var sut = CreateSut();
+
+        await Should.ThrowAsync<NotFoundException>(() =>
+            sut.UpdateAsync(Guid.NewGuid(), new UpdateContactRequest("Ad", null, null)));
+
+        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    // -----------------------------------------------------------------------
+    // DeleteAsync
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task DeleteAsync_ExistingContact_RemovesAndSaves()
+    {
+        var companyId = Guid.NewGuid();
+        var contact = new Contact(companyId, "Silinecek", null, null);
+        _contacts.GetByIdAsync(contact.Id, Arg.Any<CancellationToken>()).Returns(contact);
+        var sut = CreateSut();
+
+        await sut.DeleteAsync(contact.Id);
+
+        _contacts.Received(1).Remove(Arg.Is<Contact>(c => c.Id == contact.Id));
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task DeleteAsync_NotFound_ThrowsNotFoundAndDoesNotSave()
+    {
+        _contacts.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns((Contact?)null);
+        var sut = CreateSut();
+
+        await Should.ThrowAsync<NotFoundException>(() => sut.DeleteAsync(Guid.NewGuid()));
+
+        _contacts.DidNotReceive().Remove(Arg.Any<Contact>());
+        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
 }

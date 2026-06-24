@@ -31,4 +31,7 @@ export const queryKeys = {
     ['employees', 'managed', 'paged', params] as const,
   tendersPaged: (params: object) =>
     ['tenders', 'paged', params] as const,
+
+  /** Admin kullanıcı listesi (/auth/users) */
+  users: ['auth', 'users'] as const,
 };

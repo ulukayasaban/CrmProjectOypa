@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Oypa.Crm.Api.Extensions;
+using Oypa.Crm.Application.Common.Interfaces;
 using Oypa.Crm.Application.Features.Auth;
 using Oypa.Crm.Contracts.Auth;
 using Oypa.Crm.Contracts.Common;
@@ -10,7 +11,10 @@ namespace Oypa.Crm.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(IAuthService authService) : ControllerBase
+public sealed class AuthController(
+    IAuthService authService,
+    IIdentityService identityService,
+    ICurrentUser currentUser) : ControllerBase
 {
     [HttpPost("login")]
     [AllowAnonymous]
@@ -104,6 +108,35 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     {
         var updated = await authService.UpdateProfileAsync(request, cancellationToken);
         return Ok(ApiResponse<UserDto>.Ok(updated, "Profil güncellendi."));
+    }
+
+    /// <summary>
+    /// Tüm Identity kullanıcılarını rolleriyle listeler. Yalnızca Admin erişebilir.
+    /// </summary>
+    [HttpGet("users")]
+    [Authorize(AuthenticationExtensions.AdminPolicy)]
+    public async Task<IActionResult> GetUsers(CancellationToken cancellationToken)
+    {
+        var users = await identityService.ListUsersAsync(cancellationToken);
+        // AuthUserInfo → UserDto dönüşümü; entity asla doğrudan dönülmez.
+        var dtos = users.Select(u => new UserDto(u.Id, u.Email, u.FullName, u.Position, u.Phone, u.Roles)).ToList();
+        return Ok(ApiResponse<IReadOnlyList<UserDto>>.Ok(dtos));
+    }
+
+    /// <summary>
+    /// Belirtilen kullanıcıyı siler. Kendini silmek 403 döner.
+    /// İlişkili Employee kaydı varsa ApplicationUserId null'a düşer (Employee silinmez).
+    /// </summary>
+    [HttpDelete("users/{id:guid}")]
+    [Authorize(AuthenticationExtensions.AdminPolicy)]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
+    public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken)
+    {
+        var actorId = currentUser.UserId
+            ?? throw new Application.Common.Exceptions.UnauthorizedAppException("Oturum bulunamadı.");
+
+        await identityService.DeleteUserAsync(id, actorId, cancellationToken);
+        return Ok(ApiResponse.Ok("Kullanıcı silindi."));
     }
 
     private string? ClientIp() => HttpContext.Connection.RemoteIpAddress?.ToString();

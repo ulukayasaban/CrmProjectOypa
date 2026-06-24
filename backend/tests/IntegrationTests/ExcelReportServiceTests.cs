@@ -15,8 +15,9 @@ namespace Oypa.Crm.IntegrationTests;
 public sealed class ExcelReportServiceTests
 {
     private readonly IMeetingRepository _meetingRepository = Substitute.For<IMeetingRepository>();
+    private readonly ITenderRepository _tenderRepository = Substitute.For<ITenderRepository>();
 
-    private ExcelReportService CreateSut() => new(_meetingRepository);
+    private ExcelReportService CreateSut() => new(_meetingRepository, _tenderRepository);
 
     private static Meeting MakeMeeting(string companyTitle, string repName, string? repTitle = null)
     {

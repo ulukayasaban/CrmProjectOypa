@@ -467,6 +467,67 @@ public sealed class NotificationServiceTests
     }
 
     // -----------------------------------------------------------------------
+    // DeleteAsync — sahiplik kontrolü
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task DeleteAsync_OwnNotification_RemovesAndSaves()
+    {
+        var userId = Guid.NewGuid();
+        _currentUser.IsAuthenticated.Returns(true);
+        _currentUser.UserId.Returns(userId);
+
+        var notif = new Notification(userId, "silinecek", NotificationType.Manual);
+        _notifications.GetByIdAsync(notif.Id, Arg.Any<CancellationToken>())
+            .Returns(notif);
+
+        var sut = CreateSut();
+        await sut.DeleteAsync(notif.Id);
+
+        _notifications.Received(1).Remove(Arg.Is<Notification>(n => n.Id == notif.Id));
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task DeleteAsync_AnotherUsersNotification_ThrowsNotFoundAndDoesNotRemove()
+    {
+        // B'nin bildirimini A silmeye çalışırsa 404 (gizleme davranışı).
+        var userA = Guid.NewGuid();
+        var userB = Guid.NewGuid();
+
+        _currentUser.IsAuthenticated.Returns(true);
+        _currentUser.UserId.Returns(userA);
+
+        var notifForB = new Notification(userB, "B'nin bildirimi", NotificationType.Manual);
+        _notifications.GetByIdAsync(notifForB.Id, Arg.Any<CancellationToken>())
+            .Returns(notifForB);
+
+        var sut = CreateSut();
+
+        await Should.ThrowAsync<NotFoundException>(() => sut.DeleteAsync(notifForB.Id));
+
+        _notifications.DidNotReceive().Remove(Arg.Any<Notification>());
+        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task DeleteAsync_NonExistentNotification_ThrowsNotFoundException()
+    {
+        _currentUser.IsAuthenticated.Returns(true);
+        _currentUser.UserId.Returns(UserId);
+
+        _notifications.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns((Notification?)null);
+
+        var sut = CreateSut();
+
+        await Should.ThrowAsync<NotFoundException>(() => sut.DeleteAsync(Guid.NewGuid()));
+
+        _notifications.DidNotReceive().Remove(Arg.Any<Notification>());
+        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    // -----------------------------------------------------------------------
     // Yardımcılar
     // -----------------------------------------------------------------------
 

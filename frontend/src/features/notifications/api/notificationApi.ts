@@ -31,4 +31,9 @@ export const notificationApi = {
   async send(payload: SendNotificationPayload): Promise<void> {
     await httpClient.post('/notifications/send', payload);
   },
+
+  /** Kendi bildirimini siler. DELETE /notifications/{id} */
+  async deleteNotification(id: string): Promise<void> {
+    await httpClient.delete(`/notifications/${id}`);
+  },
 };

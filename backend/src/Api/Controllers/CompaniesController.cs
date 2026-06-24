@@ -132,6 +132,30 @@ public sealed class CompaniesController(
         return StatusCode(StatusCodes.Status201Created, ApiResponse<ContactDto>.Ok(data, "İlgili kişi eklendi."));
     }
 
+    /// <summary>Belirtilen ilgili kişiyi Id ile döndürür.</summary>
+    [HttpGet("contacts/{contactId:guid}")]
+    public async Task<IActionResult> GetContactById(Guid contactId, CancellationToken cancellationToken)
+    {
+        var data = await contactService.GetByIdAsync(contactId, cancellationToken);
+        return Ok(ApiResponse<ContactDto>.Ok(data));
+    }
+
+    /// <summary>İlgili kişiyi günceller.</summary>
+    [HttpPut("contacts/{contactId:guid}")]
+    public async Task<IActionResult> UpdateContact(Guid contactId, UpdateContactRequest request, CancellationToken cancellationToken)
+    {
+        var data = await contactService.UpdateAsync(contactId, request, cancellationToken);
+        return Ok(ApiResponse<ContactDto>.Ok(data, "İlgili kişi güncellendi."));
+    }
+
+    /// <summary>İlgili kişiyi siler.</summary>
+    [HttpDelete("contacts/{contactId:guid}")]
+    public async Task<IActionResult> DeleteContact(Guid contactId, CancellationToken cancellationToken)
+    {
+        await contactService.DeleteAsync(contactId, cancellationToken);
+        return Ok(ApiResponse.Ok("İlgili kişi silindi."));
+    }
+
     [HttpGet("{id:guid}/meetings")]
     public async Task<IActionResult> GetMeetings(Guid id, CancellationToken cancellationToken)
     {

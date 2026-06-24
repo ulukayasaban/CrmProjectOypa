@@ -113,6 +113,23 @@ export const companyApi = {
     );
     return data;
   },
+
+  /** İlgili kişiyi günceller. PUT /contacts/{contactId} */
+  async updateContact(
+    contactId: string,
+    payload: ContactPayload,
+  ): Promise<ContactDto> {
+    const { data } = await httpClient.put<ContactDto>(
+      `/contacts/${contactId}`,
+      payload,
+    );
+    return data;
+  },
+
+  /** İlgili kişiyi siler. DELETE /contacts/{contactId} */
+  async deleteContact(contactId: string): Promise<void> {
+    await httpClient.delete(`/contacts/${contactId}`);
+  },
   async getMeetings(id: string): Promise<MeetingDto[]> {
     const { data } = await httpClient.get<MeetingDto[]>(
       `/companies/${id}/meetings`,

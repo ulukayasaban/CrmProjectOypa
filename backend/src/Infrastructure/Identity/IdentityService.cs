@@ -1,11 +1,15 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Oypa.Crm.Application.Common.Exceptions;
 using Oypa.Crm.Application.Common.Interfaces;
 using Oypa.Crm.Application.Common.Models;
+using Oypa.Crm.Infrastructure.Persistence;
 
 namespace Oypa.Crm.Infrastructure.Identity;
 
-public sealed class IdentityService(UserManager<ApplicationUser> userManager) : IIdentityService
+public sealed class IdentityService(
+    UserManager<ApplicationUser> userManager,
+    AppDbContext db) : IIdentityService
 {
     public async Task<AuthUserInfo?> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken = default)
     {
@@ -193,6 +197,50 @@ public sealed class IdentityService(UserManager<ApplicationUser> userManager) : 
         }
 
         return new string(password);
+    }
+
+    public async Task<IReadOnlyList<AuthUserInfo>> ListUsersAsync(CancellationToken cancellationToken = default)
+    {
+        // Tüm kullanıcıları bellekte çek; her biri için rol sorgula.
+        // Kullanıcı sayısı genelde az olduğundan N+1 burada kabul edilebilir.
+        var users = await userManager.Users
+            .AsNoTracking()
+            .OrderBy(u => u.FullName)
+            .ToListAsync(cancellationToken);
+
+        var result = new List<AuthUserInfo>(users.Count);
+        foreach (var user in users)
+            result.Add(await ToInfoAsync(user));
+
+        return result;
+    }
+
+    public async Task DeleteUserAsync(Guid userId, Guid currentUserId, CancellationToken cancellationToken = default)
+    {
+        // Kendini silme girişimini engelle — güvenlik kuralı.
+        if (userId == currentUserId)
+            throw new ForbiddenAppException("Kendi hesabınızı silemezsiniz.");
+
+        var user = await userManager.FindByIdAsync(userId.ToString())
+            ?? throw new NotFoundException($"Kullanıcı bulunamadı (id: {userId}).");
+
+        // Bağlı personel kaydı varsa ApplicationUserId null'a düşür (Employee kaydını koru).
+        var linkedEmployee = await db.Employees
+            .FirstOrDefaultAsync(e => e.ApplicationUserId == userId, cancellationToken);
+
+        if (linkedEmployee is not null)
+        {
+            linkedEmployee.UnlinkAccount();
+            // db.SaveChangesAsync, kullanıcı silinmeden önce çağrılmaz;
+            // Identity UserManager.DeleteAsync kendi içinde SaveChanges yapar.
+            // EF change tracker bu değişikliği takip eder; sonraki SaveChanges'da yazılır.
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        var result = await userManager.DeleteAsync(user);
+        if (!result.Succeeded)
+            throw new ConflictException(
+                $"Kullanıcı silinemedi: {string.Join("; ", result.Errors.Select(e => e.Description))}");
     }
 
     private async Task<AuthUserInfo> ToInfoAsync(ApplicationUser user)

@@ -7,6 +7,7 @@ import {
   useCompanyContacts,
   useCompanyMeetings,
   useConvertCompany,
+  useDeleteContact,
   useUpdateCustomerStatus,
   useUpdateLeadStatus,
 } from '../features/companies/model/useCompanies';
@@ -36,6 +37,7 @@ import { formatDate, formatTime } from '../shared/lib/format';
 import { getErrorMessage } from '../shared/lib/errorMessage';
 import { openInOutlook, saveEml } from '../shared/lib/outlook';
 import { useAuth } from '../app/providers/useAuth';
+import type { ContactDto } from '../entities/company/model/company';
 
 interface MeetingMailActionsProps {
   meetingId: string;
@@ -110,6 +112,8 @@ export default function CompanyDetailPage() {
   const { confirm, ConfirmEl } = useConfirm();
 
   const [contactModal, setContactModal] = useState(false);
+  // Düzenleme modunda açmak için seçili contact; undefined → yeni kişi ekle
+  const [editingContact, setEditingContact] = useState<ContactDto | undefined>(undefined);
   const [meetingModal, setMeetingModal] = useState(false);
   const [opportunityModal, setOpportunityModal] = useState(false);
   const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
@@ -124,6 +128,7 @@ export default function CompanyDetailPage() {
   const updateStatus = useUpdateMeetingStatus();
   const assignSalesRep = useAssignSalesRep(id);
   const salesReps = useSalesReps();
+  const deleteContact = useDeleteContact(id);
 
   if (company.isLoading) return <Spinner />;
   if (company.isError || !company.data) {
@@ -145,6 +150,23 @@ export default function CompanyDetailPage() {
     try {
       await convert.mutateAsync();
       toast.success('Firma müşteriye dönüştürüldü.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  }
+
+  /** İlgili kişiyi onay alarak siler. */
+  async function handleDeleteContact(contact: ContactDto) {
+    const confirmed = await confirm({
+      title: 'İlgili Kişiyi Sil',
+      message: `"${contact.name}" kişisini silmek istiyor musunuz? Bu işlem geri alınamaz.`,
+      confirmLabel: 'Sil',
+    });
+    if (!confirmed) return;
+
+    try {
+      await deleteContact.mutateAsync(contact.id);
+      toast.success('İlgili kişi silindi.');
     } catch (err) {
       toast.error(getErrorMessage(err));
     }
@@ -343,7 +365,11 @@ export default function CompanyDetailPage() {
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
-                onClick={() => setContactModal(true)}
+                onClick={() => {
+                  // Yeni kişi ekle modunda aç
+                  setEditingContact(undefined);
+                  setContactModal(true);
+                }}
               >
                 <PlusIcon size={14} /> Yeni Kişi
               </button>
@@ -362,6 +388,27 @@ export default function CompanyDetailPage() {
                   </div>
                   <div className="muted">{contact.email ?? '-'}</div>
                   <div className="muted">{contact.phone ?? '-'}</div>
+                  {/* Düzenle / Sil aksiyonları */}
+                  <div className="row-actions" style={{ marginTop: 8 }}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => {
+                        setEditingContact(contact);
+                        setContactModal(true);
+                      }}
+                    >
+                      Düzenle
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      disabled={deleteContact.isPending}
+                      onClick={() => void handleDeleteContact(contact)}
+                    >
+                      Sil
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -502,7 +549,11 @@ export default function CompanyDetailPage() {
       {contactModal && (
         <ContactFormModal
           companyId={id}
-          onClose={() => setContactModal(false)}
+          contact={editingContact}
+          onClose={() => {
+            setContactModal(false);
+            setEditingContact(undefined);
+          }}
         />
       )}
       {meetingModal && (

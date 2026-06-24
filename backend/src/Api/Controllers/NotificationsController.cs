@@ -58,4 +58,15 @@ public sealed class NotificationsController(INotificationService notificationSer
         await notificationService.SendToUnitAsync(request, cancellationToken);
         return Ok(ApiResponse.Ok("Bildirim gönderildi."));
     }
+
+    /// <summary>
+    /// Geçerli kullanıcının belirtilen bildirimini siler.
+    /// Başkasının bildirimine erişim 404 döner.
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        await notificationService.DeleteAsync(id, cancellationToken);
+        return Ok(ApiResponse.Ok("Bildirim silindi."));
+    }
 }

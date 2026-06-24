@@ -60,4 +60,13 @@ public interface IIdentityService
         string? phone,
         string? position,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Tüm Identity kullanıcılarını rolleriyle birlikte listeler. Yalnızca Admin kullanabilir.</summary>
+    Task<IReadOnlyList<AuthUserInfo>> ListUsersAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Belirtilen kullanıcıyı siler.
+    /// currentUserId ile eşleşirse ForbiddenAppException fırlatır (kendini silme engeli).
+    /// </summary>
+    Task DeleteUserAsync(Guid userId, Guid currentUserId, CancellationToken cancellationToken = default);
 }

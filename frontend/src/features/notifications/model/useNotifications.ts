@@ -58,3 +58,20 @@ export function useSendNotification() {
     },
   });
 }
+
+/**
+ * Kendi bildirimini siler.
+ * Başarı durumunda bildirim listesi ve okunmamış sayısı yenilenir.
+ */
+export function useDeleteNotification() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => notificationApi.deleteNotification(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.notificationsUnread,
+      });
+    },
+  });
+}

@@ -156,6 +156,25 @@ public sealed class NotificationService(
     }
 
     // -----------------------------------------------------------------------
+    // Silme
+    // -----------------------------------------------------------------------
+
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var userId = RequireCurrentUserId();
+
+        // Sahiplik kontrolü: başkasının bildirimini 404 ile gizle.
+        var notification = await notifications.GetByIdAsync(id, cancellationToken)
+            ?? throw NotFoundException.For("Bildirim", id);
+
+        if (notification.RecipientUserId != userId)
+            throw NotFoundException.For("Bildirim", id);
+
+        notifications.Remove(notification);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    // -----------------------------------------------------------------------
     // Yardımcılar
     // -----------------------------------------------------------------------
 
