@@ -2,7 +2,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
 import { MEETING_METHOD_OPTIONS } from '../../../shared/constants/labels';
-import { getErrorMessage } from '../../../shared/lib/errorMessage';
+import { useToast } from '../../../shared/components/toast/ToastProvider';
+import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
 import { useSalesReps } from '../../salesreps/model/useSalesReps';
 import {
   useCompanyContacts,
@@ -29,11 +30,13 @@ export function MeetingFormModal({
   const salesReps = useSalesReps();
   const leads = useLeads();
   const customers = useCustomers();
+  const toast = useToast();
 
   const {
     register,
     handleSubmit,
     watch,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<MeetingFormValues>({
     resolver: zodResolver(meetingSchema),
@@ -53,27 +56,31 @@ export function MeetingFormModal({
     : [...(leads.data ?? []), ...(customers.data ?? [])];
 
   const onSubmit = handleSubmit(async (values) => {
-    await createMeeting.mutateAsync({
-      companyId: values.companyId,
-      contactId: values.contactId || undefined,
-      salesRepId: values.salesRepId,
-      date: values.date,
-      // Backend expects HH:mm:ss; <input type=time> gives HH:mm.
-      time: values.time.length === 5 ? `${values.time}:00` : values.time,
-      address: values.address,
-      method: values.method,
-    });
-    onClose();
+    try {
+      await createMeeting.mutateAsync({
+        companyId: values.companyId,
+        contactId: values.contactId || undefined,
+        salesRepId: values.salesRepId,
+        date: values.date,
+        // Backend HH:mm:ss bekler; <input type=time> HH:mm verir
+        time: values.time.length === 5 ? `${values.time}:00` : values.time,
+        address: values.address,
+        method: values.method,
+      });
+      toast.success('Randevu planlandı.');
+      onClose();
+    } catch (err) {
+      // Alan-bazlı sunucu hatalarını RHF'e uygula; kalan genel hatayı toast ile göster
+      const generalMsg = applyServerFieldErrors<MeetingFormValues>(err, setError);
+      if (generalMsg) {
+        toast.error(generalMsg);
+      }
+    }
   });
 
   return (
     <Modal title="Randevu / Görüşme Planla" onClose={onClose} width={600}>
       <form className="crm-form" onSubmit={onSubmit}>
-        {createMeeting.isError && (
-          <div className="form-error">
-            {getErrorMessage(createMeeting.error)}
-          </div>
-        )}
         <div className="form-group">
           <label htmlFor="companyId">Hedef Firma</label>
           <select

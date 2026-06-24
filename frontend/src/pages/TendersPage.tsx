@@ -9,6 +9,8 @@ import { SortableTh } from '../shared/components/SortableTh';
 import { Spinner } from '../shared/components/Spinner';
 import { StateBlock } from '../shared/components/StateBlock';
 import { PlusIcon } from '../shared/components/icons';
+import { useToast } from '../shared/components/toast/ToastProvider';
+import { useConfirm } from '../shared/hooks/useConfirm';
 import { useDebouncedValue } from '../shared/hooks/useDebouncedValue';
 import {
   SECTOR_LABELS,
@@ -65,6 +67,9 @@ interface TendersContentProps {
 
 function TendersContent({ segment }: TendersContentProps) {
   const navigate = useNavigate();
+  const toast = useToast();
+  const { confirm, ConfirmEl } = useConfirm();
+
   const [sectorFilter, setSectorFilter] = useState<Sector | ''>('');
   const [searchInput, setSearchInput] = useState('');
   const [sortBy, setSortBy] = useState<TenderSortField>(DEFAULT_SORT_BY);
@@ -118,13 +123,20 @@ function TendersContent({ segment }: TendersContentProps) {
     setPage(1);
   }
 
-  function handleDelete(tender: TenderDto) {
-    if (
-      window.confirm(
-        `"${tender.title}" ihalesini silmek istediğinizden emin misiniz?`,
-      )
-    ) {
-      deleteTender.mutate(tender.id);
+  async function handleDelete(tender: TenderDto) {
+    const confirmed = await confirm({
+      title: 'İhaleyi Sil',
+      message: `"${tender.title}" ihalesini silmek istediğinizden emin misiniz?`,
+      confirmLabel: 'Sil',
+      danger: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await deleteTender.mutateAsync(tender.id);
+      toast.success('İhale silindi.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
     }
   }
 
@@ -311,7 +323,7 @@ function TendersContent({ segment }: TendersContentProps) {
                       type="button"
                       className="btn btn-ghost btn-sm"
                       disabled={deleteTender.isPending}
-                      onClick={() => handleDelete(tender)}
+                      onClick={() => void handleDelete(tender)}
                     >
                       Sil
                     </button>
@@ -332,6 +344,8 @@ function TendersContent({ segment }: TendersContentProps) {
         onPageSizeChange={handlePageSizeChange}
       />
 
+      {ConfirmEl}
+
       {createModal && <TenderFormModal onClose={() => setCreateModal(false)} />}
       {editTender && (
         <TenderFormModal
@@ -346,7 +360,15 @@ function TendersContent({ segment }: TendersContentProps) {
           onSave={(status) => {
             changeTenderStatus.mutate(
               { id: statusChangeTender.id, status },
-              { onSuccess: () => setStatusChangeTender(null) },
+              {
+                onSuccess: () => {
+                  setStatusChangeTender(null);
+                  toast.success('İhale durumu güncellendi.');
+                },
+                onError: (err) => {
+                  toast.error(getErrorMessage(err));
+                },
+              },
             );
           }}
           isPending={changeTenderStatus.isPending}

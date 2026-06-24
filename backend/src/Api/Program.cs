@@ -38,7 +38,13 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
             .SelectMany(kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage))
             .Where(m => !string.IsNullOrWhiteSpace(m))
             .ToList();
-        return new BadRequestObjectResult(ApiResponse.Fail("Geçersiz istek.", errors));
+        // Alan-bazlı hatalar: ModelState anahtarı camelCase'e çevrilir.
+        var fieldErrors = context.ModelState
+            .Where(kvp => kvp.Value!.Errors.Count > 0 && !string.IsNullOrEmpty(kvp.Key))
+            .ToDictionary(
+                kvp => char.IsLower(kvp.Key[0]) ? kvp.Key : char.ToLowerInvariant(kvp.Key[0]) + kvp.Key[1..],
+                kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
+        return new BadRequestObjectResult(ApiResponse.Fail("Geçersiz istek.", errors, fieldErrors));
     };
 });
 

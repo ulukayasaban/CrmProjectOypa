@@ -21,6 +21,8 @@ import { mailDraftApi } from '../features/maildrafts/api/mailDraftApi';
 import { Spinner } from '../shared/components/Spinner';
 import { StateBlock } from '../shared/components/StateBlock';
 import { PlusIcon } from '../shared/components/icons';
+import { useToast } from '../shared/components/toast/ToastProvider';
+import { useConfirm } from '../shared/hooks/useConfirm';
 import {
   LEAD_STATUS_OPTIONS,
   MEETING_METHOD_LABELS,
@@ -40,8 +42,8 @@ interface MeetingMailActionsProps {
 }
 
 /**
- * Fetches the mail draft for a meeting and renders Outlook/eml action buttons.
- * Buttons are disabled while loading and hidden when no draft exists (404).
+ * Görüşmeye ait mail taslağını çeker ve Outlook/.eml aksiyon butonlarını render eder.
+ * Taslak yoksa (404) null döner.
  */
 function MeetingMailActions({ meetingId }: MeetingMailActionsProps) {
   const [emlPending, setEmlPending] = useState(false);
@@ -49,7 +51,7 @@ function MeetingMailActions({ meetingId }: MeetingMailActionsProps) {
   const { data: draft, isLoading } = useQuery({
     queryKey: queryKeys.mailDraftByMeeting(meetingId),
     queryFn: () => mailDraftApi.getByMeeting(meetingId),
-    // A 404 means no draft exists for this meeting — treat as empty, not error.
+    // 404 → bu görüşme için taslak yok; hata olarak ele alma.
     retry: false,
     throwOnError: false,
   });
@@ -104,6 +106,9 @@ function MeetingMailActions({ meetingId }: MeetingMailActionsProps) {
 export default function CompanyDetailPage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
+  const { confirm, ConfirmEl } = useConfirm();
+
   const [contactModal, setContactModal] = useState(false);
   const [meetingModal, setMeetingModal] = useState(false);
   const [opportunityModal, setOpportunityModal] = useState(false);
@@ -128,6 +133,22 @@ export default function CompanyDetailPage() {
   const data = company.data;
   const isLead = data.type === 'Lead';
   const isCustomer = data.type === 'Customer';
+
+  async function handleConvert() {
+    const confirmed = await confirm({
+      title: 'Müşteriye Dönüştür',
+      message: 'Firmayı aktif müşteri portföyüne taşımak istiyor musunuz?',
+      confirmLabel: 'Dönüştür',
+    });
+    if (!confirmed) return;
+
+    try {
+      await convert.mutateAsync();
+      toast.success('Firma müşteriye dönüştürüldü.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  }
 
   return (
     <>
@@ -163,7 +184,10 @@ export default function CompanyDetailPage() {
                     // LEAD_STATUS_OPTIONS'tan gelen değer; narrowing ile runtime güvenli daraltma.
                     const status = toLeadStatus(event.target.value);
                     if (status !== undefined) {
-                      updateLeadStatus.mutate(status);
+                      updateLeadStatus.mutate(status, {
+                        onSuccess: () => toast.success('Lead durumu güncellendi.'),
+                        onError: (err) => toast.error(getErrorMessage(err)),
+                      });
                     }
                   }}
                 >
@@ -173,11 +197,6 @@ export default function CompanyDetailPage() {
                     </option>
                   ))}
                 </select>
-                {updateLeadStatus.isError && (
-                  <span className="field-error">
-                    {getErrorMessage(updateLeadStatus.error)}
-                  </span>
-                )}
               </div>
             )}
             <hr className="divider" />
@@ -245,7 +264,10 @@ export default function CompanyDetailPage() {
                   disabled={assignSalesRep.isPending || salesReps.isLoading}
                   onChange={(event) => {
                     const value = event.target.value;
-                    assignSalesRep.mutate(value === '' ? null : value);
+                    assignSalesRep.mutate(value === '' ? null : value, {
+                      onSuccess: () => toast.success('Temsilci atandı.'),
+                      onError: (err) => toast.error(getErrorMessage(err)),
+                    });
                   }}
                 >
                   <option value="">Havuza al (atama yok)</option>
@@ -255,11 +277,6 @@ export default function CompanyDetailPage() {
                     </option>
                   ))}
                 </select>
-                {assignSalesRep.isError && (
-                  <span className="field-error">
-                    {getErrorMessage(assignSalesRep.error)}
-                  </span>
-                )}
               </div>
             )}
             <div className="detail-actions">
@@ -268,15 +285,7 @@ export default function CompanyDetailPage() {
                   type="button"
                   className="btn btn-primary"
                   disabled={convert.isPending}
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        'Firmayı aktif müşteri portföyüne taşımak istiyor musunuz?',
-                      )
-                    ) {
-                      convert.mutate();
-                    }
-                  }}
+                  onClick={() => void handleConvert()}
                 >
                   {convert.isPending
                     ? 'Dönüştürülüyor...'
@@ -291,7 +300,15 @@ export default function CompanyDetailPage() {
                   onClick={() => {
                     const nextStatus =
                       data.customerStatus === 'Active' ? 'Passive' : 'Active';
-                    updateCustomerStatus.mutate(nextStatus);
+                    updateCustomerStatus.mutate(nextStatus, {
+                      onSuccess: () =>
+                        toast.success(
+                          nextStatus === 'Passive'
+                            ? 'Müşteri pasif yapıldı.'
+                            : 'Müşteri aktif yapıldı.',
+                        ),
+                      onError: (err) => toast.error(getErrorMessage(err)),
+                    });
                   }}
                 >
                   {updateCustomerStatus.isPending
@@ -300,11 +317,6 @@ export default function CompanyDetailPage() {
                       ? 'Pasif Yap'
                       : 'Aktif Yap'}
                 </button>
-              )}
-              {isCustomer && updateCustomerStatus.isError && (
-                <span className="field-error" style={{ fontSize: '0.8rem' }}>
-                  {getErrorMessage(updateCustomerStatus.error)}
-                </span>
               )}
               <button
                 type="button"
@@ -321,11 +333,6 @@ export default function CompanyDetailPage() {
                 📅 Randevu Planla
               </button>
             </div>
-            {convert.isError && (
-              <div className="form-error" style={{ marginTop: 12 }}>
-                {getErrorMessage(convert.error)}
-              </div>
-            )}
           </div>
         </div>
 
@@ -426,11 +433,19 @@ export default function CompanyDetailPage() {
                                   className="btn btn-ghost btn-sm"
                                   disabled={updateStatus.isPending}
                                   onClick={() =>
-                                    updateStatus.mutate({
-                                      id: meeting.id,
-                                      status: 'Done',
-                                      companyId: id,
-                                    })
+                                    updateStatus.mutate(
+                                      {
+                                        id: meeting.id,
+                                        status: 'Done',
+                                        companyId: id,
+                                      },
+                                      {
+                                        onSuccess: () =>
+                                          toast.success('Görüşme yapıldı olarak işaretlendi.'),
+                                        onError: (err) =>
+                                          toast.error(getErrorMessage(err)),
+                                      },
+                                    )
                                   }
                                 >
                                   Yapıldı
@@ -481,6 +496,8 @@ export default function CompanyDetailPage() {
           </div>
         </div>
       </div>
+
+      {ConfirmEl}
 
       {contactModal && (
         <ContactFormModal

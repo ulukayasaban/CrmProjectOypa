@@ -2,7 +2,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
 import { USER_ROLE_OPTIONS } from '../../../shared/constants/labels';
-import { getErrorMessage } from '../../../shared/lib/errorMessage';
+import { useToast } from '../../../shared/components/toast/ToastProvider';
+import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
 import { useCreateEmployee, useUpdateEmployee } from '../model/useEmployees';
 import {
   createEmployeeSchema,
@@ -32,6 +33,7 @@ export function EmployeeFormModal({
   const isEdit = Boolean(employee);
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee();
+  const toast = useToast();
 
   // Create mode form
   const createForm = useForm<CreateEmployeeFormValues>({
@@ -57,35 +59,55 @@ export function EmployeeFormModal({
   });
 
   const createAccount = createForm.watch('createAccount');
-  const mutationError = isEdit ? updateEmployee.error : createEmployee.error;
-  const mutationIsError = isEdit ? updateEmployee.isError : createEmployee.isError;
 
   const onSubmitCreate = createForm.handleSubmit(async (values) => {
-    const result = await createEmployee.mutateAsync({
-      title: values.title,
-      fullName: values.fullName || undefined,
-      email: values.email || undefined,
-      managerId: values.managerId || undefined,
-      createAccount: values.createAccount,
-      role: values.createAccount ? values.role : undefined,
-    });
-    if (result.account) {
-      onCredentials?.(result.account);
+    try {
+      const result = await createEmployee.mutateAsync({
+        title: values.title,
+        fullName: values.fullName || undefined,
+        email: values.email || undefined,
+        managerId: values.managerId || undefined,
+        createAccount: values.createAccount,
+        role: values.createAccount ? values.role : undefined,
+      });
+      toast.success('Personel oluşturuldu.');
+      if (result.account) {
+        onCredentials?.(result.account);
+      }
+      onClose();
+    } catch (err) {
+      const generalMsg = applyServerFieldErrors<CreateEmployeeFormValues>(
+        err,
+        createForm.setError,
+      );
+      if (generalMsg) {
+        toast.error(generalMsg);
+      }
     }
-    onClose();
   });
 
   const onSubmitEdit = editForm.handleSubmit(async (values) => {
     if (!employee) return;
-    await updateEmployee.mutateAsync({
-      id: employee.id,
-      payload: {
-        title: values.title,
-        fullName: values.fullName || undefined,
-        email: values.email || undefined,
-      },
-    });
-    onClose();
+    try {
+      await updateEmployee.mutateAsync({
+        id: employee.id,
+        payload: {
+          title: values.title,
+          fullName: values.fullName || undefined,
+          email: values.email || undefined,
+        },
+      });
+      toast.success('Personel güncellendi.');
+      onClose();
+    } catch (err) {
+      const generalMsg = applyServerFieldErrors<UpdateEmployeeFormValues>(
+        err,
+        editForm.setError,
+      );
+      if (generalMsg) {
+        toast.error(generalMsg);
+      }
+    }
   });
 
   // Exclude the edited employee from the manager dropdown
@@ -99,9 +121,6 @@ export function EmployeeFormModal({
     >
       {isEdit ? (
         <form className="crm-form" onSubmit={onSubmitEdit}>
-          {mutationIsError && (
-            <div className="form-error">{getErrorMessage(mutationError)}</div>
-          )}
           <div className="form-group">
             <label htmlFor="edit-title">Ünvan</label>
             <input id="edit-title" {...editForm.register('title')} />
@@ -134,9 +153,6 @@ export function EmployeeFormModal({
         </form>
       ) : (
         <form className="crm-form" onSubmit={onSubmitCreate}>
-          {mutationIsError && (
-            <div className="form-error">{getErrorMessage(mutationError)}</div>
-          )}
           <div className="form-group">
             <label htmlFor="create-title">Ünvan</label>
             <input id="create-title" {...createForm.register('title')} />

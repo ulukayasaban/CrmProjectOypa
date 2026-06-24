@@ -5,7 +5,8 @@ import {
   SECTOR_OPTIONS,
   TENDER_STATUS_OPTIONS,
 } from '../../../shared/constants/labels';
-import { getErrorMessage } from '../../../shared/lib/errorMessage';
+import { useToast } from '../../../shared/components/toast/ToastProvider';
+import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
 import { useSalesReps } from '../../salesreps/model/useSalesReps';
 import { useCustomers, useLeads } from '../../companies/model/useCompanies';
 import { useCreateTender, useUpdateTender } from '../model/useTenders';
@@ -32,10 +33,12 @@ export function TenderFormModal({ onClose, tender }: TenderFormModalProps) {
   const salesReps = useSalesReps();
   const leads = useLeads();
   const customers = useCustomers();
+  const toast = useToast();
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<TenderFormValues>({
     resolver: zodResolver(tenderSchema),
@@ -68,8 +71,6 @@ export function TenderFormModal({ onClose, tender }: TenderFormModalProps) {
   const companyOptions = [...(leads.data ?? []), ...(customers.data ?? [])];
 
   const isPending = isEdit ? updateTender.isPending : createTender.isPending;
-  const isError = isEdit ? updateTender.isError : createTender.isError;
-  const mutationError = isEdit ? updateTender.error : createTender.error;
 
   const onSubmit = handleSubmit(async (values) => {
     const payload = {
@@ -87,12 +88,22 @@ export function TenderFormModal({ onClose, tender }: TenderFormModalProps) {
       assignedSalesRepId: values.assignedSalesRepId || null,
     };
 
-    if (isEdit && tender) {
-      await updateTender.mutateAsync({ id: tender.id, payload });
-    } else {
-      await createTender.mutateAsync(payload);
+    try {
+      if (isEdit && tender) {
+        await updateTender.mutateAsync({ id: tender.id, payload });
+        toast.success('İhale güncellendi.');
+      } else {
+        await createTender.mutateAsync(payload);
+        toast.success('İhale kaydedildi.');
+      }
+      onClose();
+    } catch (err) {
+      // Alan-bazlı sunucu hatalarını RHF'e uygula; kalan genel hatayı toast ile göster
+      const generalMsg = applyServerFieldErrors<TenderFormValues>(err, setError);
+      if (generalMsg) {
+        toast.error(generalMsg);
+      }
     }
-    onClose();
   });
 
   return (
@@ -102,10 +113,6 @@ export function TenderFormModal({ onClose, tender }: TenderFormModalProps) {
       width={660}
     >
       <form className="crm-form" onSubmit={onSubmit}>
-        {isError && (
-          <div className="form-error">{getErrorMessage(mutationError)}</div>
-        )}
-
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="companyId">Firma</label>

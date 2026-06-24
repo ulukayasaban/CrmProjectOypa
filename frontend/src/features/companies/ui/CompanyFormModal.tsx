@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
 import { SECTOR_OPTIONS, SOURCE_OPTIONS } from '../../../shared/constants/labels';
-import { getErrorMessage } from '../../../shared/lib/errorMessage';
+import { useToast } from '../../../shared/components/toast/ToastProvider';
+import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
 import { useCreateCompany } from '../model/useCompanies';
 import {
   companySchema,
@@ -36,11 +37,13 @@ const COPY_FIELDS: ReadonlyArray<{ field: CopyField; label: string; type?: strin
 
 export function CompanyFormModal({ onClose, onCreated, prefill }: CompanyFormModalProps) {
   const createCompany = useCreateCompany();
+  const toast = useToast();
   const isOpportunity = Boolean(prefill);
   const {
     register,
     handleSubmit,
     setValue,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
@@ -61,19 +64,28 @@ export function CompanyFormModal({ onClose, onCreated, prefill }: CompanyFormMod
   }
 
   const onSubmit = handleSubmit(async (values) => {
-    const company = await createCompany.mutateAsync({
-      title: values.title,
-      sector: values.sector,
-      phone: values.phone,
-      email: values.email,
-      address: values.address,
-      city: values.city || undefined,
-      website: values.website || undefined,
-      taxNumber: values.taxNumber || undefined,
-      source: values.source || undefined,
-    });
-    onCreated?.(company);
-    onClose();
+    try {
+      const company = await createCompany.mutateAsync({
+        title: values.title,
+        sector: values.sector,
+        phone: values.phone,
+        email: values.email,
+        address: values.address,
+        city: values.city || undefined,
+        website: values.website || undefined,
+        taxNumber: values.taxNumber || undefined,
+        source: values.source || undefined,
+      });
+      toast.success(isOpportunity ? 'Yeni fırsat oluşturuldu.' : 'Firma kaydedildi.');
+      onCreated?.(company);
+      onClose();
+    } catch (err) {
+      // Alan-bazlı sunucu hatalarını RHF'e uygula; kalan genel hatayı toast ile göster
+      const generalMsg = applyServerFieldErrors<CompanyFormValues>(err, setError);
+      if (generalMsg) {
+        toast.error(generalMsg);
+      }
+    }
   });
 
   return (
@@ -83,11 +95,6 @@ export function CompanyFormModal({ onClose, onCreated, prefill }: CompanyFormMod
       width={600}
     >
       <form className="crm-form" onSubmit={onSubmit}>
-        {createCompany.isError && (
-          <div className="form-error">
-            {getErrorMessage(createCompany.error)}
-          </div>
-        )}
         {isOpportunity && (
           <p className="muted" style={{ fontSize: '0.8rem' }}>
             <strong>{prefill?.title}</strong> firması için yeni bir fırsat

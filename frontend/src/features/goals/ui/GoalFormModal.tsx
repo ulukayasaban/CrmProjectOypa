@@ -1,7 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
-import { getErrorMessage } from '../../../shared/lib/errorMessage';
+import { useToast } from '../../../shared/components/toast/ToastProvider';
+import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
 import { useManagedEmployees } from '../../employees/model/useEmployees';
 import { useCreateGoal, useUpdateGoal } from '../model/useGoals';
 import {
@@ -26,13 +27,14 @@ export function GoalFormModal({ goal, onClose }: GoalFormModalProps) {
   const managedEmployees = useManagedEmployees();
   const createGoal = useCreateGoal();
   const updateGoal = useUpdateGoal();
+  const toast = useToast();
 
   const isEdit = Boolean(goal);
-  const mutation = isEdit ? updateGoal : createGoal;
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<GoalFormValues>({
     resolver: zodResolver(goalSchema),
@@ -53,21 +55,26 @@ export function GoalFormModal({ goal, onClose }: GoalFormModalProps) {
       weeklyTarget: values.weeklyTarget,
       title: values.title || undefined,
     };
-    if (isEdit && goal) {
-      await updateGoal.mutateAsync({ id: goal.id, payload });
-    } else {
-      await createGoal.mutateAsync(payload);
+    try {
+      if (isEdit && goal) {
+        await updateGoal.mutateAsync({ id: goal.id, payload });
+        toast.success('Hedef güncellendi.');
+      } else {
+        await createGoal.mutateAsync(payload);
+        toast.success('Hedef oluşturuldu.');
+      }
+      onClose();
+    } catch (err) {
+      const generalMsg = applyServerFieldErrors<GoalFormValues>(err, setError);
+      if (generalMsg) {
+        toast.error(generalMsg);
+      }
     }
-    onClose();
   });
 
   return (
     <Modal title={isEdit ? 'Hedef Düzenle' : 'Yeni Hedef'} onClose={onClose}>
       <form className="crm-form" onSubmit={onSubmit}>
-        {mutation.isError && (
-          <div className="form-error">{getErrorMessage(mutation.error)}</div>
-        )}
-
         <div className="form-group">
           <label htmlFor="assigneeEmployeeId">Atanan Personel</label>
           <select id="assigneeEmployeeId" {...register('assigneeEmployeeId')}>

@@ -5,6 +5,8 @@ import { GoalWeeksModal } from '../features/goals/ui/GoalWeeksModal';
 import { Spinner } from '../shared/components/Spinner';
 import { StateBlock } from '../shared/components/StateBlock';
 import { PlusIcon } from '../shared/components/icons';
+import { useToast } from '../shared/components/toast/ToastProvider';
+import { useConfirm } from '../shared/hooks/useConfirm';
 import { getErrorMessage } from '../shared/lib/errorMessage';
 import type { GoalDto } from '../entities/goal/model/goal';
 
@@ -17,6 +19,8 @@ const SEGMENT_LABELS: Record<string, string> = {
 export default function GoalsPage() {
   const { data, isLoading, isError, error } = useGoals();
   const deleteGoal = useDeleteGoal();
+  const toast = useToast();
+  const { confirm, ConfirmEl } = useConfirm();
 
   const [createModal, setCreateModal] = useState(false);
   const [editGoal, setEditGoal] = useState<GoalDto | null>(null);
@@ -25,10 +29,21 @@ export default function GoalsPage() {
   if (isLoading) return <Spinner />;
   if (isError) return <StateBlock message={getErrorMessage(error)} />;
 
-  const handleDelete = (goal: GoalDto) => {
+  const handleDelete = async (goal: GoalDto) => {
     const label = goal.title ?? goal.assigneeName;
-    if (window.confirm(`"${label}" hedefini silmek istediğinize emin misiniz?`)) {
-      void deleteGoal.mutateAsync(goal.id);
+    const confirmed = await confirm({
+      title: 'Hedefi Sil',
+      message: `"${label}" hedefini silmek istediğinize emin misiniz?`,
+      confirmLabel: 'Sil',
+      danger: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await deleteGoal.mutateAsync(goal.id);
+      toast.success('Hedef silindi.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
     }
   };
 
@@ -110,7 +125,7 @@ export default function GoalsPage() {
                         <button
                           type="button"
                           className="btn btn-ghost btn-sm"
-                          onClick={() => handleDelete(goal)}
+                          onClick={() => void handleDelete(goal)}
                           disabled={deleteGoal.isPending}
                         >
                           Sil
@@ -124,6 +139,8 @@ export default function GoalsPage() {
           </table>
         </div>
       </div>
+
+      {ConfirmEl}
 
       {createModal && <GoalFormModal onClose={() => setCreateModal(false)} />}
       {editGoal && (

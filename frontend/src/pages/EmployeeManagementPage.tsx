@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { Modal } from '../shared/components/Modal';
 import { Spinner } from '../shared/components/Spinner';
 import { StateBlock } from '../shared/components/StateBlock';
 import { Pagination } from '../shared/components/Pagination';
 import { SortableTh } from '../shared/components/SortableTh';
 import { PlusIcon } from '../shared/components/icons';
+import { useToast } from '../shared/components/toast/ToastProvider';
+import { useConfirm } from '../shared/hooks/useConfirm';
 import { useDebouncedValue } from '../shared/hooks/useDebouncedValue';
 import { getErrorMessage } from '../shared/lib/errorMessage';
-import { USER_ROLE_LABELS } from '../shared/constants/labels';
+import { USER_ROLE_LABELS, USER_ROLE_OPTIONS } from '../shared/constants/labels';
 import {
   // Tam-liste hook'lar: modal/operasyon için kullanılmaya devam eder
   useManagedEmployees,
@@ -42,6 +45,8 @@ type ActiveModal =
 export default function EmployeeManagementPage() {
   // Tam-liste: modal ve operasyonlar için (Sidebar/NotificationBell de bu key'i kullanır)
   const managed = useManagedEmployees();
+  const toast = useToast();
+  const { confirm, ConfirmEl } = useConfirm();
 
   // Tablo için sayfalı sorgu
   const [searchInput, setSearchInput] = useState('');
@@ -78,9 +83,21 @@ export default function EmployeeManagementPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Bu personeli silmek istediğinize emin misiniz?')) return;
-    await removeEmployee.mutateAsync(id);
-    if (pendingDeleteId === id) setPendingDeleteId(null);
+    const confirmed = await confirm({
+      title: 'Personeli Sil',
+      message: 'Bu personeli silmek istediğinize emin misiniz?',
+      confirmLabel: 'Sil',
+      danger: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await removeEmployee.mutateAsync(id);
+      toast.success('Personel silindi.');
+      if (pendingDeleteId === id) setPendingDeleteId(null);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
   }
 
   async function handleCreateAccount(employee: EmployeeDto) {
@@ -88,18 +105,42 @@ export default function EmployeeManagementPage() {
   }
 
   async function handleResetPassword(employee: EmployeeDto) {
-    if (!window.confirm(`${employee.title} için parola sıfırlansın mı?`)) return;
-    const result = await resetPassword.mutateAsync(employee.id);
-    setCredentials(result);
+    const confirmed = await confirm({
+      title: 'Parola Sıfırla',
+      message: `${employee.title} için parola sıfırlansın mı?`,
+      confirmLabel: 'Sıfırla',
+    });
+    if (!confirmed) return;
+
+    try {
+      const result = await resetPassword.mutateAsync(employee.id);
+      toast.success('Parola sıfırlandı.');
+      setCredentials(result);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
   }
 
   async function handleUnlinkAccount(employee: EmployeeDto) {
-    if (!window.confirm(`${employee.title} için hesap bağlantısı kaldırılsın mı?`)) return;
-    await unlinkAccount.mutateAsync(employee.id);
+    const confirmed = await confirm({
+      title: 'Hesap Bağlantısını Kaldır',
+      message: `${employee.title} için hesap bağlantısı kaldırılsın mı?`,
+      confirmLabel: 'Kaldır',
+      danger: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      await unlinkAccount.mutateAsync(employee.id);
+      toast.success('Hesap bağlantısı kaldırıldı.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
   }
 
   async function handleCreateAccountSubmit(employee: EmployeeDto, role: string) {
     const result = await createAccount.mutateAsync({ id: employee.id, payload: { role } });
+    toast.success('Hesap oluşturuldu.');
     setCredentials(result);
     closeModal();
   }
@@ -337,6 +378,8 @@ export default function EmployeeManagementPage() {
         )}
       </div>
 
+      {ConfirmEl}
+
       {activeModal?.type === 'create' && (
         <EmployeeFormModal
           managedList={fullEmployeeList}
@@ -389,7 +432,8 @@ export default function EmployeeManagementPage() {
   );
 }
 
-// Modal için yerel bileşen — sayfanın geri kalanından ayrı tutuldu
+// ─── Yerel CreateAccountModal ─────────────────────────────────────────────────
+
 interface CreateAccountModalProps {
   employee: EmployeeDto;
   isPending: boolean;
@@ -398,10 +442,6 @@ interface CreateAccountModalProps {
   onSubmit: (employee: EmployeeDto, role: string) => void;
   onClose: () => void;
 }
-
-import React from 'react';
-import { Modal } from '../shared/components/Modal';
-import { USER_ROLE_OPTIONS } from '../shared/constants/labels';
 
 function CreateAccountModal({
   employee,

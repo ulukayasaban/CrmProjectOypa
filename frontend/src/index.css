@@ -907,6 +907,83 @@ select option {
 }
 
 /* ============================================================
+   Toast bildirimleri
+   Konteyner: pointer-events:none → sayfa içeriği tıklanabilir kalır.
+   Toast'lar: pointer-events:auto → kapatma butonu çalışır.
+   z-index 1500 → modal (1000) ve sidebar (1200) üstünde.
+   ============================================================ */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1500;
+  pointer-events: none;
+  max-width: calc(100vw - 48px);
+}
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  min-width: 280px;
+  max-width: 400px;
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: toastIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.toast--success {
+  background: rgba(39, 174, 96, 0.18);
+  border-color: rgba(39, 174, 96, 0.4);
+  color: #7dffb3;
+}
+.toast--error {
+  background: rgba(235, 87, 87, 0.18);
+  border-color: rgba(235, 87, 87, 0.4);
+  color: #ffb4b4;
+}
+.toast--info {
+  background: rgba(26, 95, 122, 0.28);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-main);
+}
+.toast__message {
+  flex: 1;
+}
+.toast__close {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  opacity: 0.7;
+  padding: 0 2px;
+  flex-shrink: 0;
+  margin-top: -1px;
+}
+.toast__close:hover {
+  opacity: 1;
+}
+
+/* ============================================================
    Responsive — Tablet (<=1024px)
    ============================================================ */
 @media (max-width: 1024px) {

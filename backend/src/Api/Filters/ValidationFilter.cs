@@ -22,10 +22,23 @@ public sealed class ValidationFilter : IAsyncActionFilter
             if (result.IsValid) continue;
 
             var errors = result.Errors.Select(e => e.ErrorMessage).ToList();
-            context.Result = new BadRequestObjectResult(ApiResponse.Fail("Doğrulama hatası.", errors));
+            // Alan-bazlı hatalar: PropertyName camelCase'e çevrilir (istemci RHF alanlarına bağlar).
+            var fieldErrors = result.Errors
+                .GroupBy(e => ToCamelCase(e.PropertyName))
+                .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+            context.Result = new BadRequestObjectResult(
+                ApiResponse.Fail("Doğrulama hatası.", errors, fieldErrors));
             return;
         }
 
         await next();
+    }
+
+    /// <summary>"Title" → "title", "TenderDate" → "tenderDate" (boş/tek karakter güvenli).</summary>
+    private static string ToCamelCase(string propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName) || char.IsLower(propertyName[0]))
+            return propertyName;
+        return char.ToLowerInvariant(propertyName[0]) + propertyName[1..];
     }
 }

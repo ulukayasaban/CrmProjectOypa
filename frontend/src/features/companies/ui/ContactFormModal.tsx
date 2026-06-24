@@ -1,7 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
-import { getErrorMessage } from '../../../shared/lib/errorMessage';
+import { useToast } from '../../../shared/components/toast/ToastProvider';
+import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
 import { useCreateContact } from '../model/useCompanies';
 import { contactSchema, type ContactFormValues } from '../model/companySchema';
 
@@ -12,31 +13,36 @@ interface ContactFormModalProps {
 
 export function ContactFormModal({ companyId, onClose }: ContactFormModalProps) {
   const createContact = useCreateContact(companyId);
+  const toast = useToast();
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
   });
 
   const onSubmit = handleSubmit(async (values) => {
-    await createContact.mutateAsync({
-      name: values.name,
-      email: values.email || undefined,
-      phone: values.phone || undefined,
-    });
-    onClose();
+    try {
+      await createContact.mutateAsync({
+        name: values.name,
+        email: values.email || undefined,
+        phone: values.phone || undefined,
+      });
+      toast.success('İlgili kişi eklendi.');
+      onClose();
+    } catch (err) {
+      const generalMsg = applyServerFieldErrors<ContactFormValues>(err, setError);
+      if (generalMsg) {
+        toast.error(generalMsg);
+      }
+    }
   });
 
   return (
     <Modal title="Yeni İlgili Kişi" onClose={onClose}>
       <form className="crm-form" onSubmit={onSubmit}>
-        {createContact.isError && (
-          <div className="form-error">
-            {getErrorMessage(createContact.error)}
-          </div>
-        )}
         <div className="form-group">
           <label htmlFor="name">İsim Soyisim</label>
           <input id="name" {...register('name')} />
