@@ -34,7 +34,10 @@ export function AppLayout() {
   // Mobil off-canvas sidebar durumu. Rota değişince otomatik kapanır.
   const [navOpen, setNavOpen] = useState(false);
 
+  // Rota değişince mobil çekmeceyi kapat. Effect içinde setState bilinçli ve güvenlidir:
+  // yalnızca pathname değiştiğinde tetiklenir, döngü oluşturmaz.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNavOpen(false);
   }, [location.pathname]);
 

@@ -19,4 +19,16 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // react-refresh/only-export-components yalnızca HMR (fast-refresh) içindir.
+    // Router (lazy bileşenler + router export) ve context provider dosyaları meşru
+    // olarak bileşen-dışı export içerir; bu dosyalarda kural kapatılır.
+    files: [
+      'src/routes/router.tsx',
+      'src/shared/components/toast/ToastProvider.tsx',
+    ],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

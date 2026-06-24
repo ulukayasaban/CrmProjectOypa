@@ -14,6 +14,12 @@ node_modules/
 frontend/dist/
 frontend/.vite/
 
+# Playwright E2E çıktıları
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/.last-run.json
+
 # Env & secrets (.env.production gibi varyantlar dahil; .example şablonları hariç)
 .env
 .env.local
