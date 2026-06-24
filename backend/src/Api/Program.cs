@@ -54,7 +54,7 @@ builder.Services.AddScoped<ICurrentUser, CurrentUserService>();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
-builder.Services.AddAppRateLimiting();
+builder.Services.AddAppRateLimiting(builder.Environment.IsDevelopment());
 builder.Services.AddAppSwagger();
 
 // Sağlık kontrolü: liveness + DB hazırlık kontrolü (ek NuGet paketi gerektirmez).

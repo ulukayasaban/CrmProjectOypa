@@ -1,37 +1,46 @@
 # OYPA CRM — E2E Testleri (Playwright)
 
-Kritik kullanıcı akışları için uçtan uca test iskeleti. CI'ı ağırlaştırmamak için
-Playwright bağımlılığı `package.json`'a **eklenmemiştir**; kullanmak için kurulum gerekir.
+Kritik kullanıcı akışları için uçtan uca testler. Playwright bağımlılığı (`@playwright/test`)
+`devDependencies`'tedir; tarayıcılar ayrıca indirilmelidir.
 
-## Kurulum
+## Kurulum (ilk kez)
 
 ```bash
 cd frontend
-npm i -D @playwright/test
+npm install
 npx playwright install chromium
 ```
 
 ## Çalıştırma
 
-Önce API (5022) ve frontend dev server (5173) ayakta olmalı:
-
 ```bash
-# 1) API
-dotnet run --project backend/src/Api --launch-profile http
-# 2) Frontend (ayrı terminal)
-cd frontend && npm run dev
-# 3) E2E (ayrı terminal)
-cd frontend && npx playwright test --config e2e/playwright.config.ts
+cd frontend
+npm run test:e2e
 ```
 
-## Kapsam (başlangıç)
+`playwright.config.ts` `webServer` ile API (5022) ve frontend dev (5173) zaten çalışıyorsa
+**yeniden kullanır**, çalışmıyorsa **otomatik başlatır**. Yani sadece komutu çalıştırmak yeterli.
 
-- `login.spec.ts` — geçerli kimlik bilgisiyle giriş → dashboard'a yönlenme; geçersiz bilgide hata.
+## Kapsam
 
-Yeni akışlar eklendikçe (ihale oluşturma, sayfalama, bildirim) buraya `*.spec.ts` eklenir.
+| Dosya | Akış |
+|---|---|
+| `login.spec.ts` | Giriş (geçerli→dashboard, geçersiz→login'de kalır) |
+| `navigation.spec.ts` | Tüm ana sayfaların yüklenmesi + sidebar navigasyon + grup genişleme |
+| `tenders.spec.ts` | İhale arama, sektör filtresi, kazanılan segment |
+| `lists.spec.ts` | Lead/Müşteri/Görüşme/Personel arama kutuları + boş durum |
+| `calendar.spec.ts` | Takvim ızgarası + ay navigasyonu |
+| `notifications.spec.ts` | Bildirim çanı popover |
+| `profile.spec.ts` | Profil bilgisi + Düzenle/Parola modalları |
+| `account.spec.ts` | Şifremi unuttum linki + forgot/reset sayfaları (anonim) |
+| `reports.spec.ts` | Rapor indirme butonları |
+
+`helpers.ts` (login yardımcısı) ve `fixtures.ts` (otomatik giriş yapan `page` fixture) ortak yapılardır.
+
+> Not: Development ortamında rate limiting gevşektir (E2E'nin tekrarlı login/refresh'i engellenmesin
+> diye); production'da sıkı limitler korunur.
 
 ## CI
 
-İstenirse `.github/workflows/ci.yml`'e ayrı bir `e2e` job eklenir:
-servisleri başlat → `npx playwright install --with-deps chromium` → `npx playwright test`.
-Tarayıcı indirme maliyeti nedeniyle varsayılan CI'da kapalıdır.
+Varsayılan CI'da kapalıdır (API LocalDB/Windows + tarayıcı indirme maliyeti). Ayrı bir
+`workflow_dispatch` job'u olarak eklenebilir: SQL Server servis konteyneri + `npx playwright install --with-deps chromium` + `npm run test:e2e`.
