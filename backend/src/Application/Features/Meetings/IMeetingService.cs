@@ -1,3 +1,4 @@
+using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Meetings;
 
 namespace Oypa.Crm.Application.Features.Meetings;
@@ -14,4 +15,7 @@ public interface IMeetingService
 
     /// <summary>Belirtilen görüşmeye not ekler; güncel <see cref="MeetingDto"/> döndürür (notlar dahil).</summary>
     Task<MeetingDto> AddNoteAsync(Guid meetingId, AddMeetingNoteRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>Görüşmeleri sayfalama + arama + sıralama ile listeler.</summary>
+    Task<PagedResult<MeetingDto>> GetPagedAsync(PagedQuery query, CancellationToken cancellationToken = default);
 }

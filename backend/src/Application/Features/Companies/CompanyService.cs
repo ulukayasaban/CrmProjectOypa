@@ -1,6 +1,7 @@
 using Oypa.Crm.Application.Common.Exceptions;
 using Oypa.Crm.Application.Common.Interfaces;
 using Oypa.Crm.Application.Mappings;
+using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Companies;
 using Oypa.Crm.Domain.Entities;
 using Oypa.Crm.Domain.Enums;
@@ -120,5 +121,41 @@ public sealed class CompanyService(
 
         company.AssignSalesRep(salesRepId);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<PagedResult<CompanyDto>> GetLeadsPagedAsync(
+        LeadStatus? status,
+        PagedQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var (items, totalCount) = await companyRepository.ListLeadsPagedAsync(
+            status,
+            query.Search,
+            query.SortBy,
+            query.IsDescending,
+            query.Page,
+            query.PageSize,
+            cancellationToken);
+
+        var dtos = items.Select(c => c.ToDto()).ToList();
+        return new PagedResult<CompanyDto>(dtos, query.Page, query.PageSize, totalCount);
+    }
+
+    public async Task<PagedResult<CompanyDto>> GetCustomersPagedAsync(
+        CustomerStatus? status,
+        PagedQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var (items, totalCount) = await companyRepository.ListCustomersPagedAsync(
+            status,
+            query.Search,
+            query.SortBy,
+            query.IsDescending,
+            query.Page,
+            query.PageSize,
+            cancellationToken);
+
+        var dtos = items.Select(c => c.ToDto()).ToList();
+        return new PagedResult<CompanyDto>(dtos, query.Page, query.PageSize, totalCount);
     }
 }

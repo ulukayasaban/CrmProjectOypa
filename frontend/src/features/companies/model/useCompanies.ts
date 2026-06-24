@@ -1,9 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../../shared/api/queryKeys';
 import {
   companyApi,
   type CompanyPayload,
   type ContactPayload,
+  type CustomersPagedParams,
+  type LeadsPagedParams,
 } from '../api/companyApi';
 import type { CustomerStatus, LeadStatus } from '../../../shared/types/enums';
 
@@ -18,6 +20,30 @@ export function useCustomers(status?: CustomerStatus) {
   return useQuery({
     queryKey: status ? [...queryKeys.customers, status] : queryKeys.customers,
     queryFn: () => companyApi.getCustomers(status),
+  });
+}
+
+/**
+ * Sunucu taraflı sayfalı lead sorgusu.
+ * Takvim/Sidebar gibi tam-liste tüketicilerini etkilemez.
+ */
+export function useLeadsPaged(params: LeadsPagedParams) {
+  return useQuery({
+    queryKey: queryKeys.leadsPaged(params),
+    queryFn: () => companyApi.getLeadsPaged(params),
+    placeholderData: keepPreviousData,
+  });
+}
+
+/**
+ * Sunucu taraflı sayfalı müşteri sorgusu.
+ * Tam-liste useCustomers hook'u bozulmaz.
+ */
+export function useCustomersPaged(params: CustomersPagedParams) {
+  return useQuery({
+    queryKey: queryKeys.customersPaged(params),
+    queryFn: () => companyApi.getCustomersPaged(params),
+    placeholderData: keepPreviousData,
   });
 }
 

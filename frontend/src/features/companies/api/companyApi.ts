@@ -10,6 +10,7 @@ import type {
   LeadStatus,
   Sector,
 } from '../../../shared/types/enums';
+import type { PagedParams, PagedResult } from '../../../shared/types/paged';
 
 export interface CompanyPayload {
   title: string;
@@ -21,6 +22,16 @@ export interface CompanyPayload {
   website?: string;
   taxNumber?: string;
   source?: CompanySource;
+}
+
+/** /companies/leads/paged ucu için parametre tipi. */
+export interface LeadsPagedParams extends PagedParams {
+  status?: LeadStatus;
+}
+
+/** /companies/customers/paged ucu için parametre tipi. */
+export interface CustomersPagedParams extends PagedParams {
+  status?: CustomerStatus;
 }
 
 export interface ContactPayload {
@@ -42,6 +53,18 @@ export const companyApi = {
     const { data } = await httpClient.get<CompanyDto[]>('/companies/customers', {
       params,
     });
+    return data;
+  },
+
+  /** Sunucu taraflı sayfalı lead listesi. */
+  async getLeadsPaged(params: LeadsPagedParams): Promise<PagedResult<CompanyDto>> {
+    const { data } = await httpClient.get<PagedResult<CompanyDto>>('/companies/leads/paged', { params });
+    return data;
+  },
+
+  /** Sunucu taraflı sayfalı müşteri listesi. */
+  async getCustomersPaged(params: CustomersPagedParams): Promise<PagedResult<CompanyDto>> {
+    const { data } = await httpClient.get<PagedResult<CompanyDto>>('/companies/customers/paged', { params });
     return data;
   },
   async getById(id: string): Promise<CompanyDto> {

@@ -1,6 +1,7 @@
 using Oypa.Crm.Application.Common.Exceptions;
 using Oypa.Crm.Application.Common.Interfaces;
 using Oypa.Crm.Application.Mappings;
+using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Tenders;
 using Oypa.Crm.Domain.Entities;
 using Oypa.Crm.Domain.Enums;
@@ -114,5 +115,27 @@ public sealed class TenderService(
 
         tenders.Remove(tender);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<PagedResult<TenderDto>> GetPagedAsync(
+        Sector? sector,
+        TenderStatus? status,
+        IReadOnlyCollection<TenderStatus>? statuses,
+        PagedQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var (items, totalCount) = await tenders.ListPagedAsync(
+            sector,
+            status,
+            statuses,
+            query.Search,
+            query.SortBy,
+            query.IsDescending,
+            query.Page,
+            query.PageSize,
+            cancellationToken);
+
+        var dtos = items.Select(t => t.ToDto()).ToList();
+        return new PagedResult<TenderDto>(dtos, query.Page, query.PageSize, totalCount);
     }
 }

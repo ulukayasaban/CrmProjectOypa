@@ -1,3 +1,4 @@
+using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Employees;
 
 namespace Oypa.Crm.Application.Features.Employees;
@@ -9,6 +10,9 @@ public interface IEmployeeService
 
     /// <summary>Çağıranın yönetim kapsamındaki personel listesi.</summary>
     Task<IReadOnlyList<EmployeeDto>> GetManagedAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Çağıranın yönetim kapsamındaki personeli sayfalama + arama + sıralama ile listeler.</summary>
+    Task<PagedResult<EmployeeDto>> GetManagedPagedAsync(PagedQuery query, CancellationToken cancellationToken = default);
 
     /// <summary>Tek personel kaydı — kapsam kontrolü dahil.</summary>
     Task<EmployeeDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);

@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { useTenders } from '../features/tenders/model/useTenders';
+import { useTendersPaged } from '../features/tenders/model/useTenders';
 import { useChangeTenderStatus, useDeleteTender } from '../features/tenders/model/useTenders';
 import { TenderFormModal } from '../features/tenders/ui/TenderFormModal';
 import { Modal } from '../shared/components/Modal';
+import { Pagination } from '../shared/components/Pagination';
+import { SortableTh } from '../shared/components/SortableTh';
 import { Spinner } from '../shared/components/Spinner';
 import { StateBlock } from '../shared/components/StateBlock';
 import { PlusIcon } from '../shared/components/icons';
+import { useDebouncedValue } from '../shared/hooks/useDebouncedValue';
 import {
   SECTOR_LABELS,
   SECTOR_OPTIONS,
@@ -21,6 +24,11 @@ import type { Sector } from '../shared/types/enums';
 
 type Segment = 'aktif' | 'kazanilan' | 'kaybedilen';
 
+/**
+ * Her segmentin hangi TenderStatus değerlerini kapsadığını tanımlar.
+ * Sunucu tek bir status parametresi aldığından, segment filtrelemesi
+ * client-side olarak sayfalı sonuçlara uygulanır.
+ */
 const SEGMENT_STATUSES: Record<Segment, TenderStatus[]> = {
   aktif: ['Hazirlik', 'TeklifVerildi'],
   kazanilan: ['Kazanildi'],
@@ -33,6 +41,13 @@ function isSegment(value: string): value is Segment {
   return VALID_SEGMENTS.includes(value as Segment);
 }
 
+/** İhale tablosu sıralanabilir sütunları. */
+type TenderSortField = 'title' | 'company' | 'tenderDate' | 'estimatedValue' | 'status';
+
+const DEFAULT_SORT_BY: TenderSortField = 'tenderDate';
+const DEFAULT_SORT_DIR = 'desc' as const;
+const DEFAULT_PAGE_SIZE = 20;
+
 export default function TendersPage() {
   const { segment = '' } = useParams<{ segment: string }>();
 
@@ -40,7 +55,8 @@ export default function TendersPage() {
     return <Navigate to="/tenders/aktif" replace />;
   }
 
-  return <TendersContent segment={segment} />;
+  // key={segment}: segment değişince sayfa/arama/sıralama state'i sıfırlanır.
+  return <TendersContent key={segment} segment={segment} />;
 }
 
 interface TendersContentProps {
@@ -50,24 +66,57 @@ interface TendersContentProps {
 function TendersContent({ segment }: TendersContentProps) {
   const navigate = useNavigate();
   const [sectorFilter, setSectorFilter] = useState<Sector | ''>('');
+  const [searchInput, setSearchInput] = useState('');
+  const [sortBy, setSortBy] = useState<TenderSortField>(DEFAULT_SORT_BY);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>(DEFAULT_SORT_DIR);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [createModal, setCreateModal] = useState(false);
   const [editTender, setEditTender] = useState<TenderDto | null>(null);
   const [statusChangeTender, setStatusChangeTender] = useState<TenderDto | null>(null);
 
-  const { data, isLoading, isError, error } = useTenders();
+  // 300ms gecikme ile arama
+  const search = useDebouncedValue(searchInput, 300);
+
+  const { data, isLoading, isError, error } = useTendersPaged({
+    search: search || undefined,
+    sortBy,
+    sortDir,
+    page,
+    pageSize,
+    sector: sectorFilter !== '' ? sectorFilter : undefined,
+    // Segment'in tüm statüleri sunucuya gönderilir → filtre sunucu tarafında;
+    // böylece sayfalama ve toplam kayıt sayısı segment için doğru olur.
+    statuses: SEGMENT_STATUSES[segment],
+  });
+
   const changeTenderStatus = useChangeTenderStatus();
   const deleteTender = useDeleteTender();
 
-  if (isLoading) return <Spinner />;
-  if (isError) return <StateBlock message={getErrorMessage(error)} />;
+  /** Sıralama değişince sayfayı başa al. */
+  function handleSort(field: string, dir: 'asc' | 'desc') {
+    setSortBy(field as TenderSortField);
+    setSortDir(dir);
+    setPage(1);
+  }
 
-  const allowedStatuses = SEGMENT_STATUSES[segment];
+  /** Arama değişince sayfayı başa al. */
+  function handleSearchChange(value: string) {
+    setSearchInput(value);
+    setPage(1);
+  }
 
-  const filtered = (data ?? []).filter((tender) => {
-    const statusMatch = allowedStatuses.includes(tender.status);
-    const sectorMatch = sectorFilter === '' || tender.sector === sectorFilter;
-    return statusMatch && sectorMatch;
-  });
+  /** Sektör filtresi değişince sayfayı başa al. */
+  function handleSectorChange(value: Sector | '') {
+    setSectorFilter(value);
+    setPage(1);
+  }
+
+  /** Sayfa boyutu değişince sayfayı başa al. */
+  function handlePageSizeChange(size: number) {
+    setPageSize(size);
+    setPage(1);
+  }
 
   function handleDelete(tender: TenderDto) {
     if (
@@ -78,6 +127,14 @@ function TendersContent({ segment }: TendersContentProps) {
       deleteTender.mutate(tender.id);
     }
   }
+
+  // Segment filtresi sunucuda uygulandığından sayfa içeriği doğrudan kullanılır.
+  const filtered = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const totalCount = data?.totalCount ?? 0;
+
+  if (isLoading) return <Spinner />;
+  if (isError) return <StateBlock message={getErrorMessage(error)} />;
 
   return (
     <>
@@ -92,10 +149,21 @@ function TendersContent({ segment }: TendersContentProps) {
           </h3>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {/* Arama kutusu */}
+          <input
+            type="search"
+            placeholder="İhale veya firma ara..."
+            aria-label="İhale ara"
+            value={searchInput}
+            onChange={(event) => handleSearchChange(event.target.value)}
+            style={{ minWidth: 200 }}
+          />
           <select
             value={sectorFilter}
             aria-label="İş koluna göre filtrele"
-            onChange={(event) => setSectorFilter(toSectorFilter(event.target.value))}
+            onChange={(event) =>
+              handleSectorChange(toSectorFilter(event.target.value))
+            }
             style={{ minWidth: 160 }}
           >
             <option value="">Tüm İş Kolları</option>
@@ -120,15 +188,50 @@ function TendersContent({ segment }: TendersContentProps) {
           <thead>
             <tr>
               <th>İhale No</th>
-              <th>Başlık</th>
-              <th>Firma</th>
+              <SortableTh
+                field="title"
+                activeSortBy={sortBy}
+                activeSortDir={sortDir}
+                onSort={handleSort}
+              >
+                Başlık
+              </SortableTh>
+              <SortableTh
+                field="company"
+                activeSortBy={sortBy}
+                activeSortDir={sortDir}
+                onSort={handleSort}
+              >
+                Firma
+              </SortableTh>
               <th>İş Kolu</th>
-              <th>İhale Tarihi</th>
-              <th>Tahmini Değer</th>
+              <SortableTh
+                field="tenderDate"
+                activeSortBy={sortBy}
+                activeSortDir={sortDir}
+                onSort={handleSort}
+              >
+                İhale Tarihi
+              </SortableTh>
+              <SortableTh
+                field="estimatedValue"
+                activeSortBy={sortBy}
+                activeSortDir={sortDir}
+                onSort={handleSort}
+              >
+                Tahmini Değer
+              </SortableTh>
               <th>Personel</th>
               <th>Hacim</th>
               <th>Miktar</th>
-              <th>Durum</th>
+              <SortableTh
+                field="status"
+                activeSortBy={sortBy}
+                activeSortDir={sortDir}
+                onSort={handleSort}
+              >
+                Durum
+              </SortableTh>
               <th>İşlemler</th>
             </tr>
           </thead>
@@ -136,7 +239,9 @@ function TendersContent({ segment }: TendersContentProps) {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={11} className="table-empty">
-                  Bu kategoride ihale bulunamadı.
+                  {search
+                    ? `"${search}" için bu kategoride ihale bulunamadı.`
+                    : 'Bu kategoride ihale bulunamadı.'}
                 </td>
               </tr>
             )}
@@ -217,6 +322,15 @@ function TendersContent({ segment }: TendersContentProps) {
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        totalCount={totalCount}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={handlePageSizeChange}
+      />
 
       {createModal && <TenderFormModal onClose={() => setCreateModal(false)} />}
       {editTender && (

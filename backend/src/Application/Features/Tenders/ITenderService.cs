@@ -1,3 +1,4 @@
+using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Tenders;
 using Oypa.Crm.Domain.Enums;
 
@@ -17,4 +18,15 @@ public interface ITenderService
     Task ChangeStatusAsync(Guid id, ChangeTenderStatusRequest request, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// İhaleleri sayfalama + arama + sıralama ile listeler.
+    /// Mevcut sektör/durum filtreleri ek parametre olarak korunur.
+    /// </summary>
+    Task<PagedResult<TenderDto>> GetPagedAsync(
+        Sector? sector,
+        TenderStatus? status,
+        IReadOnlyCollection<TenderStatus>? statuses,
+        PagedQuery query,
+        CancellationToken cancellationToken = default);
 }

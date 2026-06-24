@@ -18,6 +18,19 @@ public sealed class MeetingsController(IMeetingService meetingService) : Control
         return Ok(ApiResponse<IReadOnlyList<MeetingDto>>.Ok(data));
     }
 
+    /// <summary>
+    /// Görüşmeleri sayfalama + arama + sıralama ile listeler (Takvim etkilenmez).
+    /// sortBy: date | company | status (varsayılan: date desc)
+    /// </summary>
+    [HttpGet("paged")]
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] PagedQuery query,
+        CancellationToken cancellationToken)
+    {
+        var data = await meetingService.GetPagedAsync(query, cancellationToken);
+        return Ok(ApiResponse<PagedResult<MeetingDto>>.Ok(data));
+    }
+
     [HttpPost]
     public async Task<IActionResult> Schedule(ScheduleMeetingRequest request, CancellationToken cancellationToken)
     {

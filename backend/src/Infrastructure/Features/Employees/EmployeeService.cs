@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Oypa.Crm.Application.Common.Exceptions;
 using Oypa.Crm.Application.Common.Interfaces;
 using Oypa.Crm.Application.Features.Employees;
+using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Employees;
 using Oypa.Crm.Domain.Entities;
 using Oypa.Crm.Infrastructure.Identity;
@@ -64,6 +65,49 @@ public sealed class EmployeeService(
 
         var employees = await query.ToListAsync(cancellationToken);
         return await MapToDtoListAsync(employees, cancellationToken);
+    }
+
+    public async Task<PagedResult<EmployeeDto>> GetManagedPagedAsync(
+        PagedQuery pagedQuery,
+        CancellationToken cancellationToken = default)
+    {
+        var (all, ids) = await ResolveScopeAsync(cancellationToken);
+
+        IQueryable<Employee> query = db.Set<Employee>().AsNoTracking().Include(e => e.Manager);
+
+        // Org kapsam filtresi — mevcut GetManagedAsync ile aynı kural
+        if (!all)
+            query = query.Where(e => ids.Contains(e.Id));
+
+        // Serbest metin araması: ad, e-posta veya ünvan
+        if (!string.IsNullOrWhiteSpace(pagedQuery.Search))
+        {
+            var term = pagedQuery.Search.Trim().ToLower();
+            query = query.Where(e =>
+                (e.FullName != null && e.FullName.ToLower().Contains(term)) ||
+                (e.Email != null && e.Email.ToLower().Contains(term)) ||
+                e.Title.ToLower().Contains(term));
+        }
+
+        // Toplam kayıt sayısı — sayfa kesmesinden önce hesaplanır
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        // Sıralama — bilinmeyen alan fullName asc'e düşer
+        query = (pagedQuery.SortBy?.ToLower()) switch
+        {
+            "title"    => pagedQuery.IsDescending ? query.OrderByDescending(e => e.Title)    : query.OrderBy(e => e.Title),
+            "email"    => pagedQuery.IsDescending ? query.OrderByDescending(e => e.Email)    : query.OrderBy(e => e.Email),
+            // Varsayılan: fullName asc
+            _          => pagedQuery.IsDescending ? query.OrderByDescending(e => e.FullName) : query.OrderBy(e => e.FullName)
+        };
+
+        var employees = await query
+            .Skip((pagedQuery.Page - 1) * pagedQuery.PageSize)
+            .Take(pagedQuery.PageSize)
+            .ToListAsync(cancellationToken);
+
+        var dtos = await MapToDtoListAsync(employees, cancellationToken);
+        return new PagedResult<EmployeeDto>(dtos, pagedQuery.Page, pagedQuery.PageSize, totalCount);
     }
 
     public async Task<EmployeeDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

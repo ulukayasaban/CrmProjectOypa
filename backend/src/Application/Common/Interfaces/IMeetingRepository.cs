@@ -21,4 +21,16 @@ public interface IMeetingRepository : IRepository<Meeting>
         DateOnly weekEnd,
         GoalSegment segment,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Görüşmeleri sayfa kesimiyle, arama ve sıralamayı destekleyerek getirir.
+    /// search: company.title VEYA salesRep adı ile eşleşme (case-insensitive contains).
+    /// </summary>
+    Task<(IReadOnlyList<Meeting> Items, int TotalCount)> ListPagedAsync(
+        string? search,
+        string? sortBy,
+        bool descending,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }

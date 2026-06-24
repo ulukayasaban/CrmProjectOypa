@@ -1,19 +1,32 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../../shared/api/queryKeys';
 import {
   employeeApi,
   type CreateEmployeePayload,
+  type EmployeeManagedPagedParams,
   type UpdateEmployeePayload,
   type AssignManagerPayload,
   type CreateAccountPayload,
   type AssignRolePayload,
 } from '../api/employeeApi';
 
-/** Queries managed employees (scope: current user's direct/indirect reports). */
+/** Tam liste — Sidebar/NotificationBell tarafından kullanılır, değiştirilmez. */
 export function useManagedEmployees() {
   return useQuery({
     queryKey: queryKeys.managedEmployees,
     queryFn: employeeApi.getManaged,
+  });
+}
+
+/**
+ * Sunucu taraflı sayfalı personel sorgusu (yalnızca tablo sayfası kullanır).
+ * useManagedEmployees tam-liste hook'u bozulmaz.
+ */
+export function useEmployeesManagedPaged(params: EmployeeManagedPagedParams) {
+  return useQuery({
+    queryKey: queryKeys.managedEmployeesPaged(params),
+    queryFn: () => employeeApi.getManagedPaged(params),
+    placeholderData: keepPreviousData,
   });
 }
 

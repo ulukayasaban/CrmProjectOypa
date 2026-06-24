@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../../shared/api/queryKeys';
-import { meetingApi, type MeetingPayload } from '../api/meetingApi';
+import { meetingApi, type MeetingPagedParams, type MeetingPayload } from '../api/meetingApi';
 import type { MeetingStatus } from '../../../shared/types/enums';
 
 interface AddMeetingNoteVars {
@@ -13,6 +13,18 @@ export function useMeetings() {
   return useQuery({
     queryKey: queryKeys.meetings,
     queryFn: meetingApi.getAll,
+  });
+}
+
+/**
+ * Sunucu taraflı sayfalı görüşme sorgusu.
+ * Takvim gibi tam-liste tüketicilerini etkilemez.
+ */
+export function useMeetingsPaged(params: MeetingPagedParams) {
+  return useQuery({
+    queryKey: queryKeys.meetingsPaged(params),
+    queryFn: () => meetingApi.getPaged(params),
+    placeholderData: keepPreviousData,
   });
 }
 

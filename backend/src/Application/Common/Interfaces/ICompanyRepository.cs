@@ -14,4 +14,30 @@ public interface ICompanyRepository : IRepository<Company>
 
     /// <summary>Firmayı atanan temsilciyle birlikte getirir (tracking açık — güncelleme için).</summary>
     Task<Company?> GetByIdWithRepAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lead firmaları sayfa kesimiyle, arama ve sıralamayı destekleyerek getirir.
+    /// Mevcut durum filtresi korunur.
+    /// </summary>
+    Task<(IReadOnlyList<Company> Items, int TotalCount)> ListLeadsPagedAsync(
+        LeadStatus? status,
+        string? search,
+        string? sortBy,
+        bool descending,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Müşteri firmaları sayfa kesimiyle, arama ve sıralamayı destekleyerek getirir.
+    /// Mevcut durum filtresi korunur.
+    /// </summary>
+    Task<(IReadOnlyList<Company> Items, int TotalCount)> ListCustomersPagedAsync(
+        CustomerStatus? status,
+        string? search,
+        string? sortBy,
+        bool descending,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }

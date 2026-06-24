@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { useMeetings } from '../features/meetings/model/useMeetings';
+import { useMeetingsPaged } from '../features/meetings/model/useMeetings';
 import { MeetingNotes } from '../features/meetings/ui/MeetingNotes';
 import { reportApi } from '../features/reports/api/reportApi';
 import { saveBlob } from '../shared/lib/saveBlob';
+import { Pagination } from '../shared/components/Pagination';
+import { SortableTh } from '../shared/components/SortableTh';
 import { Spinner } from '../shared/components/Spinner';
 import { StateBlock } from '../shared/components/StateBlock';
+import { useDebouncedValue } from '../shared/hooks/useDebouncedValue';
 import {
   MEETING_METHOD_LABELS,
   MEETING_STATUS_LABELS,
@@ -13,10 +16,32 @@ import { formatDate, formatTime } from '../shared/lib/format';
 import { getErrorMessage } from '../shared/lib/errorMessage';
 import type { MeetingDto } from '../entities/meeting/model/meeting';
 
+/** Görüşme tablosu sıralanabilir sütunları. */
+type MeetingSortField = 'date' | 'company' | 'status';
+
+const DEFAULT_SORT_BY: MeetingSortField = 'date';
+const DEFAULT_SORT_DIR = 'desc' as const;
+const DEFAULT_PAGE_SIZE = 20;
+
 export default function MeetingHistoryPage() {
-  const { data, isLoading, isError, error } = useMeetings();
+  const [searchInput, setSearchInput] = useState('');
+  const [sortBy, setSortBy] = useState<MeetingSortField>(DEFAULT_SORT_BY);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>(DEFAULT_SORT_DIR);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+
+  // 300ms gecikme ile arama
+  const search = useDebouncedValue(searchInput, 300);
+
+  const { data, isLoading, isError, error } = useMeetingsPaged({
+    search: search || undefined,
+    sortBy,
+    sortDir,
+    page,
+    pageSize,
+  });
 
   async function handleExport() {
     setDownloading(true);
@@ -27,6 +52,32 @@ export default function MeetingHistoryPage() {
       setDownloading(false);
     }
   }
+
+  /** Sıralama değişince sayfayı başa al ve açık satırı kapat. */
+  function handleSort(field: string, dir: 'asc' | 'desc') {
+    setSortBy(field as MeetingSortField);
+    setSortDir(dir);
+    setPage(1);
+    setExpandedId(null);
+  }
+
+  /** Arama değişince sayfayı başa al. */
+  function handleSearchChange(value: string) {
+    setSearchInput(value);
+    setPage(1);
+    setExpandedId(null);
+  }
+
+  /** Sayfa boyutu değişince sayfayı başa al. */
+  function handlePageSizeChange(size: number) {
+    setPageSize(size);
+    setPage(1);
+    setExpandedId(null);
+  }
+
+  const items = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const totalCount = data?.totalCount ?? 0;
 
   if (isLoading) return <Spinner />;
   if (isError || !data) return <StateBlock message={getErrorMessage(error)} />;
@@ -44,28 +95,64 @@ export default function MeetingHistoryPage() {
           {downloading ? 'İndiriliyor...' : "Excel'e Aktar"}
         </button>
       </div>
+
+      {/* Arama kutusu */}
+      <div style={{ marginBottom: 12 }}>
+        <input
+          type="search"
+          placeholder="Firma adı veya temsilci ara..."
+          aria-label="Görüşme ara"
+          value={searchInput}
+          onChange={(event) => handleSearchChange(event.target.value)}
+          style={{ maxWidth: 320 }}
+        />
+      </div>
+
       <div className="data-table-container glass">
         <table className="data-table">
           <thead>
             <tr>
-              <th>Firma</th>
+              <SortableTh
+                field="company"
+                activeSortBy={sortBy}
+                activeSortDir={sortDir}
+                onSort={handleSort}
+              >
+                Firma
+              </SortableTh>
               <th>İlgili Kişi</th>
               <th>Temsilci</th>
-              <th>Tarih / Saat</th>
+              <SortableTh
+                field="date"
+                activeSortBy={sortBy}
+                activeSortDir={sortDir}
+                onSort={handleSort}
+              >
+                Tarih / Saat
+              </SortableTh>
               <th>Yöntem</th>
-              <th>Durum</th>
+              <SortableTh
+                field="status"
+                activeSortBy={sortBy}
+                activeSortDir={sortDir}
+                onSort={handleSort}
+              >
+                Durum
+              </SortableTh>
               <th>Notlar</th>
             </tr>
           </thead>
           <tbody>
-            {data.length === 0 && (
+            {items.length === 0 && (
               <tr>
                 <td colSpan={7} className="table-empty">
-                  Görüşme kaydı yok.
+                  {search
+                    ? `"${search}" için sonuç bulunamadı.`
+                    : 'Görüşme kaydı yok.'}
                 </td>
               </tr>
             )}
-            {data.map((meeting: MeetingDto) => {
+            {items.map((meeting: MeetingDto) => {
               const isExpanded = expandedId === meeting.id;
               const noteCount = meeting.notes.length;
 
@@ -125,7 +212,10 @@ export default function MeetingHistoryPage() {
                     <tr>
                       <td
                         colSpan={7}
-                        style={{ padding: '8px 16px', background: 'rgba(0,0,0,0.15)' }}
+                        style={{
+                          padding: '8px 16px',
+                          background: 'rgba(0,0,0,0.15)',
+                        }}
                       >
                         <MeetingNotes
                           meetingId={meeting.id}
@@ -141,6 +231,15 @@ export default function MeetingHistoryPage() {
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        totalCount={totalCount}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </>
   );
 }

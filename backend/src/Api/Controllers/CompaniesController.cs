@@ -11,6 +11,7 @@ using Oypa.Crm.Contracts.Contacts;
 using Oypa.Crm.Contracts.Meetings;
 using Oypa.Crm.Domain.Enums;
 
+
 namespace Oypa.Crm.Api.Controllers;
 
 [ApiController]
@@ -29,12 +30,42 @@ public sealed class CompaniesController(
         return Ok(ApiResponse<IReadOnlyList<CompanyDto>>.Ok(data));
     }
 
+    /// <summary>
+    /// Lead firmaları sayfalama + arama + sıralama ile listeler (Takvim/Sidebar etkilenmez).
+    /// sortBy: title | city | createdAt (varsayılan: createdAt desc)
+    /// </summary>
+    [HttpGet("leads/paged")]
+    [EnableRateLimiting(RateLimitingExtensions.Search)]
+    public async Task<IActionResult> GetLeadsPaged(
+        [FromQuery] LeadStatus? status,
+        [FromQuery] PagedQuery query,
+        CancellationToken cancellationToken)
+    {
+        var data = await companyService.GetLeadsPagedAsync(status, query, cancellationToken);
+        return Ok(ApiResponse<PagedResult<CompanyDto>>.Ok(data));
+    }
+
     [HttpGet("customers")]
     [EnableRateLimiting(RateLimitingExtensions.Search)]
     public async Task<IActionResult> GetCustomers([FromQuery] CustomerStatus? status, CancellationToken cancellationToken)
     {
         var data = await companyService.GetCustomersAsync(status, cancellationToken);
         return Ok(ApiResponse<IReadOnlyList<CompanyDto>>.Ok(data));
+    }
+
+    /// <summary>
+    /// Müşteri firmaları sayfalama + arama + sıralama ile listeler (Takvim/Sidebar etkilenmez).
+    /// sortBy: title | city | createdAt (varsayılan: createdAt desc)
+    /// </summary>
+    [HttpGet("customers/paged")]
+    [EnableRateLimiting(RateLimitingExtensions.Search)]
+    public async Task<IActionResult> GetCustomersPaged(
+        [FromQuery] CustomerStatus? status,
+        [FromQuery] PagedQuery query,
+        CancellationToken cancellationToken)
+    {
+        var data = await companyService.GetCustomersPagedAsync(status, query, cancellationToken);
+        return Ok(ApiResponse<PagedResult<CompanyDto>>.Ok(data));
     }
 
     [HttpGet("{id:guid}")]

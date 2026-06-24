@@ -1,5 +1,6 @@
 import { httpClient } from '../../../shared/api/httpClient';
 import type { EmployeeDto } from '../../../entities/employee/model/employee';
+import type { PagedParams, PagedResult } from '../../../shared/types/paged';
 
 export interface CreateEmployeePayload {
   title: string;
@@ -38,9 +39,18 @@ export interface CreateEmployeeResult {
   account: AccountCredentials | null;
 }
 
+/** /employees/managed/paged ucu için parametre tipi. */
+export type EmployeeManagedPagedParams = PagedParams;
+
 export const employeeApi = {
   async getManaged(): Promise<EmployeeDto[]> {
     const { data } = await httpClient.get<EmployeeDto[]>('/employees/managed');
+    return data;
+  },
+
+  /** Sunucu taraflı sayfalı personel listesi. */
+  async getManagedPaged(params: EmployeeManagedPagedParams): Promise<PagedResult<EmployeeDto>> {
+    const { data } = await httpClient.get<PagedResult<EmployeeDto>>('/employees/managed/paged', { params });
     return data;
   },
 

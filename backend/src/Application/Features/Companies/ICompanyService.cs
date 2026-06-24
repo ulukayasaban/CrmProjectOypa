@@ -1,3 +1,4 @@
+using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Companies;
 using Oypa.Crm.Domain.Enums;
 
@@ -25,4 +26,16 @@ public interface ICompanyService
     /// Firmaya satış temsilcisi atar. <paramref name="salesRepId"/> null ise firma havuza alınır.
     /// </summary>
     Task AssignSalesRepAsync(Guid id, Guid? salesRepId, CancellationToken cancellationToken = default);
+
+    /// <summary>Lead firmaları sayfalama + arama + sıralama ile listeler.</summary>
+    Task<PagedResult<CompanyDto>> GetLeadsPagedAsync(
+        LeadStatus? status,
+        PagedQuery query,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Müşteri firmaları sayfalama + arama + sıralama ile listeler.</summary>
+    Task<PagedResult<CompanyDto>> GetCustomersPagedAsync(
+        CustomerStatus? status,
+        PagedQuery query,
+        CancellationToken cancellationToken = default);
 }

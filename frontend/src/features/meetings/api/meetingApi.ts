@@ -1,6 +1,7 @@
 import { httpClient } from '../../../shared/api/httpClient';
 import type { MeetingDto } from '../../../entities/meeting/model/meeting';
 import type { MeetingMethod, MeetingStatus } from '../../../shared/types/enums';
+import type { PagedParams, PagedResult } from '../../../shared/types/paged';
 
 export interface MeetingPayload {
   companyId: string;
@@ -12,9 +13,18 @@ export interface MeetingPayload {
   method: MeetingMethod;
 }
 
+/** /meetings/paged ucu için parametre tipi. */
+export type MeetingPagedParams = PagedParams;
+
 export const meetingApi = {
   async getAll(): Promise<MeetingDto[]> {
     const { data } = await httpClient.get<MeetingDto[]>('/meetings');
+    return data;
+  },
+
+  /** Sunucu taraflı sayfalı görüşme listesi. */
+  async getPaged(params: MeetingPagedParams): Promise<PagedResult<MeetingDto>> {
+    const { data } = await httpClient.get<PagedResult<MeetingDto>>('/meetings/paged', { params });
     return data;
   },
   async create(payload: MeetingPayload): Promise<MeetingDto> {

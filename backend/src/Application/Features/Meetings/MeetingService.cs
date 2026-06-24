@@ -2,6 +2,7 @@ using Oypa.Crm.Application.Common.Exceptions;
 using Oypa.Crm.Application.Common.Interfaces;
 using Oypa.Crm.Application.Features.Notifications;
 using Oypa.Crm.Application.Mappings;
+using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Meetings;
 using Oypa.Crm.Domain.Entities;
 using Oypa.Crm.Domain.Enums;
@@ -182,6 +183,22 @@ public sealed class MeetingService(
             $"Yöntem: {MethodLabel(meeting.Method)}";
 
         return new MailDraft(rep.Email, subject, body, meeting.Id, contact?.Email);
+    }
+
+    public async Task<PagedResult<MeetingDto>> GetPagedAsync(
+        PagedQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var (items, totalCount) = await meetings.ListPagedAsync(
+            query.Search,
+            query.SortBy,
+            query.IsDescending,
+            query.Page,
+            query.PageSize,
+            cancellationToken);
+
+        var dtos = items.Select(m => m.ToDto()).ToList();
+        return new PagedResult<MeetingDto>(dtos, query.Page, query.PageSize, totalCount);
     }
 
     private static string MethodLabel(MeetingMethod method) => method switch

@@ -24,6 +24,25 @@ public sealed class TendersController(ITenderService tenderService) : Controller
         return Ok(ApiResponse<IReadOnlyList<TenderDto>>.Ok(data));
     }
 
+    /// <summary>
+    /// İhaleleri sayfalama + arama + sıralama ile listeler.
+    /// Mevcut sector/status filtreleri korunur; Takvim/Sidebar için tam liste ucu sağdaki GET /api/tenders kullanılır.
+    /// sortBy: title | company | tenderDate | estimatedValue | status (varsayılan: tenderDate desc)
+    /// statuses: segment için çoklu durum (ör. ?statuses=Hazirlik&statuses=TeklifVerildi) — sunucu tarafı filtre.
+    /// </summary>
+    [HttpGet("paged")]
+    [EnableRateLimiting(RateLimitingExtensions.Search)]
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] Sector? sector,
+        [FromQuery] TenderStatus? status,
+        [FromQuery] TenderStatus[]? statuses,
+        [FromQuery] PagedQuery query,
+        CancellationToken cancellationToken)
+    {
+        var data = await tenderService.GetPagedAsync(sector, status, statuses, query, cancellationToken);
+        return Ok(ApiResponse<PagedResult<TenderDto>>.Ok(data));
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {

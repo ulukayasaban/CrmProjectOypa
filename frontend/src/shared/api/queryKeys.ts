@@ -18,4 +18,17 @@ export const queryKeys = {
   managedEmployees: ['employees', 'managed'] as const,
   tenders: ['tenders'] as const,
   tender: (id: string) => ['tenders', id] as const,
+
+  // Sayfalı sorgular — her parametre seti ayrı cache entry oluşturur.
+  // `object` tipi tüm arayüzleri karşılar; cast gerekmez.
+  leadsPaged: (params: object) =>
+    ['companies', 'leads', 'paged', params] as const,
+  customersPaged: (params: object) =>
+    ['companies', 'customers', 'paged', params] as const,
+  meetingsPaged: (params: object) =>
+    ['meetings', 'paged', params] as const,
+  managedEmployeesPaged: (params: object) =>
+    ['employees', 'managed', 'paged', params] as const,
+  tendersPaged: (params: object) =>
+    ['tenders', 'paged', params] as const,
 };

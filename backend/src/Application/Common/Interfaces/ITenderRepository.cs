@@ -24,4 +24,20 @@ public interface ITenderRepository : IRepository<Tender>
         DateOnly today,
         int daysAhead,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// İhaleleri sayfa kesimiyle, arama ve sıralamayı destekleyerek getirir.
+    /// Mevcut sektör/durum filtreleri korunur.
+    /// </summary>
+    /// <returns>Filtre uygulanmış toplam kayıt sayısı ve sayfa içeriği.</returns>
+    Task<(IReadOnlyList<Tender> Items, int TotalCount)> ListPagedAsync(
+        Sector? sector,
+        TenderStatus? status,
+        IReadOnlyCollection<TenderStatus>? statuses,
+        string? search,
+        string? sortBy,
+        bool descending,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }

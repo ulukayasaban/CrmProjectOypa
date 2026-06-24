@@ -6,6 +6,7 @@ using Oypa.Crm.Application.Features.Employees;
 using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Employees;
 
+
 namespace Oypa.Crm.Api.Controllers;
 
 [ApiController]
@@ -27,6 +28,19 @@ public sealed class EmployeesController(IEmployeeService employeeService) : Cont
     {
         var data = await employeeService.GetManagedAsync(cancellationToken);
         return Ok(ApiResponse<IReadOnlyList<EmployeeDto>>.Ok(data));
+    }
+
+    /// <summary>
+    /// Çağıranın yönetim kapsamındaki personeli sayfalama + arama + sıralama ile listeler.
+    /// sortBy: fullName | title | email (varsayılan: fullName asc)
+    /// </summary>
+    [HttpGet("managed/paged")]
+    public async Task<IActionResult> GetManagedPaged(
+        [FromQuery] PagedQuery query,
+        CancellationToken cancellationToken)
+    {
+        var data = await employeeService.GetManagedPagedAsync(query, cancellationToken);
+        return Ok(ApiResponse<PagedResult<EmployeeDto>>.Ok(data));
     }
 
     /// <summary>Yeni personel oluşturur. CreateAccount == true ise geçici kimlik bilgilerini döndürür.</summary>

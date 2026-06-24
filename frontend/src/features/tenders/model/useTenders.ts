@@ -1,12 +1,24 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../../shared/api/queryKeys';
-import { tenderApi, type TenderListParams, type TenderPayload } from '../api/tenderApi';
+import { tenderApi, type TenderListParams, type TenderPagedParams, type TenderPayload } from '../api/tenderApi';
 import type { TenderStatus } from '../../../entities/tender/model/tender';
 
 export function useTenders(params?: TenderListParams) {
   return useQuery({
     queryKey: params ? [...queryKeys.tenders, params] : queryKeys.tenders,
     queryFn: () => tenderApi.getAll(params),
+  });
+}
+
+/**
+ * Sunucu taraflı sayfalı ihale sorgusu.
+ * Takvim/Sidebar gibi tam-liste tüketicilerini etkilemez.
+ */
+export function useTendersPaged(params: TenderPagedParams) {
+  return useQuery({
+    queryKey: queryKeys.tendersPaged(params),
+    queryFn: () => tenderApi.getPaged(params),
+    placeholderData: keepPreviousData,
   });
 }
 
