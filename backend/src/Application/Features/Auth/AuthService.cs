@@ -15,9 +15,12 @@ public sealed class AuthService(
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
     IDateTimeProvider clock,
-    IOptions<JwtOptions> jwtOptions) : IAuthService
+    IOptions<JwtOptions> jwtOptions,
+    IEmailSender emailSender,
+    IOptions<AppOptions> appOptions) : IAuthService
 {
     private readonly JwtOptions _jwt = jwtOptions.Value;
+    private readonly AppOptions _app = appOptions.Value;
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, string? ipAddress, CancellationToken cancellationToken = default)
     {
@@ -90,6 +93,57 @@ public sealed class AuthService(
         var user = await identityService.GetByIdAsync(userId, cancellationToken)
                    ?? throw new UnauthorizedAppException("Kullanıcı bulunamadı.");
         return ToUserDto(user);
+    }
+
+    public async Task ChangePasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        var userId = currentUser.UserId ?? throw new UnauthorizedAppException("Oturum bulunamadı.");
+
+        var (succeeded, errors) = await identityService.ChangePasswordAsync(
+            userId, request.CurrentPassword, request.NewPassword, cancellationToken);
+
+        if (!succeeded)
+            // Hatalı mevcut parola veya politika ihlali: 400 ile döner.
+            throw new ConflictException(string.Join(" ", errors.DefaultIfEmpty("Parola değiştirilemedi.")));
+    }
+
+    public async Task ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        var (email, token) = await identityService.GeneratePasswordResetTokenAsync(request.Email, cancellationToken);
+
+        // Kullanıcı bulunamasa bile sessizce döner — varlık sızdırma koruması.
+        if (email is null || token is null)
+            return;
+
+        var encodedToken = Uri.EscapeDataString(token);
+        var resetLink = $"{_app.FrontendBaseUrl}/reset-password?email={Uri.EscapeDataString(email)}&token={encodedToken}";
+
+        var htmlBody = $"""
+            <p>Parolanızı sıfırlamak için aşağıdaki bağlantıya tıklayın:</p>
+            <p><a href="{resetLink}">Parolayı Sıfırla</a></p>
+            <p>Bu bağlantı geçici olarak geçerlidir. İsteği siz başlatmadıysanız bu e-postayı yok sayın.</p>
+            """;
+
+        await emailSender.SendAsync(email, "OYPA CRM — Parola Sıfırlama", htmlBody, cancellationToken);
+    }
+
+    public async Task ResetPasswordWithTokenAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        var (succeeded, errors) = await identityService.ResetPasswordWithTokenAsync(
+            request.Email, request.Token, request.NewPassword, cancellationToken);
+
+        if (!succeeded)
+            throw new ConflictException(string.Join(" ", errors.DefaultIfEmpty("Parola sıfırlanamadı.")));
+    }
+
+    public async Task<UserDto> UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default)
+    {
+        var userId = currentUser.UserId ?? throw new UnauthorizedAppException("Oturum bulunamadı.");
+
+        var updated = await identityService.UpdateProfileAsync(
+            userId, request.FullName, request.Phone, request.Position, cancellationToken);
+
+        return ToUserDto(updated);
     }
 
     private async Task<AuthResponse> IssueTokensAsync(AuthUserInfo user, string? ipAddress, CancellationToken cancellationToken)

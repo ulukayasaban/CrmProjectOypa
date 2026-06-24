@@ -19,14 +19,17 @@ public sealed class AuthServiceTests
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
     private readonly IDateTimeProvider _clock = Substitute.For<IDateTimeProvider>();
-    private readonly IOptions<JwtOptions> _options =
+    private readonly IEmailSender _emailSender = Substitute.For<IEmailSender>();
+    private readonly IOptions<JwtOptions> _jwtOptions =
         Options.Create(new JwtOptions { RefreshTokenDays = 7, AccessTokenMinutes = 15 });
+    private readonly IOptions<AppOptions> _appOptions =
+        Options.Create(new AppOptions { FrontendBaseUrl = "http://localhost:5173" });
 
     private readonly AuthUserInfo _user = new(
         Guid.NewGuid(), "admin@oypa.com.tr", "Admin", "Pos", "555", new[] { "Admin" });
 
     private AuthService CreateSut() =>
-        new(_identity, _jwt, _refreshTokens, _unitOfWork, _currentUser, _clock, _options);
+        new(_identity, _jwt, _refreshTokens, _unitOfWork, _currentUser, _clock, _jwtOptions, _emailSender, _appOptions);
 
     public AuthServiceTests()
     {

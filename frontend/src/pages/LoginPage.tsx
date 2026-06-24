@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../app/providers/useAuth';
 import {
   loginSchema,
@@ -75,6 +75,17 @@ export default function LoginPage() {
               <span className="field-error">{errors.password.message}</span>
             )}
           </div>
+
+          {/* Şifremi Unuttum linki — sağa yaslanmış, parola alanının altında */}
+          <div style={{ textAlign: 'right', marginTop: '-0.25rem', marginBottom: '0.75rem' }}>
+            <Link
+              to="/forgot-password"
+              style={{ color: 'var(--accent-gold)', fontSize: '0.85rem' }}
+            >
+              Şifremi Unuttum?
+            </Link>
+          </div>
+
           <button
             type="submit"
             className="btn btn-primary btn-block"

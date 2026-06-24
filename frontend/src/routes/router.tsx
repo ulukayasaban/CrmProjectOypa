@@ -7,6 +7,8 @@ import { Spinner } from '../shared/components/Spinner';
 // Tüm sayfa bileşenleri lazy import ile code-splitting uygulanır.
 // Suspense fallback AppLayout içinde Outlet'i sarar.
 const LoginPage = lazy(() => import('../pages/LoginPage'));
+const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 const DashboardPage = lazy(() => import('../pages/DashboardPage'));
 const LeadsPage = lazy(() => import('../pages/LeadsPage'));
 const CustomersPage = lazy(() => import('../pages/CustomersPage'));
@@ -23,16 +25,31 @@ const GoalsPage = lazy(() => import('../pages/GoalsPage'));
 const TendersPage = lazy(() => import('../pages/TendersPage'));
 const TenderDetailPage = lazy(() => import('../pages/TenderDetailPage'));
 
+/** Anonim sayfalarda paylaşılan Suspense sarmalayıcısı */
+function PublicPage({ Page }: { Page: React.ComponentType }) {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <Page />
+    </Suspense>
+  );
+}
+
 export const router = createBrowserRouter([
+  // ─── Anonim rotalar (ProtectedRoute dışında) ───────────────────────────────
   {
     path: '/login',
-    // LoginPage AppLayout dışında olduğu için kendi Suspense sargısını alır.
-    element: (
-      <Suspense fallback={<Spinner />}>
-        <LoginPage />
-      </Suspense>
-    ),
+    element: <PublicPage Page={LoginPage} />,
   },
+  {
+    path: '/forgot-password',
+    element: <PublicPage Page={ForgotPasswordPage} />,
+  },
+  {
+    path: '/reset-password',
+    element: <PublicPage Page={ResetPasswordPage} />,
+  },
+
+  // ─── Korumalı rotalar ──────────────────────────────────────────────────────
   {
     element: <ProtectedRoute />,
     children: [

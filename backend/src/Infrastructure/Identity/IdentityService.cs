@@ -98,6 +98,65 @@ public sealed class IdentityService(UserManager<ApplicationUser> userManager) : 
         return newPassword;
     }
 
+    public async Task<(bool Succeeded, IReadOnlyList<string> Errors)> ChangePasswordAsync(
+        Guid userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString())
+            ?? throw new NotFoundException($"Kullanıcı bulunamadı (id: {userId}).");
+
+        var result = await userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+        return result.Succeeded
+            ? (true, [])
+            : (false, result.Errors.Select(e => e.Description).ToList());
+    }
+
+    public async Task<(string? Email, string? Token)> GeneratePasswordResetTokenAsync(
+        string email, CancellationToken cancellationToken = default)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+
+        // Kullanıcı bulunamazsa null çifti döner; çağıran katman varlık sızdırmaz.
+        if (user is null)
+            return (null, null);
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+        return (user.Email, token);
+    }
+
+    public async Task<(bool Succeeded, IReadOnlyList<string> Errors)> ResetPasswordWithTokenAsync(
+        string email, string token, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+
+        // Kullanıcı bulunamazsa da genel hata ver — e-posta varlığını sızdırma.
+        if (user is null)
+            return (false, ["Parola sıfırlama başarısız. Bağlantı geçersiz veya süresi dolmuş olabilir."]);
+
+        var result = await userManager.ResetPasswordAsync(user, token, newPassword);
+        return result.Succeeded
+            ? (true, [])
+            : (false, result.Errors.Select(e => e.Description).ToList());
+    }
+
+    public async Task<AuthUserInfo> UpdateProfileAsync(
+        Guid userId, string fullName, string? phone, string? position, CancellationToken cancellationToken = default)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString())
+            ?? throw new NotFoundException($"Kullanıcı bulunamadı (id: {userId}).");
+
+        user.FullName = fullName;
+        user.PhoneNumber = phone;
+        user.Position = position;
+
+        // UpdateAsync, EF üzerinden değişiklikleri kaydeder.
+        var result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+            throw new ConflictException(
+                $"Profil güncellenemedi: {string.Join("; ", result.Errors.Select(e => e.Description))}");
+
+        return await ToInfoAsync(user);
+    }
+
     /// <summary>
     /// En az 12 karakter, en az 1 büyük harf, 1 küçük harf, 1 rakam, 1 özel karakter içeren
     /// rastgele parola üretir.

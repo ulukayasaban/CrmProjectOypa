@@ -6,6 +6,7 @@ using Oypa.Crm.Application.Common.Events;
 using Oypa.Crm.Application.Common.Interfaces;
 using Oypa.Crm.Application.Common.Options;
 using Oypa.Crm.Application.Features.Employees;
+using Oypa.Crm.Infrastructure.Email;
 using Oypa.Crm.Infrastructure.Events;
 using Oypa.Crm.Infrastructure.Features.Employees;
 using Oypa.Crm.Infrastructure.Features.Org;
@@ -41,6 +42,15 @@ public static class DependencyInjection
         services.AddScoped<IReportService, ExcelReportService>();
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<AppOptions>(configuration.GetSection(AppOptions.SectionName));
+
+        // E-posta yapılandırması: Email:Host doluysa gerçek SMTP, boşsa NullEmailSender (dev ortamı).
+        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+        var emailHost = configuration[$"{EmailOptions.SectionName}:Host"];
+        if (!string.IsNullOrWhiteSpace(emailHost))
+            services.AddScoped<IEmailSender, SmtpEmailSender>();
+        else
+            services.AddScoped<IEmailSender, NullEmailSender>();
 
         services
             .AddIdentityCore<ApplicationUser>(options =>
@@ -57,7 +67,9 @@ public static class DependencyInjection
                 options.Lockout.AllowedForNewUsers = true;
             })
             .AddRoles<IdentityRole<Guid>>()
-            .AddEntityFrameworkStores<AppDbContext>();
+            .AddEntityFrameworkStores<AppDbContext>()
+            // Parola sıfırlama token'ı üretimi için varsayılan token sağlayıcıları eklenir.
+            .AddDefaultTokenProviders();
 
         return services;
     }
