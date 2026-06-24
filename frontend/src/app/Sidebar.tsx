@@ -127,7 +127,9 @@ export function Sidebar({ open = false }: SidebarProps) {
     return !item.adminOnly || hasRole('Admin');
   });
 
-  const todayKey = new Date().toISOString().slice(0, 10);
+  // Yerel gün anahtarı (toISOString UTC döndürür → gece yarısı–03:00 arası yanlış gün verirdi).
+  const now = new Date();
+  const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const upcoming = (meetings.data ?? [])
     .filter(
       (meeting) =>

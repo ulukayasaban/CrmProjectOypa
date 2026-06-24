@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { noteSchema, type NoteFormValues } from '../model/meetingSchema';
 import { useAddMeetingNote } from '../model/useMeetings';
 import { getErrorMessage } from '../../../shared/lib/errorMessage';
-import { formatDate, formatTime } from '../../../shared/lib/format';
+import { formatDateTime } from '../../../shared/lib/format';
 import type { MeetingNoteDto } from '../../../entities/meeting/model/meeting';
 
 interface MeetingNotesProps {
@@ -44,7 +44,7 @@ export function MeetingNotes({ meetingId, companyId, notes }: MeetingNotesProps)
           {notes.map((note) => (
             <li key={note.id} className="meeting-notes__item">
               <span className="meeting-notes__meta muted">
-                {formatDate(note.createdAtUtc)} · {formatTime(note.createdAtUtc.slice(11, 19))} &nbsp;
+                {formatDateTime(note.createdAtUtc)} &nbsp;
                 <strong>{note.authorName}</strong>
                 {note.authorTitle ? ` (${note.authorTitle})` : ''}
               </span>

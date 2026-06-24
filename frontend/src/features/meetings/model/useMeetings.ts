@@ -23,6 +23,8 @@ export function useCreateMeeting() {
     onSuccess: (meeting) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.meetings });
       void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+      // Hedef ilerlemesi tamamlanan görüşme sayısına bağlı; Hedefler ekranı da tazelensin.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.goals });
       void queryClient.invalidateQueries({ queryKey: queryKeys.mailDrafts });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.companyMeetings(meeting.companyId),
@@ -46,6 +48,8 @@ export function useUpdateMeetingStatus() {
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.meetings });
       void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+      // Görüşme "Yapıldı" olunca hedef ilerlemesi değişir; Hedefler ekranı da tazelensin.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.goals });
       if (variables.companyId) {
         void queryClient.invalidateQueries({
           queryKey: queryKeys.companyMeetings(variables.companyId),

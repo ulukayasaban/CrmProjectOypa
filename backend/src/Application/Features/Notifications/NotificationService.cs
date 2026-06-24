@@ -89,8 +89,8 @@ public sealed class NotificationService(
     {
         var senderId = RequireCurrentUserId();
 
-        // Yetki: Admin veya yönetim kapsamı olan kullanıcı (astı var)
-        await EnsureCanSendAsync(cancellationToken);
+        // Yetki: Admin veya yönetim kapsamı olan kullanıcı (astı var) + hedef birim kapsamda olmalı
+        await EnsureCanSendAsync(request.TargetUnitId, cancellationToken);
 
         // Hedef birim alt-ağacındaki hesaplı kullanıcıları çöz; göndereni hariç tut
         var recipientUserIds = (await orgScope.GetSubtreeUserIdsAsync(request.TargetUnitId, cancellationToken))
@@ -167,20 +167,28 @@ public sealed class NotificationService(
     }
 
     /// <summary>
-    /// Admin veya yönetim kapsamı genişliği > 1 (en az bir ast) olan kullanıcıya izin verir.
-    /// Yalnızca kendisi olan Sales kullanıcıları ForbiddenAppException alır.
+    /// Gönderme yetkisini ve hedef birimin kapsam içinde olduğunu doğrular.
+    /// Admin / kök yönetici (AllEmployees) her birime gönderebilir. Diğer yöneticiler
+    /// yalnızca kendi alt-ağaçlarındaki (Ids) bir birime gönderebilir. Astı olmayan
+    /// (Ids.Count == 1) kullanıcılar hiç gönderemez.
     /// </summary>
-    private async Task EnsureCanSendAsync(CancellationToken cancellationToken)
+    private async Task EnsureCanSendAsync(Guid targetUnitId, CancellationToken cancellationToken)
     {
         if (currentUser.Roles.Contains("Admin"))
             return;
 
         var scope = await orgScope.ResolveAsync(cancellationToken);
 
-        // AllEmployees=true → kök yönetici; Ids.Count>1 → en az bir ast var
-        if (scope.AllEmployees || scope.Ids.Count > 1)
+        // Kök yönetici → tüm birimlere gönderebilir
+        if (scope.AllEmployees)
             return;
 
-        throw new ForbiddenAppException("Bildirim gönderme yetkiniz yok. Yalnızca yöneticiler ve adminler gönderebilir.");
+        // En az bir ast yoksa (yalnızca kendisi) gönderemez
+        if (scope.Ids.Count <= 1)
+            throw new ForbiddenAppException("Bildirim gönderme yetkiniz yok. Yalnızca yöneticiler ve adminler gönderebilir.");
+
+        // Hedef birim, gönderenin yönetim kapsamı (alt-ağaç) içinde olmalı
+        if (!scope.Ids.Contains(targetUnitId))
+            throw new ForbiddenAppException("Yalnızca kendi yönetim kapsamınızdaki birimlere bildirim gönderebilirsiniz.");
     }
 }

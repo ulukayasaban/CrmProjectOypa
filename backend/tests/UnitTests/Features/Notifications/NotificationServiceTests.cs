@@ -224,9 +224,9 @@ public sealed class NotificationServiceTests
         _currentUser.UserId.Returns(senderId);
         _currentUser.Roles.Returns(new List<string>());
 
-        // Yönetici kapsamı: birden fazla çalışan var (senderId dahil)
+        // Yönetici kapsamı: hedef birim (targetUnitId) yöneticinin alt-ağacında olmalı
         _orgScope.ResolveAsync(Arg.Any<CancellationToken>())
-            .Returns(new OrgScope(false, [senderId, recipient1, recipient2]));
+            .Returns(new OrgScope(false, [senderId, recipient1, recipient2, targetUnitId]));
 
         // Alt-ağaç: göndereni de içeriyor; servis onu dışlamalı
         _orgScope.GetSubtreeUserIdsAsync(targetUnitId, Arg.Any<CancellationToken>())
@@ -341,9 +341,9 @@ public sealed class NotificationServiceTests
     }
 
     [Fact]
-    public async Task SendToUnitAsync_CrossUnit_ManagerCanTargetAnyUnit()
+    public async Task SendToUnitAsync_CrossUnit_OutsideScope_ThrowsForbidden()
     {
-        // Tam çapraz: yönetici kendi alt-ağacı dışındaki bir birime de gönderebilir
+        // Yönetici, kendi alt-ağacı DIŞINDAKİ bir birime bildirim gönderememeli (yetki sızıntısı koruması)
         var senderId = Guid.NewGuid();
         var externalUnitId = Guid.NewGuid(); // gönderenin kapsamı dışında bir birim
         var externalRecipient = Guid.NewGuid();
@@ -352,22 +352,21 @@ public sealed class NotificationServiceTests
         _currentUser.UserId.Returns(senderId);
         _currentUser.Roles.Returns(new List<string>());
 
-        // Yönetici kapsamı: kendi alt-ağacı (externalRecipient dahil değil)
+        // Yönetici kapsamı: kendi alt-ağacı (externalUnitId dahil DEĞİL)
         _orgScope.ResolveAsync(Arg.Any<CancellationToken>())
             .Returns(new OrgScope(false, [senderId, Guid.NewGuid()])); // birden fazla → yönetici
 
-        // Hedef birim (dışarıdaki birim) kendi alt-ağacını döndürür
+        // Hedef birim (dışarıdaki birim) kendi alt-ağacını döndürür — ancak yetki kontrolü buna ulaşmadan reddetmeli
         _orgScope.GetSubtreeUserIdsAsync(externalUnitId, Arg.Any<CancellationToken>())
             .Returns(new List<Guid> { externalRecipient });
 
-        _orgScope.GetByUserIdAsync(senderId, Arg.Any<CancellationToken>())
-            .Returns((Employee?)null);
-
         var sut = CreateSut();
-        // Dış birime gönderim — kapsam kısıtı olmamalı
-        await sut.SendToUnitAsync(new SendNotificationRequest(externalUnitId, "Çapraz Birim", "Mesaj"));
 
-        await _notifications.Received(1).AddAsync(Arg.Any<Notification>(), Arg.Any<CancellationToken>());
+        // Kapsam dışı birime gönderim engellenmeli
+        await Should.ThrowAsync<ForbiddenAppException>(
+            () => sut.SendToUnitAsync(new SendNotificationRequest(externalUnitId, "Çapraz Birim", "Mesaj")));
+
+        await _notifications.DidNotReceive().AddAsync(Arg.Any<Notification>(), Arg.Any<CancellationToken>());
     }
 
     // -----------------------------------------------------------------------

@@ -63,6 +63,8 @@ export function useConvertCompany(id: string) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.company(id) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.leads });
       void queryClient.invalidateQueries({ queryKey: queryKeys.customers });
+      // Lead→Müşteri dönüşümü "Aktif Leadler"/"Toplam Müşteri" sayaçlarını değiştirir.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
     },
   });
 }

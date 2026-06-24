@@ -23,7 +23,11 @@ const string CorsPolicy = "frontend";
 builder.Services
     .AddControllers(options => options.Filters.Add<ValidationFilter>())
     .AddJsonOptions(options =>
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        // DateTime'ları UTC 'Z' ile serileştir (istemci doğru yerel saate çevirsin).
+        options.JsonSerializerOptions.Converters.Add(new UtcDateTimeJsonConverter());
+    });
 
 // Model binding hatalarını da standart ApiResponse zarfına çevir.
 builder.Services.Configure<ApiBehaviorOptions>(options =>

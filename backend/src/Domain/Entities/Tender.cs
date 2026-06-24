@@ -118,6 +118,11 @@ public class Tender : BaseEntity
 
         ValidateNumerics(personnelCount, estimatedValue, volume, quantity);
 
+        // İhale tarihi değiştiyse yaklaşan-bildirim idempotency damgasını sıfırla;
+        // aksi halde tarih ileri alınınca yeni "yaklaşan ihale" bildirimi hiç gönderilmez.
+        if (TenderDate != tenderDate)
+            ApproachNotifiedAtUtc = null;
+
         Title = title;
         TenderNumber = tenderNumber;
         Sector = sector;
