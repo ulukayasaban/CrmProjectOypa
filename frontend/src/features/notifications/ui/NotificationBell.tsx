@@ -11,6 +11,7 @@ import { formatDateTime } from '../../../shared/lib/format';
 import { useAuth } from '../../../app/providers/useAuth';
 import { useManagedEmployees } from '../../employees/model/useEmployees';
 import { NotificationComposeModal } from './NotificationComposeModal';
+import { NotificationPreferencesModal } from './NotificationPreferencesModal';
 import { getErrorMessage } from '../../../shared/lib/errorMessage';
 import type { NotificationDto } from '../../../entities/notification/model/notification';
 
@@ -112,6 +113,7 @@ function NotificationItem({ item, onRead, onDelete }: NotificationItemProps) {
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [prefsOpen, setPrefsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { hasRole } = useAuth();
@@ -162,6 +164,18 @@ export function NotificationBell() {
             <div className="notification-popover-head">
               <h4>Bildirimler</h4>
               <div className="head-actions">
+                {/* Bildirim tür tercihleri ayar butonu */}
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  aria-label="Bildirim tercihlerini ayarla"
+                  onClick={() => {
+                    setOpen(false);
+                    setPrefsOpen(true);
+                  }}
+                >
+                  ⚙ Tercihler
+                </button>
                 {canCompose && (
                   <button
                     type="button"
@@ -208,6 +222,10 @@ export function NotificationBell() {
 
       {composeOpen && (
         <NotificationComposeModal onClose={() => setComposeOpen(false)} />
+      )}
+
+      {prefsOpen && (
+        <NotificationPreferencesModal onClose={() => setPrefsOpen(false)} />
       )}
     </>
   );

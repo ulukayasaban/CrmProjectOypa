@@ -7,6 +7,17 @@ export interface SendNotificationPayload {
   message: string;
 }
 
+/** Tek bir bildirim tür tercihi */
+export interface NotificationPreferenceItem {
+  type: string;
+  enabled: boolean;
+}
+
+/** PUT /notifications/preferences istek gövdesi */
+export interface UpdatePreferencesPayload {
+  items: NotificationPreferenceItem[];
+}
+
 export const notificationApi = {
   async getMine(): Promise<NotificationDto[]> {
     const { data } = await httpClient.get<NotificationDto[]>('/notifications');
@@ -35,5 +46,21 @@ export const notificationApi = {
   /** Kendi bildirimini siler. DELETE /notifications/{id} */
   async deleteNotification(id: string): Promise<void> {
     await httpClient.delete(`/notifications/${id}`);
+  },
+
+  /** Bildirim tür tercihlerini getirir. GET /notifications/preferences */
+  async getPreferences(): Promise<NotificationPreferenceItem[]> {
+    const { data } =
+      await httpClient.get<NotificationPreferenceItem[]>(
+        '/notifications/preferences',
+      );
+    return data;
+  },
+
+  /** Bildirim tür tercihlerini günceller. PUT /notifications/preferences */
+  async updatePreferences(
+    payload: UpdatePreferencesPayload,
+  ): Promise<void> {
+    await httpClient.put('/notifications/preferences', payload);
   },
 };

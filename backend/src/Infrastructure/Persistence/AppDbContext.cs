@@ -26,6 +26,7 @@ public sealed class AppDbContext(
     public DbSet<GoalWeek> GoalWeeks => Set<GoalWeek>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Tender> Tenders => Set<Tender>();
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
 
     /// <summary>Tüm denetim kayıtları. Sadece okunabilir; güncellenemez.</summary>
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();

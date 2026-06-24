@@ -11,7 +11,9 @@ namespace Oypa.Crm.Api.Controllers;
 [ApiController]
 [Route("api/notifications")]
 [Authorize]
-public sealed class NotificationsController(INotificationService notificationService) : ControllerBase
+public sealed class NotificationsController(
+    INotificationService notificationService,
+    INotificationPreferenceService preferenceService) : ControllerBase
 {
     /// <summary>Geçerli kullanıcının bildirimlerini tarihe göre azalan sırada döndürür.</summary>
     [HttpGet]
@@ -68,5 +70,34 @@ public sealed class NotificationsController(INotificationService notificationSer
     {
         await notificationService.DeleteAsync(id, cancellationToken);
         return Ok(ApiResponse.Ok("Bildirim silindi."));
+    }
+
+    // -----------------------------------------------------------------------
+    // Tercih uçları — GET /api/notifications/preferences
+    //                  PUT /api/notifications/preferences
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Geçerli kullanıcının 5 toggle edilebilir bildirim türü için tercihlerini döndürür.
+    /// Kayıt bulunmayan tipler Enabled=true olarak gösterilir (opt-out modeli).
+    /// </summary>
+    [HttpGet("preferences")]
+    public async Task<IActionResult> GetPreferences(CancellationToken cancellationToken)
+    {
+        var data = await preferenceService.GetMineAsync(cancellationToken);
+        return Ok(ApiResponse<IReadOnlyList<NotificationPreferenceDto>>.Ok(data));
+    }
+
+    /// <summary>
+    /// Geçerli kullanıcının bildirim tercihlerini toplu günceller.
+    /// Manual tipi içeren öğeler yok sayılır.
+    /// </summary>
+    [HttpPut("preferences")]
+    public async Task<IActionResult> UpdatePreferences(
+        [FromBody] UpdateNotificationPreferencesRequest request,
+        CancellationToken cancellationToken)
+    {
+        await preferenceService.SetMineAsync(request.Items, cancellationToken);
+        return Ok(ApiResponse.Ok("Bildirim tercihleri güncellendi."));
     }
 }

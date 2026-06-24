@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../../shared/api/queryKeys';
-import { notificationApi, type SendNotificationPayload } from '../api/notificationApi';
+import {
+  notificationApi,
+  type NotificationPreferenceItem,
+  type SendNotificationPayload,
+} from '../api/notificationApi';
+import { useToast } from '../../../shared/components/toast/ToastProvider';
 
 export function useNotifications(enabled: boolean) {
   return useQuery({
@@ -72,6 +77,37 @@ export function useDeleteNotification() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.notificationsUnread,
       });
+    },
+  });
+}
+
+/**
+ * Kullanıcının bildirim tür tercihlerini getirir.
+ * GET /notifications/preferences
+ */
+export function useNotificationPreferences() {
+  return useQuery({
+    queryKey: queryKeys.notificationPreferences,
+    queryFn: notificationApi.getPreferences,
+  });
+}
+
+/**
+ * Bildirim tür tercihlerini günceller.
+ * Başarı durumunda tercihler cache'i invalidate edilir ve başarı toastı gösterilir.
+ */
+export function useUpdateNotificationPreferences() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: (items: NotificationPreferenceItem[]) =>
+      notificationApi.updatePreferences({ items }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.notificationPreferences,
+      });
+      toast.success('Tercihler kaydedildi.');
     },
   });
 }

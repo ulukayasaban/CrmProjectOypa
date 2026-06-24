@@ -18,8 +18,30 @@ public sealed class NotificationServiceTests
     private readonly IRealtimeNotifier _realtimeNotifier = Substitute.For<IRealtimeNotifier>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
+    // Tercih servisi: varsayılan olarak tüm kullanıcılar için her tip ETKİN döner (mevcut testler etkilenmez).
+    private readonly INotificationPreferenceService _preferenceService =
+        Substitute.For<INotificationPreferenceService>();
+
     private NotificationService CreateSut() =>
-        new(_notifications, _currentUser, _orgScope, _realtimeNotifier, _unitOfWork);
+        new(_notifications, _currentUser, _orgScope, _realtimeNotifier, _unitOfWork, _preferenceService);
+
+    /// <summary>
+    /// Tercih servisini varsayılan "hepsi etkin" moduna getirir:
+    /// IsEnabledForUsersAsync → verilen liste olduğu gibi geri döner.
+    /// </summary>
+    private void SetupPreferenceServiceDefault()
+    {
+        _preferenceService
+            .IsEnabledForUsersAsync(
+                Arg.Any<IEnumerable<Guid>>(),
+                Arg.Any<NotificationType>(),
+                Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var ids = callInfo.Arg<IEnumerable<Guid>>().Distinct().ToList();
+                return Task.FromResult<IReadOnlyList<Guid>>(ids);
+            });
+    }
 
     private static Guid UserId { get; } = Guid.NewGuid();
 
@@ -215,6 +237,7 @@ public sealed class NotificationServiceTests
     [Fact]
     public async Task SendToUnitAsync_AsManager_SendsToSubtreeUsersExcludingSender()
     {
+        SetupPreferenceServiceDefault(); // Manual tipi → tercih filtresi uygulanmaz
         var senderId = Guid.NewGuid();
         var recipient1 = Guid.NewGuid();
         var recipient2 = Guid.NewGuid();
@@ -255,6 +278,7 @@ public sealed class NotificationServiceTests
     [Fact]
     public async Task SendToUnitAsync_AsAdmin_SendsSuccessfully()
     {
+        SetupPreferenceServiceDefault();
         var senderId = Guid.NewGuid();
         var recipient = Guid.NewGuid();
         var targetUnitId = Guid.NewGuid();
@@ -376,6 +400,7 @@ public sealed class NotificationServiceTests
     [Fact]
     public async Task SendToUnitAsync_CreatedNotificationsHaveManualTypeAndSenderName()
     {
+        SetupPreferenceServiceDefault();
         var senderId = Guid.NewGuid();
         var recipientId = Guid.NewGuid();
         var targetUnitId = Guid.NewGuid();
@@ -410,6 +435,7 @@ public sealed class NotificationServiceTests
     [Fact]
     public async Task CreateForUsersAsync_CreatesOneNotificationPerRecipient()
     {
+        SetupPreferenceServiceDefault();
         _currentUser.IsAuthenticated.Returns(true);
         _currentUser.UserId.Returns(UserId);
 
@@ -425,6 +451,7 @@ public sealed class NotificationServiceTests
     [Fact]
     public async Task CreateForUsersAsync_DeduplicatesRecipients()
     {
+        SetupPreferenceServiceDefault();
         _currentUser.IsAuthenticated.Returns(true);
         _currentUser.UserId.Returns(UserId);
 
@@ -452,6 +479,7 @@ public sealed class NotificationServiceTests
     [Fact]
     public async Task CreateForUsersAsync_CallsRealtimeNotifierForEachRecipient()
     {
+        SetupPreferenceServiceDefault();
         _currentUser.IsAuthenticated.Returns(true);
         _currentUser.UserId.Returns(UserId);
 

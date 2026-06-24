@@ -34,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<ISalesRepService, SalesRepService>();
         services.AddScoped<IMailDraftService, MailDraftService>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IGoalService, GoalService>();
         services.AddScoped<ITenderService, TenderService>();

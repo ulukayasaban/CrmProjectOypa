@@ -34,4 +34,7 @@ export const queryKeys = {
 
   /** Admin kullanıcı listesi (/auth/users) */
   users: ['auth', 'users'] as const,
+
+  /** Bildirim tür tercihleri (/notifications/preferences) */
+  notificationPreferences: ['notifications', 'preferences'] as const,
 };

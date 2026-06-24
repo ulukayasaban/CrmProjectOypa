@@ -13,7 +13,8 @@ public sealed class NotificationService(
     ICurrentUser currentUser,
     IOrgScopeService orgScope,
     IRealtimeNotifier realtimeNotifier,
-    IUnitOfWork unitOfWork) : INotificationService
+    IUnitOfWork unitOfWork,
+    INotificationPreferenceService preferenceService) : INotificationService
 {
     // -----------------------------------------------------------------------
     // Sorgular
@@ -133,6 +134,14 @@ public sealed class NotificationService(
         CancellationToken cancellationToken = default)
     {
         var idList = userIds.Distinct().ToList();
+        if (idList.Count == 0)
+            return;
+
+        // Manual dışındaki tipler için tercih filtresi uygulanır.
+        // Manual her zaman teslim edilir; diğer tipler için Enabled=false olan alıcılar çıkarılır.
+        idList = (await preferenceService.IsEnabledForUsersAsync(idList, type, cancellationToken))
+            .ToList();
+
         if (idList.Count == 0)
             return;
 
