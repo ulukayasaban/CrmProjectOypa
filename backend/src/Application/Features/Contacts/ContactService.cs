@@ -9,6 +9,7 @@ namespace Oypa.Crm.Application.Features.Contacts;
 public sealed class ContactService(
     IRepository<Company> companies,
     IRepository<Contact> contacts,
+    IDateTimeProvider clock,
     IUnitOfWork unitOfWork) : IContactService
 {
     public async Task<IReadOnlyList<ContactDto>> GetByCompanyAsync(Guid companyId, CancellationToken cancellationToken = default)
@@ -53,7 +54,9 @@ public sealed class ContactService(
         var contact = await contacts.GetByIdAsync(id, cancellationToken)
             ?? throw NotFoundException.For("İlgili kişi", id);
 
-        contacts.Remove(contact);
+        // Fiziksel silme yerine soft-delete; global query filter sorgularda gizler.
+        contact.MarkDeleted(clock.UtcNow);
+        contacts.Update(contact);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

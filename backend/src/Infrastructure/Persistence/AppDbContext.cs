@@ -27,10 +27,30 @@ public sealed class AppDbContext(
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Tender> Tenders => Set<Tender>();
 
+    /// <summary>Tüm denetim kayıtları. Sadece okunabilir; güncellenemez.</summary>
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        // Soft-delete global query filter'ı:
+        // ISoftDelete uygulayan tüm entity type'larına otomatik olarak
+        // "e.IsDeleted == false" koşulu eklenir. Include'larda da otomatik uygulanır.
+        foreach (var entityType in builder.Model.GetEntityTypes())
+        {
+            if (!typeof(ISoftDelete).IsAssignableFrom(entityType.ClrType))
+                continue;
+
+            // Expression<Func<TEntity, bool>> e => !e.IsDeleted
+            var param = System.Linq.Expressions.Expression.Parameter(entityType.ClrType, "e");
+            var prop = System.Linq.Expressions.Expression.Property(param, nameof(ISoftDelete.IsDeleted));
+            var notDeleted = System.Linq.Expressions.Expression.Not(prop);
+            var lambda = System.Linq.Expressions.Expression.Lambda(notDeleted, param);
+
+            builder.Entity(entityType.ClrType).HasQueryFilter(lambda);
+        }
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

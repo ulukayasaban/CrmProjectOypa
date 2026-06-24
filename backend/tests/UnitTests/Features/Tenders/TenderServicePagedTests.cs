@@ -17,10 +17,11 @@ public sealed class TenderServicePagedTests
     private readonly ITenderRepository _tenders = Substitute.For<ITenderRepository>();
     private readonly IRepository<Company> _companies = Substitute.For<IRepository<Company>>();
     private readonly IRepository<SalesRep> _salesReps = Substitute.For<IRepository<SalesRep>>();
+    private readonly IDateTimeProvider _clock = Substitute.For<IDateTimeProvider>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private TenderService CreateSut() =>
-        new(_tenders, _companies, _salesReps, _unitOfWork);
+        new(_tenders, _companies, _salesReps, _clock, _unitOfWork);
 
     private static Company NewCompany() =>
         new("Acme", Sector.Retail, "111", "acme@test.com", "Adres");

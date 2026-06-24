@@ -3,8 +3,11 @@ using Oypa.Crm.Domain.Enums;
 
 namespace Oypa.Crm.Domain.Entities;
 
-/// <summary>Bir yöneticiye atanmış, ekip bazlı haftalık görüşme hedefi.</summary>
-public class Goal : BaseEntity
+/// <summary>
+/// Bir yöneticiye atanmış, ekip bazlı haftalık görüşme hedefi.
+/// Soft-delete destekler; <see cref="ISoftDelete.MarkDeleted"/> ile mantıksal silme yapılır.
+/// </summary>
+public class Goal : BaseEntity, ISoftDelete
 {
     private Goal() { }
 
@@ -48,6 +51,30 @@ public class Goal : BaseEntity
     public void Deactivate()
     {
         IsActive = false;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    // ────────── ISoftDelete ──────────
+
+    /// <summary>Hedef silinmiş olarak işaretlenmiş mi.</summary>
+    public bool IsDeleted { get; private set; }
+
+    /// <summary>Silme zaman damgası (UTC). Silinmediyse null.</summary>
+    public DateTime? DeletedAtUtc { get; private set; }
+
+    /// <summary>Hedefi mantıksal olarak siler (devre dışı bırakır ve gizler).</summary>
+    public void MarkDeleted(DateTime utcNow)
+    {
+        IsDeleted = true;
+        DeletedAtUtc = utcNow;
+        UpdatedAtUtc = utcNow;
+    }
+
+    /// <summary>Silinmiş hedefi geri yükler.</summary>
+    public void Restore()
+    {
+        IsDeleted = false;
+        DeletedAtUtc = null;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 }

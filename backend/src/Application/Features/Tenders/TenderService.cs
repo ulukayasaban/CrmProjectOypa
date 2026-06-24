@@ -12,6 +12,7 @@ public sealed class TenderService(
     ITenderRepository tenders,
     IRepository<Company> companies,
     IRepository<SalesRep> salesReps,
+    IDateTimeProvider clock,
     IUnitOfWork unitOfWork) : ITenderService
 {
     public async Task<IReadOnlyList<TenderDto>> GetAsync(
@@ -113,7 +114,10 @@ public sealed class TenderService(
         var tender = await tenders.GetByIdAsync(id, cancellationToken)
                      ?? throw NotFoundException.For("İhale", id);
 
-        tenders.Remove(tender);
+        // Fiziksel silme yerine soft-delete: IsDeleted=true, DeletedAtUtc doldurulur.
+        // Global query filter sayesinde sonraki sorgularda otomatik gizlenir.
+        tender.MarkDeleted(clock.UtcNow);
+        tenders.Update(tender);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 

@@ -6,8 +6,9 @@ namespace Oypa.Crm.Domain.Entities;
 /// <summary>
 /// İhale agregası. Bir firmaya (Company) bağlı, atanan satış temsilcisinin (SalesRep) sorumluluğundadır.
 /// Sektör ayrımı mevcut <see cref="Sector"/> enum ile yapılır.
+/// Soft-delete destekler; fiziksel silme yerine <see cref="ISoftDelete.MarkDeleted"/> kullanılır.
 /// </summary>
-public class Tender : BaseEntity
+public class Tender : BaseEntity, ISoftDelete
 {
     // EF Core için
     private Tender() { }
@@ -148,6 +149,30 @@ public class Tender : BaseEntity
     {
         ApproachNotifiedAtUtc = utcNow;
         UpdatedAtUtc = utcNow;
+    }
+
+    // ────────── ISoftDelete ──────────
+
+    /// <summary>İhale silinmiş olarak işaretlenmiş mi.</summary>
+    public bool IsDeleted { get; private set; }
+
+    /// <summary>Silme zaman damgası (UTC). Silinmediyse null.</summary>
+    public DateTime? DeletedAtUtc { get; private set; }
+
+    /// <summary>İhaleyi mantıksal olarak siler.</summary>
+    public void MarkDeleted(DateTime utcNow)
+    {
+        IsDeleted = true;
+        DeletedAtUtc = utcNow;
+        UpdatedAtUtc = utcNow;
+    }
+
+    /// <summary>Silinmiş ihaleyi geri yükler.</summary>
+    public void Restore()
+    {
+        IsDeleted = false;
+        DeletedAtUtc = null;
+        UpdatedAtUtc = DateTime.UtcNow;
     }
 
     // ────────── Private helpers ──────────

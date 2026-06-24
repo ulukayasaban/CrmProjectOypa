@@ -14,10 +14,11 @@ public sealed class TenderServiceTests
     private readonly ITenderRepository _tenders = Substitute.For<ITenderRepository>();
     private readonly IRepository<Company> _companies = Substitute.For<IRepository<Company>>();
     private readonly IRepository<SalesRep> _salesReps = Substitute.For<IRepository<SalesRep>>();
+    private readonly IDateTimeProvider _clock = Substitute.For<IDateTimeProvider>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private TenderService CreateSut() =>
-        new(_tenders, _companies, _salesReps, _unitOfWork);
+        new(_tenders, _companies, _salesReps, _clock, _unitOfWork);
 
     private static Company NewCompany() =>
         new("Acme", Sector.Retail, "111", "acme@test.com", "Adres");
@@ -298,20 +299,27 @@ public sealed class TenderServiceTests
     }
 
     // -----------------------------------------------------------------------
-    // DeleteAsync — siler ve kaydeder
+    // DeleteAsync — soft-delete: fiziksel silme değil, IsDeleted işaretleme
     // -----------------------------------------------------------------------
 
     [Fact]
-    public async Task DeleteAsync_ExistingTender_RemovesAndSaves()
+    public async Task DeleteAsync_ExistingTender_SoftDeletesAndSaves()
     {
         var company = NewCompany();
         var tender = NewTender(company.Id);
+        var now = new DateTime(2026, 6, 24, 12, 0, 0, DateTimeKind.Utc);
+        _clock.UtcNow.Returns(now);
         _tenders.GetByIdAsync(tender.Id, Arg.Any<CancellationToken>()).Returns(tender);
         var sut = CreateSut();
 
         await sut.DeleteAsync(tender.Id);
 
-        _tenders.Received(1).Remove(tender);
+        // Fiziksel Remove çağrılmamalı; soft-delete entity üzerinde işaretlenmeli
+        _tenders.DidNotReceive().Remove(Arg.Any<Tender>());
+        _tenders.Received(1).Update(Arg.Any<Tender>());
+        // Entity'nin soft-delete alanları doldurulmuş olmalı
+        tender.IsDeleted.ShouldBeTrue("MarkDeleted sonrası IsDeleted true olmalı");
+        tender.DeletedAtUtc.ShouldBe(now);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

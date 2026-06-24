@@ -20,6 +20,7 @@ public sealed class EmployeeService(
     UserManager<ApplicationUser> userManager,
     IIdentityService identityService,
     IOrgScopeService orgScopeService,
+    IDateTimeProvider clock,
     IUnitOfWork unitOfWork) : IEmployeeService
 {
     // -----------------------------------------------------------------------
@@ -208,14 +209,16 @@ public sealed class EmployeeService(
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
             ?? throw NotFoundException.For("Personel", id);
 
-        // Astı olan düğüm silinemez
+        // Astı olan düğüm silinemez (soft-delete sonrası da hiyerarşi bozulmamalı)
         var hasSubordinates = await db.Set<Employee>()
             .AnyAsync(e => e.ManagerId == id, cancellationToken);
 
         if (hasSubordinates)
             throw new ConflictException("Astı bulunan personel silinemez. Önce astların yöneticisini değiştirin.");
 
-        db.Set<Employee>().Remove(employee);
+        // Fiziksel silme yerine soft-delete; global query filter sorgularda gizler.
+        employee.MarkDeleted(clock.UtcNow);
+        db.Set<Employee>().Update(employee);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 

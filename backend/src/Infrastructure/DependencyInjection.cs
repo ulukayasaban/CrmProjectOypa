@@ -12,6 +12,7 @@ using Oypa.Crm.Infrastructure.Features.Employees;
 using Oypa.Crm.Infrastructure.Features.Org;
 using Oypa.Crm.Infrastructure.Identity;
 using Oypa.Crm.Infrastructure.Persistence;
+using Oypa.Crm.Infrastructure.Persistence.Interceptors;
 using Oypa.Crm.Infrastructure.Persistence.Repositories;
 using Oypa.Crm.Infrastructure.Reports;
 using Oypa.Crm.Infrastructure.Security;
@@ -22,10 +23,18 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(
-                configuration.GetConnectionString("DefaultConnection"),
-                sql => sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+        // Interceptor scoped DI'dan alınır; ICurrentUser bağımlılığı için scoped yaşam döngüsü gerekir.
+        services.AddScoped<AuditSaveChangesInterceptor>();
+
+        services.AddDbContext<AppDbContext>((sp, options) =>
+        {
+            var interceptor = sp.GetRequiredService<AuditSaveChangesInterceptor>();
+            options
+                .UseSqlServer(
+                    configuration.GetConnectionString("DefaultConnection"),
+                    sql => sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName))
+                .AddInterceptors(interceptor);
+        });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));

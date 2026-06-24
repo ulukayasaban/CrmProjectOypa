@@ -2,8 +2,11 @@ using Oypa.Crm.Domain.Common;
 
 namespace Oypa.Crm.Domain.Entities;
 
-/// <summary>OYPA organizasyon hiyerarşisindeki personel düğümü. Opsiyonel olarak bir kimlik hesabıyla ilişkilendirilebilir.</summary>
-public class Employee : BaseEntity
+/// <summary>
+/// OYPA organizasyon hiyerarşisindeki personel düğümü. Opsiyonel olarak bir kimlik hesabıyla ilişkilendirilebilir.
+/// Soft-delete destekler; fiziksel silme yerine <see cref="ISoftDelete.MarkDeleted"/> kullanılır.
+/// </summary>
+public class Employee : BaseEntity, ISoftDelete
 {
     private Employee() { }
 
@@ -53,6 +56,30 @@ public class Employee : BaseEntity
     public void UnlinkAccount()
     {
         ApplicationUserId = null;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    // ────────── ISoftDelete ──────────
+
+    /// <summary>Personel silinmiş olarak işaretlenmiş mi.</summary>
+    public bool IsDeleted { get; private set; }
+
+    /// <summary>Silme zaman damgası (UTC). Silinmediyse null.</summary>
+    public DateTime? DeletedAtUtc { get; private set; }
+
+    /// <summary>Personeli mantıksal olarak siler.</summary>
+    public void MarkDeleted(DateTime utcNow)
+    {
+        IsDeleted = true;
+        DeletedAtUtc = utcNow;
+        UpdatedAtUtc = utcNow;
+    }
+
+    /// <summary>Silinmiş personeli geri yükler.</summary>
+    public void Restore()
+    {
+        IsDeleted = false;
+        DeletedAtUtc = null;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 }

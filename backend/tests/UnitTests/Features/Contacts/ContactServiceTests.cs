@@ -14,9 +14,11 @@ public sealed class ContactServiceTests
 {
     private readonly IRepository<Company> _companies = Substitute.For<IRepository<Company>>();
     private readonly IRepository<Contact> _contacts = Substitute.For<IRepository<Contact>>();
+    private readonly IDateTimeProvider _clock = Substitute.For<IDateTimeProvider>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
-    private ContactService CreateSut() => new(_companies, _contacts, _unitOfWork);
+    private ContactService CreateSut() =>
+        new(_companies, _contacts, _clock, _unitOfWork);
 
     private static Company NewCompany() => new("Acme", Sector.Retail, "111", "a@b.c", "Adres");
 
@@ -138,20 +140,27 @@ public sealed class ContactServiceTests
     }
 
     // -----------------------------------------------------------------------
-    // DeleteAsync
+    // DeleteAsync — soft-delete: fiziksel silme değil, IsDeleted işaretleme
     // -----------------------------------------------------------------------
 
     [Fact]
-    public async Task DeleteAsync_ExistingContact_RemovesAndSaves()
+    public async Task DeleteAsync_ExistingContact_SoftDeletesAndSaves()
     {
         var companyId = Guid.NewGuid();
         var contact = new Contact(companyId, "Silinecek", null, null);
+        var now = new DateTime(2026, 6, 24, 12, 0, 0, DateTimeKind.Utc);
+        _clock.UtcNow.Returns(now);
         _contacts.GetByIdAsync(contact.Id, Arg.Any<CancellationToken>()).Returns(contact);
         var sut = CreateSut();
 
         await sut.DeleteAsync(contact.Id);
 
-        _contacts.Received(1).Remove(Arg.Is<Contact>(c => c.Id == contact.Id));
+        // Fiziksel Remove çağrılmamalı; soft-delete entity üzerinde işaretlenmeli
+        _contacts.DidNotReceive().Remove(Arg.Any<Contact>());
+        _contacts.Received(1).Update(Arg.Any<Contact>());
+        // Entity'nin soft-delete alanları doldurulmuş olmalı
+        contact.IsDeleted.ShouldBeTrue("MarkDeleted sonrası IsDeleted true olmalı");
+        contact.DeletedAtUtc.ShouldBe(now);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

@@ -7,8 +7,9 @@ namespace Oypa.Crm.Domain.Entities;
 /// <summary>
 /// Firma agregası. Hem lead hem müşteri yaşam döngüsünü tek varlıkta taşır
 /// (<see cref="CompanyType"/>), böylece dönüşümde veri tekrarı olmaz.
+/// Soft-delete destekler; fiziksel silme yerine <see cref="ISoftDelete.MarkDeleted"/> kullanılır.
 /// </summary>
-public class Company : BaseEntity
+public class Company : BaseEntity, ISoftDelete
 {
     private readonly List<Contact> _contacts = [];
     private readonly List<Meeting> _meetings = [];
@@ -67,6 +68,30 @@ public class Company : BaseEntity
 
     public IReadOnlyCollection<Contact> Contacts => _contacts.AsReadOnly();
     public IReadOnlyCollection<Meeting> Meetings => _meetings.AsReadOnly();
+
+    // ────────── ISoftDelete ──────────
+
+    /// <summary>Firma silinmiş olarak işaretlenmiş mi.</summary>
+    public bool IsDeleted { get; private set; }
+
+    /// <summary>Silme zaman damgası (UTC). Silinmediyse null.</summary>
+    public DateTime? DeletedAtUtc { get; private set; }
+
+    /// <summary>Firmayı mantıksal olarak siler; DB'den fiziksel kaldırılmaz.</summary>
+    public void MarkDeleted(DateTime utcNow)
+    {
+        IsDeleted = true;
+        DeletedAtUtc = utcNow;
+        UpdatedAtUtc = utcNow;
+    }
+
+    /// <summary>Silinmiş firmayı geri yükler.</summary>
+    public void Restore()
+    {
+        IsDeleted = false;
+        DeletedAtUtc = null;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
 
     public void UpdateDetails(
         string title,

@@ -2,8 +2,11 @@ using Oypa.Crm.Domain.Common;
 
 namespace Oypa.Crm.Domain.Entities;
 
-/// <summary>Bir firmaya bağlı ilgili kişi.</summary>
-public class Contact : BaseEntity
+/// <summary>
+/// Bir firmaya bağlı ilgili kişi.
+/// Soft-delete destekler; fiziksel silme yerine <see cref="ISoftDelete.MarkDeleted"/> kullanılır.
+/// </summary>
+public class Contact : BaseEntity, ISoftDelete
 {
     private Contact() { }
 
@@ -27,6 +30,30 @@ public class Contact : BaseEntity
         Name = name;
         Email = email;
         Phone = phone;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    // ────────── ISoftDelete ──────────
+
+    /// <summary>İlgili kişi silinmiş olarak işaretlenmiş mi.</summary>
+    public bool IsDeleted { get; private set; }
+
+    /// <summary>Silme zaman damgası (UTC). Silinmediyse null.</summary>
+    public DateTime? DeletedAtUtc { get; private set; }
+
+    /// <summary>İlgili kişiyi mantıksal olarak siler.</summary>
+    public void MarkDeleted(DateTime utcNow)
+    {
+        IsDeleted = true;
+        DeletedAtUtc = utcNow;
+        UpdatedAtUtc = utcNow;
+    }
+
+    /// <summary>Silinmiş ilgili kişiyi geri yükler.</summary>
+    public void Restore()
+    {
+        IsDeleted = false;
+        DeletedAtUtc = null;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 }

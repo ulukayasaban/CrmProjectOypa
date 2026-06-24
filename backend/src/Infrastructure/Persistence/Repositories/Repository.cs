@@ -11,9 +11,10 @@ public class Repository<T>(AppDbContext db) : IRepository<T> where T : BaseEntit
     protected readonly AppDbContext Db = db;
     protected DbSet<T> Set => Db.Set<T>();
 
-    // FindAsync izlenen (tracked) varlık döner — güncelleme senaryoları için uygundur.
+    // FirstOrDefaultAsync global query filter'a (soft-delete) uyar; FindAsync uymuyor.
+    // Takip (tracking) korunur; güncelleme senaryolarında EF Entity'yi izlemeye devam eder.
     public async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        await Set.FindAsync([id], cancellationToken);
+        await Set.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<T>> ListAsync(CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking().ToListAsync(cancellationToken);

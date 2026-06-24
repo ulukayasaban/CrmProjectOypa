@@ -4,8 +4,11 @@ using Oypa.Crm.Domain.Events;
 
 namespace Oypa.Crm.Domain.Entities;
 
-/// <summary>Bir firma ile planlanan randevu/görüşme.</summary>
-public class Meeting : BaseEntity
+/// <summary>
+/// Bir firma ile planlanan randevu/görüşme.
+/// Soft-delete destekler; fiziksel silme yerine <see cref="ISoftDelete.MarkDeleted"/> kullanılır.
+/// </summary>
+public class Meeting : BaseEntity, ISoftDelete
 {
     private Meeting() { }
 
@@ -85,5 +88,29 @@ public class Meeting : BaseEntity
             throw new ArgumentException("Not içeriği boş olamaz.", nameof(content));
 
         _notes.Add(new MeetingNote(Id, content, authorUserId, authorName, authorTitle));
+    }
+
+    // ────────── ISoftDelete ──────────
+
+    /// <summary>Görüşme silinmiş olarak işaretlenmiş mi.</summary>
+    public bool IsDeleted { get; private set; }
+
+    /// <summary>Silme zaman damgası (UTC). Silinmediyse null.</summary>
+    public DateTime? DeletedAtUtc { get; private set; }
+
+    /// <summary>Görüşmeyi mantıksal olarak siler.</summary>
+    public void MarkDeleted(DateTime utcNow)
+    {
+        IsDeleted = true;
+        DeletedAtUtc = utcNow;
+        UpdatedAtUtc = utcNow;
+    }
+
+    /// <summary>Silinmiş görüşmeyi geri yükler.</summary>
+    public void Restore()
+    {
+        IsDeleted = false;
+        DeletedAtUtc = null;
+        UpdatedAtUtc = DateTime.UtcNow;
     }
 }
