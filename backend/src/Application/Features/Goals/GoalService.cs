@@ -156,6 +156,19 @@ public sealed class GoalService(
             .ToList();
     }
 
+    public async Task SnapshotAllAsync(CancellationToken cancellationToken = default)
+    {
+        // Tüm aktif hedefleri çek (kapsam filtresi olmadan; bu bir sistem işlemi).
+        var allGoals = await goals.ListAsync(g => g.IsActive, cancellationToken);
+        var today = clock.Today;
+
+        foreach (var goal in allGoals)
+        {
+            // Mevcut EnsureSnapshotsAsync mantığını yeniden kullan; tekrar kod yazılmaz.
+            await EnsureSnapshotsAsync(goal, today, cancellationToken);
+        }
+    }
+
     public async Task<IReadOnlyList<GoalProgressDto>> GetScopedProgressAsync(CancellationToken cancellationToken = default)
     {
         var scope = await orgScope.ResolveAsync(cancellationToken);

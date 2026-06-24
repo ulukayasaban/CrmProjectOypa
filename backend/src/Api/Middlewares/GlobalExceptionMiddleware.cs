@@ -34,7 +34,13 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
         };
 
         if (status == HttpStatusCode.InternalServerError)
-            logger.LogError(ex, "İşlenmemiş hata: {Message}", ex.Message);
+        {
+            // CorrelationId, CorrelationIdMiddleware tarafından Items'a yerleştirilir;
+            // buradan okunarak log satırına eklenir (loglama scope zaten ekliyor,
+            // ama açık parametre arama/filtrelemeyi kolaylaştırır).
+            var correlationId = context.Items[CorrelationIdMiddleware.CorrelationIdKey]?.ToString() ?? "-";
+            logger.LogError(ex, "İşlenmemiş hata: {Message} (CorrelationId: {CorrelationId})", ex.Message, correlationId);
+        }
 
         context.Response.StatusCode = (int)status;
         context.Response.ContentType = "application/json";

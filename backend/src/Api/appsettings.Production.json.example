@@ -1,9 +1,24 @@
 {
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Database=OyakCrmDb;User Id=api_user;Password=REPLACE_WITH_DB_PASSWORD;TrustServerCertificate=True;MultipleActiveResultSets=True"
+  },
   "Jwt": {
     "Secret": "REPLACE_WITH_PRODUCTION_JWT_SECRET_MIN_32_CHARS"
+  },
+  "Email": {
+    "Host": "REPLACE_WITH_SMTP_HOST_OR_LEAVE_EMPTY_TO_DISABLE",
+    "Port": 587,
+    "User": "REPLACE_WITH_SMTP_USER",
+    "Password": "REPLACE_WITH_SMTP_PASSWORD",
+    "From": "no-reply@oypa.com.tr",
+    "FromName": "OYPA CRM",
+    "EnableSsl": true
+  },
+  "App": {
+    "FrontendBaseUrl": "https://your-frontend-domain"
   },
   "Cors": {
     "AllowedOrigins": [ "https://your-frontend-domain" ]
   },
-  "AllowedHosts": "*"
+  "AllowedHosts": "api.your-domain.com"
 }

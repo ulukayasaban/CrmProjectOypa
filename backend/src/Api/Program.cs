@@ -71,6 +71,12 @@ builder.Services.AddScoped<IRealtimeNotifier, SignalRRealtimeNotifier>();
 // Yaklaşan ihale bildirimi — periyodik BackgroundService
 builder.Services.AddHostedService<UpcomingTenderReminderHostedService>();
 
+// Haftalık hedef snapshot — her 6 saatte bir tüm aktif hedefler için snapshot oluşturur
+builder.Services.AddHostedService<WeeklyGoalSnapshotHostedService>();
+
+// Süresi dolmuş RefreshToken temizleme — günde bir kez çalışır
+builder.Services.AddHostedService<RefreshTokenCleanupHostedService>();
+
 // JWT Bearer — /hubs/notifications için query-string token desteği
 builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
 {
@@ -108,6 +114,9 @@ builder.Services.AddCors(options => options.AddPolicy(CorsPolicy, policy =>
 
 var app = builder.Build();
 
+// CorrelationIdMiddleware pipeline'ın EN BAŞINDA yer alır; tüm middleware'ler
+// ve controller log satırları CorrelationId scope'undan faydalanır.
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 

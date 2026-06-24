@@ -19,4 +19,34 @@ public sealed class RefreshTokenRepository(AppDbContext db) : Repository<Refresh
             .Where(t => t.UserId == userId && t.RevokedAtUtc == null && t.ExpiresAtUtc > now)
             .ToListAsync(cancellationToken);
     }
+
+    /// <summary>
+    /// Süresi <paramref name="olderThanUtc"/> tarihinden önce dolmuş token'ları toplu siler.
+    /// EF Core ExecuteDeleteAsync ile tek SQL komutu gönderilir; change-tracker yükü olmaz.
+    /// InMemory sağlayıcı ExecuteDeleteAsync'i desteklemez; bu durumda RemoveRange ile fallback yapılır.
+    /// </summary>
+    public async Task<int> DeleteExpiredAsync(DateTime olderThanUtc, CancellationToken cancellationToken = default)
+    {
+        // InMemory provider (test ortamı) ExecuteDeleteAsync'i desteklemez; provider türü kontrol edilir.
+        var isRelational = db.Database.ProviderName?.Contains("InMemory", StringComparison.OrdinalIgnoreCase) == false;
+
+        if (isRelational)
+        {
+            return await Set
+                .Where(t => t.ExpiresAtUtc < olderThanUtc)
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+
+        // InMemory fallback: change-tracker üzerinden sil.
+        var expired = await Set
+            .Where(t => t.ExpiresAtUtc < olderThanUtc)
+            .ToListAsync(cancellationToken);
+
+        if (expired.Count == 0)
+            return 0;
+
+        Set.RemoveRange(expired);
+        await db.SaveChangesAsync(cancellationToken);
+        return expired.Count;
+    }
 }

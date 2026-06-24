@@ -18,4 +18,10 @@ public interface IGoalService
 
     /// <summary>Dashboard için: kapsamdaki hedeflerin bu haftaki ilerleme özetlerini döndürür.</summary>
     Task<IReadOnlyList<GoalProgressDto>> GetScopedProgressAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Tüm aktif hedefler için geçmiş haftaların snapshot'larını oluşturur.
+    /// Arka plan job'u tarafından çağrılır; mevcut snapshot varsa atlanır (idempotent).
+    /// </summary>
+    Task SnapshotAllAsync(CancellationToken cancellationToken = default);
 }
