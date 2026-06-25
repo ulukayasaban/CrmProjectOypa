@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using ClosedXML.Excel;
 using NSubstitute;
 using Oypa.Crm.Application.Common.Interfaces;
@@ -16,8 +17,18 @@ public sealed class ExcelReportServiceTests
 {
     private readonly IMeetingRepository _meetingRepository = Substitute.For<IMeetingRepository>();
     private readonly ITenderRepository _tenderRepository = Substitute.For<ITenderRepository>();
+    private readonly IRepository<Goal> _goalRepository = Substitute.For<IRepository<Goal>>();
+    private readonly IRepository<GoalWeek> _goalWeekRepository = Substitute.For<IRepository<GoalWeek>>();
+    private readonly IRepository<Employee> _employeeRepository = Substitute.For<IRepository<Employee>>();
+    private readonly ICompanyRepository _companyRepository = Substitute.For<ICompanyRepository>();
 
-    private ExcelReportService CreateSut() => new(_meetingRepository, _tenderRepository);
+    private ExcelReportService CreateSut() => new(
+        _meetingRepository,
+        _tenderRepository,
+        _goalRepository,
+        _goalWeekRepository,
+        _employeeRepository,
+        _companyRepository);
 
     private static Meeting MakeMeeting(string companyTitle, string repName, string? repTitle = null)
     {
@@ -217,5 +228,159 @@ public sealed class ExcelReportServiceTests
         var ws = wb.Worksheets.First();
 
         ws.Cell(2, 10).GetString().ShouldBeEmpty();
+    }
+
+    // -----------------------------------------------------------------------
+    // Tarih aralığı filtresi
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task BuildMeetingReportAsync_DateRange_ExcludesOutOfRange()
+    {
+        var inRange = MakeMeetingOn("Range A.Ş.", new DateOnly(2026, 6, 15));
+        var outRange = MakeMeetingOn("Out A.Ş.", new DateOnly(2026, 7, 20));
+        _meetingRepository.ListWithDetailsAsync(Arg.Any<CancellationToken>())
+            .Returns(new[] { inRange, outRange });
+
+        var sut = CreateSut();
+        var report = await sut.BuildMeetingReportAsync(
+            new DateOnly(2026, 6, 1), new DateOnly(2026, 6, 30));
+
+        using var ms = new MemoryStream(report.Content);
+        using var wb = new XLWorkbook(ms);
+        var ws = wb.Worksheets.First();
+
+        // Yalnızca aralıktaki görüşme yazılmalı (row 2); row 3 boş.
+        ws.Cell(2, 1).GetString().ShouldBe("Range A.Ş.");
+        ws.Cell(3, 1).GetString().ShouldBeEmpty();
+    }
+
+    // -----------------------------------------------------------------------
+    // Hedef raporu
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task BuildGoalReportAsync_EmptyList_ReturnsXlsxWithHeaders()
+    {
+        SetupEmptyGoalData();
+
+        var sut = CreateSut();
+        var report = await sut.BuildGoalReportAsync();
+
+        report.Content.ShouldNotBeEmpty();
+        report.FileName.ShouldStartWith("hedefler-");
+
+        using var ms = new MemoryStream(report.Content);
+        using var wb = new XLWorkbook(ms);
+        var ws = wb.Worksheets.First();
+        ws.Cell(1, 1).GetString().ShouldBe("Başlık");
+        ws.Cell(1, 5).GetString().ShouldBe("Toplam Gerçekleşen");
+    }
+
+    [Fact]
+    public async Task BuildGoalReportAsync_OneGoal_WritesAssigneeAndProgress()
+    {
+        var employee = new Employee("Satış Müdürü", "Avniye ÖNER");
+        var goal = new Goal(employee.Id, GoalSegment.Customer, 5, "Q3 Hedefi");
+
+        var week1 = new GoalWeek(goal.Id, new DateOnly(2026, 6, 1), 5);
+        week1.SetAchieved(3);
+        var week2 = new GoalWeek(goal.Id, new DateOnly(2026, 6, 8), 5);
+        week2.SetAchieved(4);
+
+        _goalRepository.ListAsync(Arg.Any<Expression<Func<Goal, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(new[] { goal });
+        _goalWeekRepository.ListAsync(Arg.Any<CancellationToken>())
+            .Returns(new[] { week1, week2 });
+        _employeeRepository.ListAsync(Arg.Any<CancellationToken>())
+            .Returns(new[] { employee });
+        _companyRepository.ListCustomersAsync(Arg.Any<Domain.Enums.CustomerStatus?>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Company>());
+
+        var sut = CreateSut();
+        var report = await sut.BuildGoalReportAsync();
+
+        using var ms = new MemoryStream(report.Content);
+        using var wb = new XLWorkbook(ms);
+        var ws = wb.Worksheets.First();
+
+        ws.Cell(2, 1).GetString().ShouldBe("Q3 Hedefi");
+        ws.Cell(2, 3).GetString().ShouldBe("Avniye ÖNER");
+        ws.Cell(2, 4).GetDouble().ShouldBe(5);
+        ws.Cell(2, 5).GetDouble().ShouldBe(7);  // 3 + 4
+        ws.Cell(2, 6).GetDouble().ShouldBe(2);  // 2 hafta
+    }
+
+    // -----------------------------------------------------------------------
+    // Müşteri raporu
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task BuildCustomerReportAsync_OneCustomer_WritesRow()
+    {
+        var customer = new Company("Müşteri A.Ş.", Sector.Energy, "555", "m@a.c", "Adres");
+        _companyRepository.ListCustomersAsync(Arg.Any<Domain.Enums.CustomerStatus?>(), Arg.Any<CancellationToken>())
+            .Returns(new[] { customer });
+
+        var sut = CreateSut();
+        var report = await sut.BuildCustomerReportAsync();
+
+        report.FileName.ShouldStartWith("musteriler-");
+
+        using var ms = new MemoryStream(report.Content);
+        using var wb = new XLWorkbook(ms);
+        var ws = wb.Worksheets.First();
+        ws.Cell(1, 1).GetString().ShouldBe("Firma");
+        ws.Cell(2, 1).GetString().ShouldBe("Müşteri A.Ş.");
+        ws.Cell(2, 2).GetString().ShouldBe("Enerji");
+    }
+
+    [Fact]
+    public async Task BuildCustomerReportAsync_DateRange_ExcludesOutOfRange()
+    {
+        var inRange = new Company("İçeride", Sector.Retail, "1", "a@b.c", "Adr")
+        { CreatedAtUtc = new DateTime(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc) };
+        var outRange = new Company("Dışarıda", Sector.Retail, "2", "c@d.e", "Adr")
+        { CreatedAtUtc = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc) };
+
+        _companyRepository.ListCustomersAsync(Arg.Any<Domain.Enums.CustomerStatus?>(), Arg.Any<CancellationToken>())
+            .Returns(new[] { inRange, outRange });
+
+        var sut = CreateSut();
+        var report = await sut.BuildCustomerReportAsync(
+            new DateOnly(2026, 6, 1), new DateOnly(2026, 6, 30));
+
+        using var ms = new MemoryStream(report.Content);
+        using var wb = new XLWorkbook(ms);
+        var ws = wb.Worksheets.First();
+
+        // Sıralama Title'a göre; yalnız "İçeride" olmalı.
+        ws.Cell(2, 1).GetString().ShouldBe("İçeride");
+        ws.Cell(3, 1).GetString().ShouldBeEmpty();
+    }
+
+    // -----------------------------------------------------------------------
+    // Yardımcılar
+    // -----------------------------------------------------------------------
+
+    private static Meeting MakeMeetingOn(string companyTitle, DateOnly date)
+    {
+        var company = new Company(companyTitle, Sector.Retail, "1", "a@b.c", "Adr");
+        var rep = new SalesRep("Temsilci", "temsilci@oypa.com");
+        var meeting = Meeting.Schedule(
+            company.Id, rep.Id, null, date, new TimeOnly(10, 0), "Adres", MeetingMethod.Visit);
+        SetNavigation(meeting, "Company", company);
+        SetNavigation(meeting, "SalesRep", rep);
+        return meeting;
+    }
+
+    private void SetupEmptyGoalData()
+    {
+        _goalRepository.ListAsync(Arg.Any<Expression<Func<Goal, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Goal>());
+        _goalWeekRepository.ListAsync(Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<GoalWeek>());
+        _employeeRepository.ListAsync(Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Employee>());
     }
 }

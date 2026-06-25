@@ -1,22 +1,36 @@
 using ClosedXML.Excel;
 using Oypa.Crm.Application.Common.Interfaces;
+using Oypa.Crm.Domain.Entities;
 using Oypa.Crm.Domain.Enums;
 
 namespace Oypa.Crm.Infrastructure.Reports;
 
 /// <summary>
-/// ClosedXML kullanarak görüşme ve ihale Excel raporları üretir.
+/// ClosedXML kullanarak görüşme, ihale, hedef ve müşteri Excel raporları üretir.
 /// ClosedXML bağımlılığı yalnızca bu katmanda (Infrastructure) bulunur — Clean Architecture kuralı.
 /// </summary>
 public sealed class ExcelReportService(
     IMeetingRepository meetingRepository,
-    ITenderRepository tenderRepository) : IReportService
+    ITenderRepository tenderRepository,
+    IRepository<Goal> goalRepository,
+    IRepository<GoalWeek> goalWeekRepository,
+    IRepository<Employee> employeeRepository,
+    ICompanyRepository companyRepository) : IReportService
 {
     private const string ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-    public async Task<ReportFile> BuildMeetingReportAsync(CancellationToken cancellationToken = default)
+    public async Task<ReportFile> BuildMeetingReportAsync(
+        DateOnly? from = null,
+        DateOnly? to = null,
+        CancellationToken cancellationToken = default)
     {
         var meetingList = await meetingRepository.ListWithDetailsAsync(cancellationToken);
+
+        // Tarih aralığı filtresi (her iki uç dahil). Raporlar sınırlı boyutlu
+        // olduğundan filtreleme bellek içinde uygulanır; repository imzaları değişmez.
+        meetingList = meetingList
+            .Where(m => (from is null || m.Date >= from) && (to is null || m.Date <= to))
+            .ToList();
 
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add("Görüşmeler");
@@ -71,10 +85,18 @@ public sealed class ExcelReportService(
         return new ReportFile(stream.ToArray(), "Gorusme-Raporu.xlsx", ContentType);
     }
 
-    public async Task<ReportFile> BuildTendersReportAsync(CancellationToken cancellationToken = default)
+    public async Task<ReportFile> BuildTendersReportAsync(
+        DateOnly? from = null,
+        DateOnly? to = null,
+        CancellationToken cancellationToken = default)
     {
         // Tüm ihaleleri Company ve AssignedSalesRep ilişkileriyle getir.
         var tenders = await tenderRepository.ListAsync(sector: null, status: null, cancellationToken);
+
+        // Tarih aralığı filtresi (her iki uç dahil) — ihale tarihine göre.
+        tenders = tenders
+            .Where(t => (from is null || t.TenderDate >= from) && (to is null || t.TenderDate <= to))
+            .ToList();
 
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add("İhaleler");
@@ -128,6 +150,102 @@ public sealed class ExcelReportService(
         return new ReportFile(stream.ToArray(), fileName, ContentType);
     }
 
+    public async Task<ReportFile> BuildGoalReportAsync(CancellationToken cancellationToken = default)
+    {
+        // Aktif hedefler + ilerleme (hafta snapshot'larından toplanır).
+        var goals = await goalRepository.ListAsync(g => g.IsActive, cancellationToken);
+        var weeks = await goalWeekRepository.ListAsync(cancellationToken);
+        var employees = await employeeRepository.ListAsync(cancellationToken);
+
+        var employeeNames = employees.ToDictionary(e => e.Id, e => e.FullName ?? e.Title);
+        var weeksByGoal = weeks
+            .GroupBy(w => w.GoalId)
+            .ToDictionary(g => g.Key, g => (Count: g.Count(), Achieved: g.Sum(w => w.AchievedCount)));
+
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.Worksheets.Add("Hedefler");
+
+        var headers = new[]
+        {
+            "Başlık", "Segment", "Atanan Personel", "Haftalık Hedef",
+            "Toplam Gerçekleşen", "Hafta Sayısı", "Durum", "Oluşturulma"
+        };
+        ApplyHeaderStyle(sheet, headers);
+
+        int row = 2;
+        foreach (var goal in goals.OrderByDescending(g => g.CreatedAtUtc))
+        {
+            var progress = weeksByGoal.TryGetValue(goal.Id, out var p) ? p : (Count: 0, Achieved: 0);
+
+            sheet.Cell(row, 1).Value = goal.Title ?? string.Empty;
+            sheet.Cell(row, 2).Value = GoalSegmentLabel(goal.Segment);
+            sheet.Cell(row, 3).Value = employeeNames.TryGetValue(goal.AssigneeEmployeeId, out var name)
+                ? name ?? string.Empty
+                : string.Empty;
+            sheet.Cell(row, 4).Value = goal.WeeklyTarget;
+            sheet.Cell(row, 5).Value = progress.Achieved;
+            sheet.Cell(row, 6).Value = progress.Count;
+            sheet.Cell(row, 7).Value = goal.IsActive ? "Aktif" : "Pasif";
+            sheet.Cell(row, 8).Value = goal.CreatedAtUtc.ToString("yyyy-MM-dd");
+            row++;
+        }
+
+        sheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+
+        var fileName = $"hedefler-{DateTime.UtcNow:yyyyMMdd}.xlsx";
+        return new ReportFile(stream.ToArray(), fileName, ContentType);
+    }
+
+    public async Task<ReportFile> BuildCustomerReportAsync(
+        DateOnly? from = null,
+        DateOnly? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        // Tüm müşteriler (Aktif + Pasif) AssignedSalesRep ilişkisiyle.
+        var customers = await companyRepository.ListCustomersAsync(status: null, cancellationToken);
+
+        // Tarih aralığı filtresi (her iki uç dahil) — oluşturulma tarihine göre.
+        customers = customers
+            .Where(c => (from is null || DateOnly.FromDateTime(c.CreatedAtUtc) >= from)
+                     && (to is null || DateOnly.FromDateTime(c.CreatedAtUtc) <= to))
+            .ToList();
+
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.Worksheets.Add("Müşteriler");
+
+        var headers = new[]
+        {
+            "Firma", "İş Kolu", "Durum", "Telefon", "E-posta", "Şehir", "Atanan Temsilci", "Oluşturulma"
+        };
+        ApplyHeaderStyle(sheet, headers);
+
+        int row = 2;
+        foreach (var c in customers.OrderBy(c => c.Title))
+        {
+            sheet.Cell(row, 1).Value = c.Title;
+            sheet.Cell(row, 2).Value = SectorLabel(c.Sector);
+            sheet.Cell(row, 3).Value = CustomerStatusLabel(c.CustomerStatus);
+            sheet.Cell(row, 4).Value = c.Phone;
+            sheet.Cell(row, 5).Value = c.Email;
+            sheet.Cell(row, 6).Value = c.City ?? string.Empty;
+            sheet.Cell(row, 7).Value = c.AssignedSalesRep?.Name ?? string.Empty;
+            sheet.Cell(row, 8).Value = c.CreatedAtUtc.ToString("yyyy-MM-dd");
+            row++;
+        }
+
+        sheet.Columns().AdjustToContents();
+        sheet.Column(1).Width = Math.Min(sheet.Column(1).Width, 50);
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+
+        var fileName = $"musteriler-{DateTime.UtcNow:yyyyMMdd}.xlsx";
+        return new ReportFile(stream.ToArray(), fileName, ContentType);
+    }
+
     // ─── Yardımcılar ───────────────────────────────────────────────────────────
 
     /// <summary>Başlık satırını stillendirir; mavi arka plan, beyaz kalın yazı.</summary>
@@ -167,6 +285,21 @@ public sealed class ExcelReportService(
         TenderStatus.Kaybedildi    => "Kaybedildi",
         TenderStatus.Iptal         => "İptal",
         _ => status.ToString()
+    };
+
+    private static string GoalSegmentLabel(GoalSegment segment) => segment switch
+    {
+        GoalSegment.Customer => "Müşteri",
+        GoalSegment.Lead     => "Potansiyel",
+        GoalSegment.All      => "Tümü",
+        _ => segment.ToString()
+    };
+
+    private static string CustomerStatusLabel(CustomerStatus? status) => status switch
+    {
+        CustomerStatus.Active  => "Aktif",
+        CustomerStatus.Passive => "Pasif",
+        _ => string.Empty
     };
 
     private static string SectorLabel(Sector sector) => sector switch
