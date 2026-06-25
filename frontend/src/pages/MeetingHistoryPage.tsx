@@ -5,7 +5,7 @@ import { reportApi } from '../features/reports/api/reportApi';
 import { saveBlob } from '../shared/lib/saveBlob';
 import { Pagination } from '../shared/components/Pagination';
 import { SortableTh } from '../shared/components/SortableTh';
-import { Spinner } from '../shared/components/Spinner';
+import { TableSkeleton } from '../shared/components/TableSkeleton';
 import { StateBlock } from '../shared/components/StateBlock';
 import { useDebouncedValue } from '../shared/hooks/useDebouncedValue';
 import {
@@ -79,7 +79,7 @@ export default function MeetingHistoryPage() {
   const totalPages = data?.totalPages ?? 1;
   const totalCount = data?.totalCount ?? 0;
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) return <TableSkeleton columns={7} />;
   if (isError || !data) return <StateBlock message={getErrorMessage(error)} />;
 
   return (

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from '../shared/components/Modal';
-import { Spinner } from '../shared/components/Spinner';
+import { TableSkeleton } from '../shared/components/TableSkeleton';
 import { StateBlock } from '../shared/components/StateBlock';
 import { Pagination } from '../shared/components/Pagination';
 import { SortableTh } from '../shared/components/SortableTh';
@@ -194,7 +194,7 @@ export default function EmployeeManagementPage() {
           />
         </div>
 
-        {pagedQuery.isLoading && <Spinner />}
+        {pagedQuery.isLoading && <TableSkeleton columns={6} />}
         {pagedQuery.isError && (
           <StateBlock message={getErrorMessage(pagedQuery.error)} />
         )}

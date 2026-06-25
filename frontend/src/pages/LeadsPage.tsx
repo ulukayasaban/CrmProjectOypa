@@ -7,7 +7,7 @@ import { CategoryBadges } from '../features/categories/ui/CategoryBadges';
 import { useCategories } from '../features/categories/model/useCategories';
 import { Pagination } from '../shared/components/Pagination';
 import { SortableTh } from '../shared/components/SortableTh';
-import { Spinner } from '../shared/components/Spinner';
+import { TableSkeleton } from '../shared/components/TableSkeleton';
 import { StateBlock } from '../shared/components/StateBlock';
 import { PlusIcon } from '../shared/components/icons';
 import { useDebouncedValue } from '../shared/hooks/useDebouncedValue';
@@ -145,7 +145,7 @@ export default function LeadsPage() {
         </select>
       </div>
 
-      {isLoading && <Spinner />}
+      {isLoading && <TableSkeleton columns={7} />}
       {isError && <StateBlock message={getErrorMessage(error)} />}
 
       {!isLoading && !isError && (

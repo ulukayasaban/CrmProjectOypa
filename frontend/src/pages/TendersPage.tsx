@@ -6,7 +6,7 @@ import { TenderFormModal } from '../features/tenders/ui/TenderFormModal';
 import { Modal } from '../shared/components/Modal';
 import { Pagination } from '../shared/components/Pagination';
 import { SortableTh } from '../shared/components/SortableTh';
-import { Spinner } from '../shared/components/Spinner';
+import { TableSkeleton } from '../shared/components/TableSkeleton';
 import { StateBlock } from '../shared/components/StateBlock';
 import { PlusIcon } from '../shared/components/icons';
 import { useToast } from '../shared/components/toast/ToastProvider';
@@ -145,7 +145,7 @@ function TendersContent({ segment }: TendersContentProps) {
   const totalPages = data?.totalPages ?? 1;
   const totalCount = data?.totalCount ?? 0;
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) return <TableSkeleton columns={11} />;
   if (isError) return <StateBlock message={getErrorMessage(error)} />;
 
   return (
