@@ -89,27 +89,14 @@ function OrgNodeCard({ node, depth }: OrgNodeCardProps) {
   const isRoot = depth === 0;
 
   return (
-    <div
-      style={{
-        marginLeft: depth > 0 ? 28 : 0,
-        borderLeft: depth > 0 ? '2px solid rgba(197,160,72,0.25)' : 'none',
-        paddingLeft: depth > 0 ? 20 : 0,
-        marginTop: depth > 0 ? 8 : 0,
-      }}
-    >
+    <div className={isRoot ? 'org-node' : 'org-node org-node--nested'}>
       <div
-        className="glass"
+        className="glass org-card"
         style={{
-          padding: '12px 16px',
-          borderRadius: 10,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
           background: isRoot
             ? 'rgba(197,160,72,0.08)'
             : 'rgba(255,255,255,0.04)',
           borderTop: isRoot ? '2px solid var(--accent-gold)' : undefined,
-          maxWidth: 420,
         }}
       >
         <div

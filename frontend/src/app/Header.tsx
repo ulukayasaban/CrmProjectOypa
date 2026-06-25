@@ -24,7 +24,7 @@ export function Header({ title, onMenuToggle }: HeaderProps) {
         >
           ☰
         </button>
-        <h2 style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>{title}</h2>
+        <h2 className="header-title" style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>{title}</h2>
       </div>
       <div className="header-right">
         <NotificationBell />
@@ -38,7 +38,7 @@ export function Header({ title, onMenuToggle }: HeaderProps) {
             cursor: 'pointer',
           }}
         >
-          <div style={{ textAlign: 'right', lineHeight: 1.2 }}>
+          <div className="user-meta" style={{ textAlign: 'right', lineHeight: 1.2 }}>
             <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
               {user?.fullName}
             </div>
