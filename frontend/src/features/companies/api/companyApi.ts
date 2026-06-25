@@ -27,11 +27,13 @@ export interface CompanyPayload {
 /** /companies/leads/paged ucu için parametre tipi. */
 export interface LeadsPagedParams extends PagedParams {
   status?: LeadStatus;
+  categoryId?: string;
 }
 
 /** /companies/customers/paged ucu için parametre tipi. */
 export interface CustomersPagedParams extends PagedParams {
   status?: CustomerStatus;
+  categoryId?: string;
 }
 
 export interface ContactPayload {

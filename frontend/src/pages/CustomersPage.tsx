@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import { useCustomersPaged } from '../features/companies/model/useCompanies';
+import { CategoryBadges } from '../features/categories/ui/CategoryBadges';
+import { useCategories } from '../features/categories/model/useCategories';
 import { Pagination } from '../shared/components/Pagination';
 import { SortableTh } from '../shared/components/SortableTh';
 import { Spinner } from '../shared/components/Spinner';
@@ -60,9 +62,12 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>(DEFAULT_SORT_DIR);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
 
   // 300ms gecikme ile arama
   const search = useDebouncedValue(searchInput, 300);
+
+  const categories = useCategories();
 
   const { data, isLoading, isError, error } = useCustomersPaged({
     status,
@@ -71,6 +76,7 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
     sortDir,
     page,
     pageSize,
+    categoryId,
   });
 
   /** Sıralama değişince sayfayı başa al. */
@@ -92,6 +98,12 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
     setPage(1);
   }
 
+  /** Kategori filtresi değişince sayfayı başa al. */
+  function handleCategoryChange(id: string) {
+    setCategoryId(id === '' ? undefined : id);
+    setPage(1);
+  }
+
   const items = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
   const totalCount = data?.totalCount ?? 0;
@@ -105,8 +117,8 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
         <h3>{title}</h3>
       </div>
 
-      {/* Arama kutusu */}
-      <div style={{ marginBottom: 12 }}>
+      {/* Arama kutusu ve kategori filtresi */}
+      <div style={{ marginBottom: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <input
           type="search"
           placeholder="Firma adı veya şehir ara..."
@@ -115,6 +127,19 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
           onChange={(event) => handleSearchChange(event.target.value)}
           style={{ maxWidth: 320 }}
         />
+        <select
+          aria-label="Kategori filtrele"
+          value={categoryId ?? ''}
+          onChange={(event) => handleCategoryChange(event.target.value)}
+          style={{ minWidth: 160 }}
+        >
+          <option value="">Tüm Kategoriler</option>
+          {(categories.data ?? []).map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="data-table-container glass">
@@ -138,6 +163,7 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
               >
                 Aktif Geçiş Tarihi
               </SortableTh>
+              <th>Kategoriler</th>
               <th>İletişim</th>
               <th>Temsilci</th>
               <th>İşlem</th>
@@ -146,7 +172,7 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
           <tbody>
             {items.length === 0 && (
               <tr>
-                <td colSpan={6} className="table-empty">
+                <td colSpan={7} className="table-empty">
                   {search
                     ? `"${search}" için sonuç bulunamadı.`
                     : status === 'Active'
@@ -168,6 +194,9 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
                   <span className="badge badge-opportunity">
                     {SECTOR_LABELS[company.sector]}
                   </span>
+                </td>
+                <td>
+                  <CategoryBadges categories={company.categories} />
                 </td>
                 <td style={{ fontSize: '0.85rem' }}>
                   {formatDate(company.activatedAtUtc)}

@@ -15,9 +15,12 @@ public interface ICompanyRepository : IRepository<Company>
     /// <summary>Firmayı atanan temsilciyle birlikte getirir (tracking açık — güncelleme için).</summary>
     Task<Company?> GetByIdWithRepAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <summary>Firmayı kategorileriyle birlikte getirir (tracking açık — kategori güncelleme için).</summary>
+    Task<Company?> GetByIdWithCategoriesAsync(Guid id, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Lead firmaları sayfa kesimiyle, arama ve sıralamayı destekleyerek getirir.
-    /// Mevcut durum filtresi korunur.
+    /// Mevcut durum filtresi korunur. categoryId verilirse sadece o kategoriye sahip firmalar.
     /// </summary>
     Task<(IReadOnlyList<Company> Items, int TotalCount)> ListLeadsPagedAsync(
         LeadStatus? status,
@@ -26,11 +29,12 @@ public interface ICompanyRepository : IRepository<Company>
         bool descending,
         int page,
         int pageSize,
+        Guid? categoryId = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Müşteri firmaları sayfa kesimiyle, arama ve sıralamayı destekleyerek getirir.
-    /// Mevcut durum filtresi korunur.
+    /// Mevcut durum filtresi korunur. categoryId verilirse sadece o kategoriye sahip firmalar.
     /// </summary>
     Task<(IReadOnlyList<Company> Items, int TotalCount)> ListCustomersPagedAsync(
         CustomerStatus? status,
@@ -39,5 +43,6 @@ public interface ICompanyRepository : IRepository<Company>
         bool descending,
         int page,
         int pageSize,
+        Guid? categoryId = null,
         CancellationToken cancellationToken = default);
 }

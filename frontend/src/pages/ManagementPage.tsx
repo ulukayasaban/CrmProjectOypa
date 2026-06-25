@@ -5,6 +5,7 @@ import { useSalesReps } from '../features/salesreps/model/useSalesReps';
 import { SalesRepFormModal } from '../features/salesreps/ui/SalesRepFormModal';
 import { RegisterUserModal } from '../features/auth/ui/RegisterUserModal';
 import { useDeleteUser, useUsers } from '../features/auth/model/useUsers';
+import { CategoryManagementSection } from '../features/categories/ui/CategoryManagementSection';
 import { Spinner } from '../shared/components/Spinner';
 import { StateBlock } from '../shared/components/StateBlock';
 import { PlusIcon } from '../shared/components/icons';
@@ -158,6 +159,8 @@ export default function ManagementPage() {
             </div>
           )}
         </div>
+
+        <CategoryManagementSection />
       </div>
 
       {ConfirmEl}

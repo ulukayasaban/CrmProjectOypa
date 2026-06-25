@@ -17,9 +17,10 @@ public sealed class CompanyServicePagedTests
     private readonly IRepository<Company> _companies = Substitute.For<IRepository<Company>>();
     private readonly ICompanyRepository _companyRepository = Substitute.For<ICompanyRepository>();
     private readonly IRepository<SalesRep> _salesReps = Substitute.For<IRepository<SalesRep>>();
+    private readonly IRepository<Category> _categories = Substitute.For<IRepository<Category>>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
-    private CompanyService CreateSut() => new(_companies, _companyRepository, _salesReps, _unitOfWork);
+    private CompanyService CreateSut() => new(_companies, _companyRepository, _salesReps, _categories, _unitOfWork);
 
     private static Company NewLead(string title = "Acme") =>
         new(title, Sector.Retail, "111", "a@b.c", "Adres");
@@ -43,7 +44,8 @@ public sealed class CompanyServicePagedTests
 
         _companyRepository.ListLeadsPagedAsync(
                 Arg.Any<LeadStatus?>(), Arg.Any<string?>(), Arg.Any<string?>(),
-                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(),
+                Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns((leads, totalCount));
 
         var query = new PagedQuery { Page = 1, PageSize = 2 };
@@ -64,7 +66,8 @@ public sealed class CompanyServicePagedTests
     {
         _companyRepository.ListLeadsPagedAsync(
                 Arg.Any<LeadStatus?>(), Arg.Any<string?>(), Arg.Any<string?>(),
-                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(),
+                Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns((Array.Empty<Company>(), 0));
 
         var sut = CreateSut();
@@ -85,7 +88,8 @@ public sealed class CompanyServicePagedTests
     {
         _companyRepository.ListLeadsPagedAsync(
                 Arg.Any<LeadStatus?>(), Arg.Any<string?>(), Arg.Any<string?>(),
-                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(),
+                Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns((Array.Empty<Company>(), 0));
 
         var query = new PagedQuery { Search = "Acme" };
@@ -95,7 +99,7 @@ public sealed class CompanyServicePagedTests
 
         await _companyRepository.Received(1).ListLeadsPagedAsync(
             null, "Acme", Arg.Any<string?>(), Arg.Any<bool>(),
-            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
     }
 
     // -----------------------------------------------------------------------
@@ -107,7 +111,8 @@ public sealed class CompanyServicePagedTests
     {
         _companyRepository.ListLeadsPagedAsync(
                 Arg.Any<LeadStatus?>(), Arg.Any<string?>(), Arg.Any<string?>(),
-                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(),
+                Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns((Array.Empty<Company>(), 0));
 
         var sut = CreateSut();
@@ -116,7 +121,7 @@ public sealed class CompanyServicePagedTests
 
         await _companyRepository.Received(1).ListLeadsPagedAsync(
             LeadStatus.Contacted, Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<bool>(),
-            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
     }
 
     // -----------------------------------------------------------------------
@@ -128,7 +133,8 @@ public sealed class CompanyServicePagedTests
     {
         _companyRepository.ListLeadsPagedAsync(
                 Arg.Any<LeadStatus?>(), Arg.Any<string?>(), Arg.Any<string?>(),
-                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(),
+                Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns((Array.Empty<Company>(), 0));
 
         var query = new PagedQuery { SortBy = "title", SortDir = "desc" };
@@ -138,7 +144,7 @@ public sealed class CompanyServicePagedTests
 
         await _companyRepository.Received(1).ListLeadsPagedAsync(
             null, Arg.Any<string?>(), "title", true,
-            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
     }
 
     // -----------------------------------------------------------------------
@@ -151,7 +157,8 @@ public sealed class CompanyServicePagedTests
         var lead = NewLead("Acme Özel");
         _companyRepository.ListLeadsPagedAsync(
                 Arg.Any<LeadStatus?>(), Arg.Any<string?>(), Arg.Any<string?>(),
-                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(),
+                Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns((new[] { lead }, 1));
 
         var sut = CreateSut();
@@ -175,7 +182,8 @@ public sealed class CompanyServicePagedTests
 
         _companyRepository.ListCustomersPagedAsync(
                 Arg.Any<CustomerStatus?>(), Arg.Any<string?>(), Arg.Any<string?>(),
-                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(),
+                Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns((customers, totalCount));
 
         var query = new PagedQuery { Page = 2, PageSize = 10 };
@@ -196,7 +204,8 @@ public sealed class CompanyServicePagedTests
     {
         _companyRepository.ListCustomersPagedAsync(
                 Arg.Any<CustomerStatus?>(), Arg.Any<string?>(), Arg.Any<string?>(),
-                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(),
+                Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns((Array.Empty<Company>(), 0));
 
         var sut = CreateSut();
@@ -205,7 +214,7 @@ public sealed class CompanyServicePagedTests
 
         await _companyRepository.Received(1).ListCustomersPagedAsync(
             CustomerStatus.Active, Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<bool>(),
-            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
+            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -214,7 +223,8 @@ public sealed class CompanyServicePagedTests
         var customer = NewCustomer("Süper Müşteri");
         _companyRepository.ListCustomersPagedAsync(
                 Arg.Any<CustomerStatus?>(), Arg.Any<string?>(), Arg.Any<string?>(),
-                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                Arg.Any<bool>(), Arg.Any<int>(), Arg.Any<int>(),
+                Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns((new[] { customer }, 1));
 
         var sut = CreateSut();

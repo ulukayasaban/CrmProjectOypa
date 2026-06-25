@@ -62,6 +62,9 @@ public static class DbSeeder
                 await userManager.AddToRoleAsync(admin, "Admin");
         }
 
+        // --- Varsayılan Kategoriler ---
+        await SeedCategoriesAsync(db, logger);
+
         if (!await db.SalesReps.AnyAsync())
         {
             db.SalesReps.AddRange(
@@ -441,5 +444,39 @@ public static class DbSeeder
         employee.LinkAccount(user.Id);
 
         logger.LogInformation("Org seed: {Email} ({Role}) hesabı oluşturuldu.", email, role);
+    }
+
+    /// <summary>
+    /// Varsayılan kategorileri oluşturur. Her kategori ad bazında kontrol edilir (idempotent).
+    /// </summary>
+    private static async Task SeedCategoriesAsync(AppDbContext db, ILogger<AppDbContext> logger)
+    {
+        (string Name, string Color)[] defaults =
+        [
+            ("Kurumsal", "#3b82f6"),
+            ("KOBİ",     "#22c55e"),
+            ("Kamu",     "#f59e0b"),
+            ("Öncelikli","#ef4444")
+        ];
+
+        int added = 0;
+        foreach (var (name, color) in defaults)
+        {
+            var exists = await db.Categories
+                .IgnoreQueryFilters() // silinmiş olanlar da dahil — isim benzersizliği için
+                .AnyAsync(c => c.Name == name);
+
+            if (exists)
+                continue;
+
+            db.Categories.Add(new Category(name, color));
+            added++;
+        }
+
+        if (added > 0)
+        {
+            await db.SaveChangesAsync();
+            logger.LogInformation("Category seed: {Count} varsayılan kategori oluşturuldu.", added);
+        }
     }
 }

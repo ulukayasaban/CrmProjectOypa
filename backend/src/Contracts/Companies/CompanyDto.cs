@@ -1,3 +1,4 @@
+using Oypa.Crm.Contracts.Categories;
 using Oypa.Crm.Domain.Enums;
 
 namespace Oypa.Crm.Contracts.Companies;
@@ -19,4 +20,5 @@ public sealed record CompanyDto(
     DateTime? ActivatedAtUtc,
     DateTime CreatedAtUtc,
     Guid? AssignedSalesRepId,
-    string? AssignedSalesRepName);
+    string? AssignedSalesRepName,
+    IReadOnlyList<CategoryDto> Categories);

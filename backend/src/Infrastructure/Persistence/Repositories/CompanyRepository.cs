@@ -16,6 +16,7 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
         CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking()
             .Include(c => c.AssignedSalesRep)
+            .Include(c => c.Categories)
             .Where(c => c.Type == CompanyType.Lead && (status == null || c.LeadStatus == status))
             .ToListAsync(cancellationToken);
 
@@ -24,6 +25,7 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
         CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking()
             .Include(c => c.AssignedSalesRep)
+            .Include(c => c.Categories)
             .Where(c => c.Type == CompanyType.Customer && (status == null || c.CustomerStatus == status))
             .ToListAsync(cancellationToken);
 
@@ -32,6 +34,15 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
         CancellationToken cancellationToken = default) =>
         await Set
             .Include(c => c.AssignedSalesRep)
+            .Include(c => c.Categories)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+    public async Task<Company?> GetByIdWithCategoriesAsync(
+        Guid id,
+        CancellationToken cancellationToken = default) =>
+        await Set
+            .Include(c => c.AssignedSalesRep)
+            .Include(c => c.Categories)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
     public async Task<(IReadOnlyList<Company> Items, int TotalCount)> ListLeadsPagedAsync(
@@ -41,10 +52,14 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
         bool descending,
         int page,
         int pageSize,
+        Guid? categoryId = null,
         CancellationToken cancellationToken = default)
     {
         var query = BuildCompanyQuery(CompanyType.Lead, search)
             .Where(c => status == null || c.LeadStatus == status);
+
+        if (categoryId.HasValue)
+            query = query.Where(c => c.Categories.Any(cat => cat.Id == categoryId.Value));
 
         var totalCount = await query.CountAsync(cancellationToken);
 
@@ -65,10 +80,14 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
         bool descending,
         int page,
         int pageSize,
+        Guid? categoryId = null,
         CancellationToken cancellationToken = default)
     {
         var query = BuildCompanyQuery(CompanyType.Customer, search)
             .Where(c => status == null || c.CustomerStatus == status);
+
+        if (categoryId.HasValue)
+            query = query.Where(c => c.Categories.Any(cat => cat.Id == categoryId.Value));
 
         var totalCount = await query.CountAsync(cancellationToken);
 
@@ -95,6 +114,7 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
         var query = Set.AsNoTracking()
             .Include(c => c.AssignedSalesRep)
                 .ThenInclude(r => r!.Employee)
+            .Include(c => c.Categories)
             .Where(c => c.Type == type)
             .AsQueryable();
 

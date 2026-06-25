@@ -4,6 +4,7 @@ using Oypa.Crm.Application.Common.Events;
 using Oypa.Crm.Application.Common.Interfaces;
 using Oypa.Crm.Application.Common.Services;
 using Oypa.Crm.Application.Features.Auth;
+using Oypa.Crm.Application.Features.Categories;
 using Oypa.Crm.Application.Features.Companies;
 using Oypa.Crm.Application.Features.Contacts;
 using Oypa.Crm.Application.Features.Dashboard;
@@ -28,6 +29,7 @@ public static class DependencyInjection
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<IContactService, ContactService>();
         services.AddScoped<IMeetingService, MeetingService>();

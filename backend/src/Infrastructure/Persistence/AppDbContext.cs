@@ -15,6 +15,7 @@ public sealed class AppDbContext(
     : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options), IUnitOfWork
 {
     public DbSet<Company> Companies => Set<Company>();
+    public DbSet<Category> Categories => Set<Category>();
     public DbSet<Contact> Contacts => Set<Contact>();
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Meeting> Meetings => Set<Meeting>();

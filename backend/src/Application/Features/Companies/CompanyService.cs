@@ -5,6 +5,7 @@ using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Companies;
 using Oypa.Crm.Domain.Entities;
 using Oypa.Crm.Domain.Enums;
+using System.Linq.Expressions;
 
 namespace Oypa.Crm.Application.Features.Companies;
 
@@ -12,6 +13,7 @@ public sealed class CompanyService(
     IRepository<Company> companies,
     ICompanyRepository companyRepository,
     IRepository<SalesRep> salesReps,
+    IRepository<Category> categories,
     IUnitOfWork unitOfWork) : ICompanyService
 {
     public async Task<IReadOnlyList<CompanyDto>> GetLeadsAsync(LeadStatus? status = null, CancellationToken cancellationToken = default)
@@ -126,6 +128,7 @@ public sealed class CompanyService(
     public async Task<PagedResult<CompanyDto>> GetLeadsPagedAsync(
         LeadStatus? status,
         PagedQuery query,
+        Guid? categoryId = null,
         CancellationToken cancellationToken = default)
     {
         var (items, totalCount) = await companyRepository.ListLeadsPagedAsync(
@@ -135,6 +138,7 @@ public sealed class CompanyService(
             query.IsDescending,
             query.Page,
             query.PageSize,
+            categoryId,
             cancellationToken);
 
         var dtos = items.Select(c => c.ToDto()).ToList();
@@ -144,6 +148,7 @@ public sealed class CompanyService(
     public async Task<PagedResult<CompanyDto>> GetCustomersPagedAsync(
         CustomerStatus? status,
         PagedQuery query,
+        Guid? categoryId = null,
         CancellationToken cancellationToken = default)
     {
         var (items, totalCount) = await companyRepository.ListCustomersPagedAsync(
@@ -153,9 +158,34 @@ public sealed class CompanyService(
             query.IsDescending,
             query.Page,
             query.PageSize,
+            categoryId,
             cancellationToken);
 
         var dtos = items.Select(c => c.ToDto()).ToList();
         return new PagedResult<CompanyDto>(dtos, query.Page, query.PageSize, totalCount);
+    }
+
+    public async Task<CompanyDto> SetCategoriesAsync(
+        Guid companyId,
+        IReadOnlyList<Guid> categoryIds,
+        CancellationToken cancellationToken = default)
+    {
+        var company = await companyRepository.GetByIdWithCategoriesAsync(companyId, cancellationToken)
+                      ?? throw NotFoundException.For("Firma", companyId);
+
+        var categoryList = categoryIds.Count == 0
+            ? []
+            : (IReadOnlyList<Category>)await categories.ListAsync(
+                (Expression<Func<Category, bool>>)(c => categoryIds.Contains(c.Id)),
+                cancellationToken);
+
+        company.SetCategories(categoryList);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Güncel veriyi kategorilerle yeniden yükle (SetCategories navigasyon koleksiyonunu doldurmaz)
+        var updated = await companyRepository.GetByIdWithCategoriesAsync(companyId, cancellationToken)
+                      ?? throw NotFoundException.For("Firma", companyId);
+
+        return updated.ToDto();
     }
 }

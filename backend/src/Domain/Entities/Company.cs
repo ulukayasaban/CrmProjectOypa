@@ -13,6 +13,7 @@ public class Company : BaseEntity, ISoftDelete
 {
     private readonly List<Contact> _contacts = [];
     private readonly List<Meeting> _meetings = [];
+    private readonly List<Category> _categories = [];
 
     // EF Core için
     private Company() { }
@@ -68,6 +69,7 @@ public class Company : BaseEntity, ISoftDelete
 
     public IReadOnlyCollection<Contact> Contacts => _contacts.AsReadOnly();
     public IReadOnlyCollection<Meeting> Meetings => _meetings.AsReadOnly();
+    public IReadOnlyCollection<Category> Categories => _categories.AsReadOnly();
 
     // ────────── ISoftDelete ──────────
 
@@ -141,6 +143,16 @@ public class Company : BaseEntity, ISoftDelete
     public void AssignSalesRep(Guid? salesRepId)
     {
         AssignedSalesRepId = salesRepId;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Firmaya atanacak kategorileri toptan ayarlar. Mevcut kategoriler temizlenerek yenileri eklenir.
+    /// </summary>
+    public void SetCategories(IEnumerable<Category> categories)
+    {
+        _categories.Clear();
+        _categories.AddRange(categories);
         UpdatedAtUtc = DateTime.UtcNow;
     }
 

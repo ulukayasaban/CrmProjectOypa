@@ -15,9 +15,10 @@ public sealed class CompanyServiceTests
     private readonly IRepository<Company> _companies = Substitute.For<IRepository<Company>>();
     private readonly ICompanyRepository _companyRepository = Substitute.For<ICompanyRepository>();
     private readonly IRepository<SalesRep> _salesReps = Substitute.For<IRepository<SalesRep>>();
+    private readonly IRepository<Category> _categories = Substitute.For<IRepository<Category>>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
-    private CompanyService CreateSut() => new(_companies, _companyRepository, _salesReps, _unitOfWork);
+    private CompanyService CreateSut() => new(_companies, _companyRepository, _salesReps, _categories, _unitOfWork);
 
     private static Company NewLead() =>
         new("Acme", Sector.Retail, "111", "a@b.c", "Adres");

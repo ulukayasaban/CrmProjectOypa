@@ -5,6 +5,7 @@ import type {
   LeadStatus,
   Sector,
 } from '../../../shared/types/enums';
+import type { CategoryDto } from '../../category/model/category';
 
 export interface CompanyDto {
   id: string;
@@ -24,6 +25,7 @@ export interface CompanyDto {
   createdAtUtc: string;
   assignedSalesRepId: string | null;
   assignedSalesRepName: string | null;
+  categories: CategoryDto[];
 }
 
 export interface ContactDto {

@@ -37,4 +37,7 @@ export const queryKeys = {
 
   /** Bildirim tür tercihleri (/notifications/preferences) */
   notificationPreferences: ['notifications', 'preferences'] as const,
+
+  /** Kategori listesi (/categories) */
+  categories: ['categories'] as const,
 };

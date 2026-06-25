@@ -27,15 +27,20 @@ public interface ICompanyService
     /// </summary>
     Task AssignSalesRepAsync(Guid id, Guid? salesRepId, CancellationToken cancellationToken = default);
 
+    /// <summary>Firmaya kategorileri toptan atar ve güncel CompanyDto döner.</summary>
+    Task<CompanyDto> SetCategoriesAsync(Guid companyId, IReadOnlyList<Guid> categoryIds, CancellationToken cancellationToken = default);
+
     /// <summary>Lead firmaları sayfalama + arama + sıralama ile listeler.</summary>
     Task<PagedResult<CompanyDto>> GetLeadsPagedAsync(
         LeadStatus? status,
         PagedQuery query,
+        Guid? categoryId = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>Müşteri firmaları sayfalama + arama + sıralama ile listeler.</summary>
     Task<PagedResult<CompanyDto>> GetCustomersPagedAsync(
         CustomerStatus? status,
         PagedQuery query,
+        Guid? categoryId = null,
         CancellationToken cancellationToken = default);
 }

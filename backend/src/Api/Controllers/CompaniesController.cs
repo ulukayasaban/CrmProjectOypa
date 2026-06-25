@@ -5,6 +5,7 @@ using Oypa.Crm.Api.Extensions;
 using Oypa.Crm.Application.Features.Companies;
 using Oypa.Crm.Application.Features.Contacts;
 using Oypa.Crm.Application.Features.Meetings;
+using Oypa.Crm.Contracts.Categories;
 using Oypa.Crm.Contracts.Common;
 using Oypa.Crm.Contracts.Companies;
 using Oypa.Crm.Contracts.Contacts;
@@ -39,9 +40,10 @@ public sealed class CompaniesController(
     public async Task<IActionResult> GetLeadsPaged(
         [FromQuery] LeadStatus? status,
         [FromQuery] PagedQuery query,
+        [FromQuery] Guid? categoryId,
         CancellationToken cancellationToken)
     {
-        var data = await companyService.GetLeadsPagedAsync(status, query, cancellationToken);
+        var data = await companyService.GetLeadsPagedAsync(status, query, categoryId, cancellationToken);
         return Ok(ApiResponse<PagedResult<CompanyDto>>.Ok(data));
     }
 
@@ -62,9 +64,10 @@ public sealed class CompaniesController(
     public async Task<IActionResult> GetCustomersPaged(
         [FromQuery] CustomerStatus? status,
         [FromQuery] PagedQuery query,
+        [FromQuery] Guid? categoryId,
         CancellationToken cancellationToken)
     {
-        var data = await companyService.GetCustomersPagedAsync(status, query, cancellationToken);
+        var data = await companyService.GetCustomersPagedAsync(status, query, categoryId, cancellationToken);
         return Ok(ApiResponse<PagedResult<CompanyDto>>.Ok(data));
     }
 
@@ -116,6 +119,14 @@ public sealed class CompaniesController(
     {
         await companyService.AssignSalesRepAsync(id, request.SalesRepId, cancellationToken);
         return Ok(ApiResponse.Ok("Temsilci güncellendi."));
+    }
+
+    /// <summary>Firmaya atanacak kategorileri toptan günceller.</summary>
+    [HttpPut("{id:guid}/categories")]
+    public async Task<IActionResult> SetCategories(Guid id, SetCompanyCategoriesRequest request, CancellationToken cancellationToken)
+    {
+        var data = await companyService.SetCategoriesAsync(id, request.CategoryIds, cancellationToken);
+        return Ok(ApiResponse<CompanyDto>.Ok(data, "Kategoriler güncellendi."));
     }
 
     [HttpGet("{id:guid}/contacts")]

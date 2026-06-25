@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useLeadsPaged } from '../features/companies/model/useCompanies';
 import { CompanyFormModal } from '../features/companies/ui/CompanyFormModal';
 import { StatusBadge } from '../features/companies/ui/StatusBadge';
+import { CategoryBadges } from '../features/categories/ui/CategoryBadges';
+import { useCategories } from '../features/categories/model/useCategories';
 import { Pagination } from '../shared/components/Pagination';
 import { SortableTh } from '../shared/components/SortableTh';
 import { Spinner } from '../shared/components/Spinner';
@@ -39,9 +41,12 @@ export default function LeadsPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>(DEFAULT_SORT_DIR);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
 
   // 300ms gecikme ile arama — sunucuya aşırı istek gitmesini önler
   const search = useDebouncedValue(searchInput, 300);
+
+  const categories = useCategories();
 
   const { data, isLoading, isError, error } = useLeadsPaged({
     status: activeStatus,
@@ -50,6 +55,7 @@ export default function LeadsPage() {
     sortDir,
     page,
     pageSize,
+    categoryId,
   });
 
   /** Sıralama değişince sayfayı başa al. */
@@ -74,6 +80,12 @@ export default function LeadsPage() {
   /** Sayfa boyutu değişince sayfayı başa al. */
   function handlePageSizeChange(size: number) {
     setPageSize(size);
+    setPage(1);
+  }
+
+  /** Kategori filtresi değişince sayfayı başa al. */
+  function handleCategoryChange(id: string) {
+    setCategoryId(id === '' ? undefined : id);
     setPage(1);
   }
 
@@ -108,8 +120,8 @@ export default function LeadsPage() {
         ))}
       </div>
 
-      {/* Arama kutusu */}
-      <div style={{ marginBottom: 12 }}>
+      {/* Arama kutusu ve kategori filtresi */}
+      <div style={{ marginBottom: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <input
           type="search"
           placeholder="Firma adı veya şehir ara..."
@@ -118,6 +130,19 @@ export default function LeadsPage() {
           onChange={(event) => handleSearchChange(event.target.value)}
           style={{ maxWidth: 320 }}
         />
+        <select
+          aria-label="Kategori filtrele"
+          value={categoryId ?? ''}
+          onChange={(event) => handleCategoryChange(event.target.value)}
+          style={{ minWidth: 160 }}
+        >
+          <option value="">Tüm Kategoriler</option>
+          {(categories.data ?? []).map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {isLoading && <Spinner />}
@@ -147,6 +172,7 @@ export default function LeadsPage() {
                     Adres
                   </SortableTh>
                   <th>Durum</th>
+                  <th>Kategoriler</th>
                   <th>Temsilci</th>
                   <th>İşlem</th>
                 </tr>
@@ -154,7 +180,7 @@ export default function LeadsPage() {
               <tbody>
                 {items.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="table-empty">
+                    <td colSpan={7} className="table-empty">
                       {search
                         ? `"${search}" için sonuç bulunamadı.`
                         : 'Sistemde lead bulunmuyor.'}
@@ -180,6 +206,9 @@ export default function LeadsPage() {
                     </td>
                     <td>
                       <StatusBadge company={company} />
+                    </td>
+                    <td>
+                      <CategoryBadges categories={company.categories} />
                     </td>
                     <td style={{ fontSize: '0.85rem' }}>
                       {company.assignedSalesRepName ?? (

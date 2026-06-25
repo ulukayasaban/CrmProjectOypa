@@ -22,5 +22,6 @@ public static class CompanyMappings
         c.ActivatedAtUtc,
         c.CreatedAtUtc,
         c.AssignedSalesRepId,
-        c.AssignedSalesRep?.Name);
+        c.AssignedSalesRep?.Name,
+        c.Categories.Select(cat => cat.ToDto()).ToList().AsReadOnly());
 }

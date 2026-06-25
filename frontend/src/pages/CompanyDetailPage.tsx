@@ -19,6 +19,10 @@ import { MeetingFormModal } from '../features/meetings/ui/MeetingFormModal';
 import { useUpdateMeetingStatus } from '../features/meetings/model/useMeetings';
 import { MeetingNotes } from '../features/meetings/ui/MeetingNotes';
 import { mailDraftApi } from '../features/maildrafts/api/mailDraftApi';
+import { CategoryBadges } from '../features/categories/ui/CategoryBadges';
+import { CategoryMultiSelect } from '../features/categories/ui/CategoryMultiSelect';
+import { useCategories, useSetCompanyCategories } from '../features/categories/model/useCategories';
+import { Modal } from '../shared/components/Modal';
 import { Spinner } from '../shared/components/Spinner';
 import { StateBlock } from '../shared/components/StateBlock';
 import { PlusIcon } from '../shared/components/icons';
@@ -117,6 +121,7 @@ export default function CompanyDetailPage() {
   const [meetingModal, setMeetingModal] = useState(false);
   const [opportunityModal, setOpportunityModal] = useState(false);
   const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
+  const [categoryModal, setCategoryModal] = useState(false);
 
   const { hasRole } = useAuth();
   const company = useCompany(id);
@@ -276,6 +281,30 @@ export default function CompanyDetailPage() {
               <span className="muted" style={{ fontSize: '0.75rem' }}>
                 Oluşturulma: {formatDate(data.createdAtUtc)}
               </span>
+            </div>
+
+            {/* Kategoriler */}
+            <div style={{ marginTop: 15 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  marginBottom: 6,
+                }}
+              >
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  <strong>Kategoriler:</strong>
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setCategoryModal(true)}
+                >
+                  Düzenle
+                </button>
+              </div>
+              <CategoryBadges categories={data.categories} />
             </div>
             {hasRole('Admin') && (
               <div className="form-group" style={{ marginTop: 15 }}>
@@ -573,6 +602,73 @@ export default function CompanyDetailPage() {
           onClose={() => setOpportunityModal(false)}
         />
       )}
+      {categoryModal && (
+        <CategoryEditModal
+          companyId={id}
+          currentIds={data.categories.map((c) => c.id)}
+          onClose={() => setCategoryModal(false)}
+        />
+      )}
     </>
+  );
+}
+
+// ─── Kategori düzenleme modal'ı ─────────────────────────────────────────────
+
+interface CategoryEditModalProps {
+  companyId: string;
+  currentIds: string[];
+  onClose: () => void;
+}
+
+function CategoryEditModal({ companyId, currentIds, onClose }: CategoryEditModalProps) {
+  const [selectedIds, setSelectedIds] = useState<string[]>(currentIds);
+  const allCategories = useCategories();
+  const setCompanyCategories = useSetCompanyCategories(companyId);
+  const toast = useToast();
+
+  async function handleSave() {
+    try {
+      await setCompanyCategories.mutateAsync(selectedIds);
+      onClose();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  }
+
+  return (
+    <Modal title="Kategorileri Düzenle" onClose={onClose} width={480}>
+      <div style={{ padding: '8px 0 16px' }}>
+        <p
+          id="cat-edit-label"
+          className="muted"
+          style={{ fontSize: '0.85rem', marginBottom: 14 }}
+        >
+          Firmaya uygulamak istediğiniz kategorileri seçin.
+        </p>
+        {allCategories.isLoading && <Spinner />}
+        {allCategories.data && (
+          <CategoryMultiSelect
+            categories={allCategories.data}
+            value={selectedIds}
+            onChange={setSelectedIds}
+            groupLabelId="cat-edit-label"
+          />
+        )}
+      </div>
+      <div className="modal-footer">
+        <button type="button" className="btn btn-ghost" onClick={onClose}>
+          İptal
+        </button>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={setCompanyCategories.isPending}
+          onClick={() => void handleSave()}
+        >
+          {setCompanyCategories.isPending ? 'Kaydediliyor...' : 'Kaydet'}
+        </button>
+      </div>
+    </Modal>
   );
 }

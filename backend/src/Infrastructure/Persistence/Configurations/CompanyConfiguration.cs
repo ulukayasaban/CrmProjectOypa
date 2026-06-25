@@ -46,5 +46,9 @@ public sealed class CompanyConfiguration : IEntityTypeConfiguration<Company>
             .WithOne(m => m.Company!)
             .HasForeignKey(m => m.CompanyId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(c => c.Categories)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("CompanyCategories"));
     }
 }
