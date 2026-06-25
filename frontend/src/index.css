@@ -202,6 +202,14 @@ h4 {
   color: var(--text-muted);
   transition: var(--transition-smooth);
   font-size: 0.9rem;
+  /* <button> tabanlı grup başlıkları (ExpandableNavGroup) için tarayıcının
+     yerel stillerini sıfırla; <a> NavLink'ler için bu değerler zaten zararsız. */
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  text-align: left;
+  box-sizing: border-box;
 }
 .nav-item:hover,
 .nav-item.active {
@@ -441,6 +449,27 @@ h4 {
 .form-group select:focus,
 .form-group textarea:focus {
   border-color: var(--accent-gold);
+}
+
+/* Liste sayfalarındaki arama kutuları (.form-group dışında, çıplak
+   <input type="search">). Tarayıcı varsayılanı olan beyaz arka plana
+   düşmesin diye koyu tema stili uygulanır; 5 liste sayfasını tek kuralla kapsar. */
+input[type='search'] {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: white;
+  outline: none;
+  font-size: 0.9rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+input[type='search']:focus {
+  border-color: var(--accent-gold);
+}
+input[type='search']::placeholder {
+  color: var(--text-muted);
 }
 .form-group select option {
   background: var(--primary-navy);
