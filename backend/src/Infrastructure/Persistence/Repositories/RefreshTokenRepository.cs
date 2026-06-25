@@ -28,7 +28,7 @@ public sealed class RefreshTokenRepository(AppDbContext db) : Repository<Refresh
     public async Task<int> DeleteExpiredAsync(DateTime olderThanUtc, CancellationToken cancellationToken = default)
     {
         // InMemory provider (test ortamı) ExecuteDeleteAsync'i desteklemez; provider türü kontrol edilir.
-        var isRelational = db.Database.ProviderName?.Contains("InMemory", StringComparison.OrdinalIgnoreCase) == false;
+        var isRelational = Db.Database.ProviderName?.Contains("InMemory", StringComparison.OrdinalIgnoreCase) == false;
 
         if (isRelational)
         {
@@ -46,7 +46,7 @@ public sealed class RefreshTokenRepository(AppDbContext db) : Repository<Refresh
             return 0;
 
         Set.RemoveRange(expired);
-        await db.SaveChangesAsync(cancellationToken);
+        await Db.SaveChangesAsync(cancellationToken);
         return expired.Count;
     }
 }

@@ -23,5 +23,12 @@ public sealed class GoalWeekConfiguration : IEntityTypeConfiguration<GoalWeek>
             .WithMany()
             .HasForeignKey(w => w.GoalId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Goal'a ISoftDelete query filter'ı uygulanıyor; GoalWeek bu ilişkinin
+        // zorunlu (required) bağımlı ucu. Eşleşen filtre tanımlanmazsa, bir Goal
+        // soft-delete edildiğinde haftaları "sahipsiz" kalır ve sorgularda
+        // beklenmedik sonuç verir (EF Core uyarı 10622). Eşleşen filtre ile,
+        // soft-delete edilmiş bir hedefin haftaları da otomatik gizlenir.
+        builder.HasQueryFilter(w => !w.Goal!.IsDeleted);
     }
 }
