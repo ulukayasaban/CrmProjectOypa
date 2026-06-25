@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useTendersPaged } from '../features/tenders/model/useTenders';
 import { useChangeTenderStatus, useDeleteTender } from '../features/tenders/model/useTenders';
 import { TenderFormModal } from '../features/tenders/ui/TenderFormModal';
+import { TenderStatusBadge } from '../features/tenders/ui/TenderStatusBadge';
 import { Modal } from '../shared/components/Modal';
 import { Pagination } from '../shared/components/Pagination';
 import { SortableTh } from '../shared/components/SortableTh';
@@ -15,7 +16,6 @@ import { useDebouncedValue } from '../shared/hooks/useDebouncedValue';
 import {
   SECTOR_LABELS,
   SECTOR_OPTIONS,
-  TENDER_STATUS_LABELS,
   TENDER_STATUS_OPTIONS,
 } from '../shared/constants/labels';
 import { formatDate } from '../shared/lib/format';
@@ -376,23 +376,6 @@ function TendersContent({ segment }: TendersContentProps) {
       )}
     </>
   );
-}
-
-interface TenderStatusBadgeProps {
-  status: TenderStatus;
-}
-
-function TenderStatusBadge({ status }: TenderStatusBadgeProps) {
-  const className =
-    status === 'Kazanildi'
-      ? 'badge badge-customer'
-      : status === 'Kaybedildi' || status === 'Iptal'
-        ? 'badge badge-danger'
-        : status === 'TeklifVerildi'
-          ? 'badge badge-lead'
-          : 'badge badge-opportunity';
-
-  return <span className={className}>{TENDER_STATUS_LABELS[status]}</span>;
 }
 
 interface TenderStatusModalProps {
