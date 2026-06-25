@@ -57,26 +57,38 @@ export function NotificationsRealtimeProvider({
       });
     });
 
+    // Effect bu start tamamlanmadan temizlenirse (React 19 StrictMode çift-mount
+    // veya hızlı navigasyon) `disposed` true olur. Bağlantıyı negotiation
+    // sırasında stop() ile kesmek "connection stopped during negotiation"
+    // hatasına yol açtığından, bunun yerine start tamamlanınca temiz biçimde durdururuz.
+    let disposed = false;
+
     const startConnection = async () => {
       try {
         await connection.start();
+        if (disposed) {
+          // Effect negotiation sürerken temizlendi → şimdi güvenle durdur.
+          await connection.stop();
+        }
       } catch (err) {
-        // Bağlantı hatası kritik değildir; polling fallback devreye girer.
-        // Geliştirici araçlarında izlenebilir, kullanıcı arayüzünü etkilemez.
-        console.warn(
-          '[NotificationsRealtime] SignalR hub bağlantısı kurulamadı — polling fallback aktif.',
-          err instanceof Error ? err.message : err,
-        );
+        // Beklenen teardown (disposed) durumunda sessiz kal; yalnızca gerçek
+        // bağlantı hatalarını logla. Polling fallback her durumda devrede.
+        if (!disposed) {
+          console.warn(
+            '[NotificationsRealtime] SignalR hub bağlantısı kurulamadı — polling fallback aktif.',
+            err instanceof Error ? err.message : err,
+          );
+        }
       }
     };
 
     void startConnection();
 
     return () => {
-      if (
-        connection.state !== HubConnectionState.Disconnected &&
-        connection.state !== HubConnectionState.Disconnecting
-      ) {
+      disposed = true;
+      // Yalnızca tam bağlıyken durdur; hâlâ negotiation sürüyorsa yukarıdaki
+      // startConnection bağlantı kurulunca durduracak (negotiation hatası önlenir).
+      if (connection.state === HubConnectionState.Connected) {
         void connection.stop();
       }
       connectionRef.current = null;
