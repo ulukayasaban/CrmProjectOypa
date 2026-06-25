@@ -160,7 +160,7 @@ function TendersContent({ segment }: TendersContentProps) {
                 : 'Kaybedilen İhaleler'}
           </h3>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Arama kutusu */}
           <input
             type="search"
