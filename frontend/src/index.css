@@ -495,6 +495,27 @@ input[type='search']:focus {
 input[type='search']::placeholder {
   color: var(--text-muted);
 }
+
+/* Sınıfsız (.form-group dışındaki) textarea'lar için koyu tema tabanı —
+   örn. görüşme notu ekleme alanı. .form-group textarea daha yüksek özgüllükle
+   kendi stilini korur; bu kural yalnızca çıplak textarea'lara uygulanır. */
+textarea {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: white;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+textarea:focus {
+  border-color: var(--accent-gold);
+}
+textarea::placeholder {
+  color: var(--text-muted);
+}
 .form-group select option {
   background: var(--primary-navy);
   color: white;
