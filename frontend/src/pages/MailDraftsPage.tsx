@@ -9,7 +9,7 @@ import { Spinner } from '../shared/components/Spinner';
 import { StateBlock } from '../shared/components/StateBlock';
 import { formatDateTime } from '../shared/lib/format';
 import { getErrorMessage } from '../shared/lib/errorMessage';
-import { openInOutlook, saveEml } from '../shared/lib/outlook';
+import { saveEml } from '../shared/lib/outlook';
 import type { MailDraftDto } from '../entities/maildraft/model/mailDraft';
 
 export default function MailDraftsPage() {
@@ -100,17 +100,11 @@ export default function MailDraftsPage() {
                     <button
                       type="button"
                       className="btn btn-ghost btn-sm"
-                      onClick={() => openInOutlook(draft)}
-                    >
-                      Outlook'ta Ac
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm"
                       disabled={emlPending === draft.id}
                       onClick={() => void handleDownloadEml(draft)}
+                      title="E-postayı .eml olarak indir; açıldığında Outlook'ta taslak olarak görüntülenir"
                     >
-                      {emlPending === draft.id ? '...' : '.eml'}
+                      {emlPending === draft.id ? '...' : "Outlook'ta Aç"}
                     </button>
                   </div>
                 </td>
