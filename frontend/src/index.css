@@ -15,6 +15,11 @@
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-blur: blur(12px);
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Native kontrollerin (date/time picker, select açılır listesi, takvim ikonu)
+     koyu temada doğru render edilmesi için. color-scheme tanımlı olmadığında
+     tarayıcı sayfayı açık-tema sanıp date input'un takvim ikonunu siyah çiziyor
+     ve koyu arka planda görünmez/tıklanması zor oluyordu. */
+  color-scheme: dark;
 }
 
 * {

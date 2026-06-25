@@ -208,14 +208,38 @@ export function MeetingFormModal({
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="date">Tarih</label>
-            <input id="date" type="date" {...register('date')} />
+            <input
+              id="date"
+              type="date"
+              {...register('date')}
+              onClick={(e) => {
+                // Alanın herhangi bir yerine tıklayınca native picker açılsın
+                // (yalnız minik takvim ikonu değil). Desteklenmiyorsa yoksay.
+                try {
+                  e.currentTarget.showPicker();
+                } catch {
+                  /* showPicker desteklenmiyor — varsayılan davranış geçerli */
+                }
+              }}
+            />
             {errors.date && (
               <span className="field-error">{errors.date.message}</span>
             )}
           </div>
           <div className="form-group">
             <label htmlFor="time">Saat</label>
-            <input id="time" type="time" {...register('time')} />
+            <input
+              id="time"
+              type="time"
+              {...register('time')}
+              onClick={(e) => {
+                try {
+                  e.currentTarget.showPicker();
+                } catch {
+                  /* showPicker desteklenmiyor — varsayılan davranış geçerli */
+                }
+              }}
+            />
             {errors.time && (
               <span className="field-error">{errors.time.message}</span>
             )}
