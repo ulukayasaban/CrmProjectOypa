@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ICompanyService, CompanyService>();
+        services.AddScoped<ICompanyNoteService, CompanyNoteService>();
         services.AddScoped<IContactService, ContactService>();
         services.AddScoped<IMeetingService, MeetingService>();
         services.AddScoped<ISalesRepService, SalesRepService>();

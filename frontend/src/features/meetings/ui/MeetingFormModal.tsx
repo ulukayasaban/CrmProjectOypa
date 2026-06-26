@@ -71,6 +71,7 @@ export function MeetingFormModal({
     register,
     handleSubmit,
     watch,
+    setValue,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<MeetingFormValues>({
@@ -244,6 +245,41 @@ export function MeetingFormModal({
           <label htmlFor="meeting-address">Görüşme Adresi</label>
           <input id="meeting-address" {...fieldAria('address', !!errors.address)} {...register('address')} />
           <FieldError id="address-error" message={errors.address?.message} />
+          {/* Hızlı adres doldurma butonları */}
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+            {(() => {
+              // Seçili firmayı bul: prop'tan gelen company öncelikli,
+              // yoksa dropdown'da seçili olanı companyOptions'tan eşleştir.
+              const selectedCompany =
+                company ??
+                companyOptions.find((c) => c.id === selectedCompanyId);
+              const companyAddress = selectedCompany?.address ?? '';
+              return (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  disabled={!companyAddress}
+                  onClick={() => setValue('address', companyAddress)}
+                >
+                  Firma Adresi
+                </button>
+              );
+            })()}
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setValue('address', 'OYAK Ankara')}
+            >
+              OYAK Ankara
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setValue('address', 'OYAK Dragos')}
+            >
+              OYAK Dragos
+            </button>
+          </div>
         </div>
         <div className="modal-footer">
           <button type="button" className="btn btn-ghost" onClick={onClose}>

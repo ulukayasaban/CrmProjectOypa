@@ -40,4 +40,7 @@ export const queryKeys = {
 
   /** Kategori listesi (/categories) */
   categories: ['categories'] as const,
+
+  /** Firma notları (/companies/{id}/notes) */
+  companyNotes: (id: string) => ['companies', id, 'notes'] as const,
 };

@@ -222,6 +222,40 @@ export default function MeetingHistoryPage() {
                           background: 'rgba(0,0,0,0.15)',
                         }}
                       >
+                        {/* Detay özeti: ilgili kişi, adres, yöntem */}
+                        <div
+                          className="meeting-notes"
+                          style={{
+                            marginBottom: 10,
+                            paddingBottom: 8,
+                            borderBottom: '1px solid rgba(255,255,255,0.08)',
+                          }}
+                        >
+                          <ul
+                            style={{
+                              listStyle: 'none',
+                              margin: 0,
+                              padding: 0,
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '6px 20px',
+                              fontSize: '0.8rem',
+                            }}
+                          >
+                            <li>
+                              <span className="muted">İlgili Kişi:&nbsp;</span>
+                              <strong>{meeting.contactName ?? '-'}</strong>
+                            </li>
+                            <li>
+                              <span className="muted">Adres:&nbsp;</span>
+                              <strong>{meeting.address || '-'}</strong>
+                            </li>
+                            <li>
+                              <span className="muted">Yöntem:&nbsp;</span>
+                              <strong>{MEETING_METHOD_LABELS[meeting.method]}</strong>
+                            </li>
+                          </ul>
+                        </div>
                         <MeetingNotes
                           meetingId={meeting.id}
                           companyId={meeting.companyId}

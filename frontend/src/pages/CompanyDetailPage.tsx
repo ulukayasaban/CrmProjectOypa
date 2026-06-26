@@ -43,6 +43,7 @@ import { formatDate, formatTime } from '../shared/lib/format';
 import { getErrorMessage } from '../shared/lib/errorMessage';
 import { openInOutlook, saveEml } from '../shared/lib/outlook';
 import { useAuth } from '../app/providers/useAuth';
+import { CompanyNotes } from '../features/companies/ui/CompanyNotes';
 import type { ContactDto } from '../entities/company/model/company';
 
 interface MeetingMailActionsProps {
@@ -597,6 +598,13 @@ export default function CompanyDetailPage() {
                   })}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <div className="glass card">
+            <h4>Notlar &amp; Bekleyen İşler</h4>
+            <div style={{ marginTop: 10 }}>
+              <CompanyNotes companyId={id} />
             </div>
           </div>
         </div>
