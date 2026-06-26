@@ -26,6 +26,16 @@ export default defineConfig({
           if (id.includes('node_modules/@microsoft/signalr')) {
             return 'vendor-signalr';
           }
+          // Form yığını (zod + react-hook-form + resolver) ayrı chunk'ta:
+          // yalnızca form içeren sayfalarda gerekir; ana giriş bundle'ını incelyip
+          // tarayıcı önbelleğini iyileştirir (bu bağımlılıklar nadir değişir).
+          if (
+            id.includes('node_modules/react-hook-form') ||
+            id.includes('node_modules/@hookform') ||
+            id.includes('node_modules/zod')
+          ) {
+            return 'vendor-forms';
+          }
         },
       },
     },
