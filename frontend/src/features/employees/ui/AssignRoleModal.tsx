@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import { USER_ROLE_OPTIONS } from '../../../shared/constants/labels';
 import { getErrorMessage } from '../../../shared/lib/errorMessage';
 import { toUserRole } from '../../../shared/lib/narrowing';
@@ -42,7 +44,7 @@ export function AssignRoleModal({ employee, onClose }: AssignRoleModalProps) {
         </p>
         <div className="form-group">
           <label htmlFor="role">Rol</label>
-          <select id="role" defaultValue={employee.role ?? ''} {...register('role')}>
+          <select id="role" defaultValue={employee.role ?? ''} {...fieldAria('role', !!errors.role)} {...register('role')}>
             <option value="" disabled>Seçiniz</option>
             {USER_ROLE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -50,9 +52,7 @@ export function AssignRoleModal({ employee, onClose }: AssignRoleModalProps) {
               </option>
             ))}
           </select>
-          {errors.role && (
-            <span className="field-error">{errors.role.message}</span>
-          )}
+          <FieldError id="role-error" message={errors.role?.message} />
         </div>
         <div className="modal-footer">
           <button type="button" className="btn btn-ghost" onClick={onClose}>

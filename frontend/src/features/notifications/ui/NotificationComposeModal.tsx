@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import { getErrorMessage } from '../../../shared/lib/errorMessage';
 import { useSendNotification } from '../model/useNotifications';
 import {
@@ -58,6 +60,7 @@ export function NotificationComposeModal({
           <select
             id="compose-unit"
             defaultValue=""
+            {...fieldAria('targetUnitId', !!form.formState.errors.targetUnitId)}
             {...form.register('targetUnitId')}
           >
             <option value="" disabled>
@@ -69,11 +72,7 @@ export function NotificationComposeModal({
               </option>
             ))}
           </select>
-          {form.formState.errors.targetUnitId && (
-            <span className="field-error">
-              {form.formState.errors.targetUnitId.message}
-            </span>
-          )}
+          <FieldError id="targetUnitId-error" message={form.formState.errors.targetUnitId?.message} />
         </div>
 
         <div className="form-group">
@@ -83,14 +82,11 @@ export function NotificationComposeModal({
           <input
             id="compose-title"
             type="text"
+            {...fieldAria('title', !!form.formState.errors.title)}
             {...form.register('title')}
             placeholder="Bildirim başlığı"
           />
-          {form.formState.errors.title && (
-            <span className="field-error">
-              {form.formState.errors.title.message}
-            </span>
-          )}
+          <FieldError id="title-error" message={form.formState.errors.title?.message} />
         </div>
 
         <div className="form-group">
@@ -98,14 +94,11 @@ export function NotificationComposeModal({
           <textarea
             id="compose-message"
             rows={4}
+            {...fieldAria('message', !!form.formState.errors.message)}
             {...form.register('message')}
             placeholder="Bildirim mesajını yazınız..."
           />
-          {form.formState.errors.message && (
-            <span className="field-error">
-              {form.formState.errors.message.message}
-            </span>
-          )}
+          <FieldError id="message-error" message={form.formState.errors.message?.message} />
         </div>
 
         <div className="modal-footer">

@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import { useToast } from '../../../shared/components/toast/ToastProvider';
 import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
 import { useManagedEmployees } from '../../employees/model/useEmployees';
@@ -77,7 +79,7 @@ export function GoalFormModal({ goal, onClose }: GoalFormModalProps) {
       <form className="crm-form" onSubmit={onSubmit}>
         <div className="form-group">
           <label htmlFor="assigneeEmployeeId">Atanan Personel</label>
-          <select id="assigneeEmployeeId" {...register('assigneeEmployeeId')}>
+          <select id="assigneeEmployeeId" {...fieldAria('assigneeEmployeeId', !!errors.assigneeEmployeeId)} {...register('assigneeEmployeeId')}>
             <option value="">-- Personel seçin --</option>
             {(managedEmployees.data ?? []).map((emp) => (
               <option key={emp.id} value={emp.id}>
@@ -85,25 +87,19 @@ export function GoalFormModal({ goal, onClose }: GoalFormModalProps) {
               </option>
             ))}
           </select>
-          {errors.assigneeEmployeeId && (
-            <span className="field-error">
-              {errors.assigneeEmployeeId.message}
-            </span>
-          )}
+          <FieldError id="assigneeEmployeeId-error" message={errors.assigneeEmployeeId?.message} />
         </div>
 
         <div className="form-group">
           <label htmlFor="segment">Segment</label>
-          <select id="segment" {...register('segment')}>
+          <select id="segment" {...fieldAria('segment', !!errors.segment)} {...register('segment')}>
             {GOAL_SEGMENTS.map((s) => (
               <option key={s} value={s}>
                 {SEGMENT_LABELS[s]}
               </option>
             ))}
           </select>
-          {errors.segment && (
-            <span className="field-error">{errors.segment.message}</span>
-          )}
+          <FieldError id="segment-error" message={errors.segment?.message} />
         </div>
 
         <div className="form-group">
@@ -112,19 +108,16 @@ export function GoalFormModal({ goal, onClose }: GoalFormModalProps) {
             id="weeklyTarget"
             type="number"
             min={1}
+            {...fieldAria('weeklyTarget', !!errors.weeklyTarget)}
             {...register('weeklyTarget', { valueAsNumber: true })}
           />
-          {errors.weeklyTarget && (
-            <span className="field-error">{errors.weeklyTarget.message}</span>
-          )}
+          <FieldError id="weeklyTarget-error" message={errors.weeklyTarget?.message} />
         </div>
 
         <div className="form-group">
           <label htmlFor="title">Başlık (opsiyonel)</label>
-          <input id="title" type="text" {...register('title')} />
-          {errors.title && (
-            <span className="field-error">{errors.title.message}</span>
-          )}
+          <input id="title" type="text" {...fieldAria('title', !!errors.title)} {...register('title')} />
+          <FieldError id="title-error" message={errors.title?.message} />
         </div>
 
         <div className="modal-footer">

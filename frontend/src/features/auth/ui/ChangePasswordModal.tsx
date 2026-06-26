@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import { useToast } from '../../../shared/components/toast/ToastProvider';
 import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
 import {
@@ -64,11 +66,10 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
             id="cp-current"
             type="password"
             autoComplete="current-password"
+            {...fieldAria('currentPassword', !!errors.currentPassword)}
             {...register('currentPassword')}
           />
-          {errors.currentPassword && (
-            <span className="field-error">{errors.currentPassword.message}</span>
-          )}
+          <FieldError id="currentPassword-error" message={errors.currentPassword?.message} />
         </div>
 
         {/* Yeni parola */}
@@ -79,11 +80,10 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
             type="password"
             autoComplete="new-password"
             placeholder="En az 8 karakter"
+            {...fieldAria('newPassword', !!errors.newPassword)}
             {...register('newPassword')}
           />
-          {errors.newPassword && (
-            <span className="field-error">{errors.newPassword.message}</span>
-          )}
+          <FieldError id="newPassword-error" message={errors.newPassword?.message} />
         </div>
 
         {/* Yeni parola tekrar */}
@@ -93,11 +93,10 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
             id="cp-confirm"
             type="password"
             autoComplete="new-password"
+            {...fieldAria('confirmPassword', !!errors.confirmPassword)}
             {...register('confirmPassword')}
           />
-          {errors.confirmPassword && (
-            <span className="field-error">{errors.confirmPassword.message}</span>
-          )}
+          <FieldError id="confirmPassword-error" message={errors.confirmPassword?.message} />
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>

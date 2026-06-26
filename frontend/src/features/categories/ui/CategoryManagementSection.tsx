@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import { Spinner } from '../../../shared/components/Spinner';
 import { StateBlock } from '../../../shared/components/StateBlock';
 import { PlusIcon } from '../../../shared/components/icons';
@@ -67,16 +69,14 @@ function CategoryFormModal({ initial, onClose }: CategoryFormModalProps) {
       <form className="crm-form" onSubmit={onSubmit}>
         <div className="form-group">
           <label htmlFor="cat-name">Kategori Adı</label>
-          <input id="cat-name" {...register('name')} placeholder="Örn. Öncelikli" />
-          {errors.name && (
-            <span className="field-error">{errors.name.message}</span>
-          )}
+          <input id="cat-name" {...fieldAria('name', !!errors.name)} {...register('name')} placeholder="Örn. Öncelikli" />
+          <FieldError id="name-error" message={errors.name?.message} />
         </div>
 
         <div className="form-group">
           <label htmlFor="cat-color-text">Renk</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* Renk seçici — Controller ile RHF'e bağlı */}
+            {/* Renk seçici — Controller ile RHF'e bağlı; fieldAria eklenmez */}
             <Controller
               name="color"
               control={control}
@@ -104,14 +104,13 @@ function CategoryFormModal({ initial, onClose }: CategoryFormModalProps) {
             <input
               id="cat-color-text"
               aria-label="Hex renk kodu"
+              {...fieldAria('color', !!errors.color)}
               {...register('color')}
               placeholder="#3B82F6"
               style={{ flex: 1 }}
             />
           </div>
-          {errors.color && (
-            <span className="field-error">{errors.color.message}</span>
-          )}
+          <FieldError id="color-error" message={errors.color?.message} />
         </div>
 
         <div className="modal-footer">

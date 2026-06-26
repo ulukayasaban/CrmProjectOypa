@@ -2,6 +2,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { noteSchema, type NoteFormValues } from '../model/meetingSchema';
 import { useAddMeetingNote } from '../model/useMeetings';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import { getErrorMessage } from '../../../shared/lib/errorMessage';
 import { formatDateTime } from '../../../shared/lib/format';
 import type { MeetingNoteDto } from '../../../entities/meeting/model/meeting';
@@ -66,13 +68,10 @@ export function MeetingNotes({ meetingId, companyId, notes }: MeetingNotesProps)
               rows={2}
               placeholder="Not ekle..."
               style={{ width: '100%', resize: 'vertical', fontSize: '0.8rem' }}
+              {...fieldAria('content', !!errors.content)}
               {...register('content')}
             />
-            {errors.content && (
-              <span className="field-error" style={{ fontSize: '0.75rem' }}>
-                {errors.content.message}
-              </span>
-            )}
+            <FieldError id="content-error" message={errors.content?.message} />
           </div>
           <button
             type="submit"

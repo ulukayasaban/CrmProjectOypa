@@ -7,6 +7,8 @@ import {
   type ForgotPasswordFormValues,
 } from '../features/auth/model/forgotPasswordSchema';
 import { useForgotPassword } from '../features/auth/model/useForgotPassword';
+import { FieldError } from '../shared/components/FieldError';
+import { fieldAria } from '../shared/lib/fieldAria';
 import { useToast } from '../shared/components/toast/ToastProvider';
 import { getErrorMessage } from '../shared/lib/errorMessage';
 
@@ -72,11 +74,10 @@ export default function ForgotPasswordPage() {
                 type="email"
                 autoComplete="email"
                 placeholder="ornek@oypa.com.tr"
+                {...fieldAria('email', !!errors.email)}
                 {...register('email')}
               />
-              {errors.email && (
-                <span className="field-error">{errors.email.message}</span>
-              )}
+              <FieldError id="email-error" message={errors.email?.message} />
             </div>
             <button
               type="submit"

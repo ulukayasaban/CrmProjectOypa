@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import { useToast } from '../../../shared/components/toast/ToastProvider';
 import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
 import {
@@ -71,11 +73,10 @@ export function ProfileEditModal({ user, onClose }: ProfileEditModalProps) {
             id="pe-fullName"
             type="text"
             autoComplete="name"
+            {...fieldAria('fullName', !!errors.fullName)}
             {...register('fullName')}
           />
-          {errors.fullName && (
-            <span className="field-error">{errors.fullName.message}</span>
-          )}
+          <FieldError id="fullName-error" message={errors.fullName?.message} />
         </div>
 
         {/* Telefon */}
@@ -86,11 +87,10 @@ export function ProfileEditModal({ user, onClose }: ProfileEditModalProps) {
             type="tel"
             autoComplete="tel"
             placeholder="+90 5xx xxx xx xx"
+            {...fieldAria('phone', !!errors.phone)}
             {...register('phone')}
           />
-          {errors.phone && (
-            <span className="field-error">{errors.phone.message}</span>
-          )}
+          <FieldError id="phone-error" message={errors.phone?.message} />
         </div>
 
         {/* Pozisyon */}
@@ -100,11 +100,10 @@ export function ProfileEditModal({ user, onClose }: ProfileEditModalProps) {
             id="pe-position"
             type="text"
             placeholder="Örn. Satış Uzmanı"
+            {...fieldAria('position', !!errors.position)}
             {...register('position')}
           />
-          {errors.position && (
-            <span className="field-error">{errors.position.message}</span>
-          )}
+          <FieldError id="position-error" message={errors.position?.message} />
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>

@@ -7,6 +7,8 @@ import {
   loginSchema,
   type LoginFormValues,
 } from '../features/auth/model/loginSchema';
+import { FieldError } from '../shared/components/FieldError';
+import { fieldAria } from '../shared/lib/fieldAria';
 import { getErrorMessage } from '../shared/lib/errorMessage';
 
 interface LocationState {
@@ -57,11 +59,10 @@ export default function LoginPage() {
               type="email"
               autoComplete="username"
               placeholder="admin@oypa.com.tr"
+              {...fieldAria('email', !!errors.email)}
               {...register('email')}
             />
-            {errors.email && (
-              <span className="field-error">{errors.email.message}</span>
-            )}
+            <FieldError id="email-error" message={errors.email?.message} />
           </div>
           <div className="form-group">
             <label htmlFor="password">Parola</label>
@@ -69,11 +70,10 @@ export default function LoginPage() {
               id="password"
               type="password"
               autoComplete="current-password"
+              {...fieldAria('password', !!errors.password)}
               {...register('password')}
             />
-            {errors.password && (
-              <span className="field-error">{errors.password.message}</span>
-            )}
+            <FieldError id="password-error" message={errors.password?.message} />
           </div>
 
           {/* Şifremi Unuttum linki — sağa yaslanmış, parola alanının altında */}

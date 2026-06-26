@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import { getErrorMessage } from '../../../shared/lib/errorMessage';
 import { useManagedEmployees } from '../../employees/model/useEmployees';
 import { useCreateSalesRep, useLinkEmployee } from '../model/useSalesReps';
@@ -51,21 +53,17 @@ export function SalesRepFormModal({ onClose }: SalesRepFormModalProps) {
         )}
         <div className="form-group">
           <label htmlFor="name">İsim</label>
-          <input id="name" {...register('name')} />
-          {errors.name && (
-            <span className="field-error">{errors.name.message}</span>
-          )}
+          <input id="name" {...fieldAria('name', !!errors.name)} {...register('name')} />
+          <FieldError id="name-error" message={errors.name?.message} />
         </div>
         <div className="form-group">
           <label htmlFor="email">E-posta</label>
-          <input id="email" type="email" {...register('email')} />
-          {errors.email && (
-            <span className="field-error">{errors.email.message}</span>
-          )}
+          <input id="email" type="email" {...fieldAria('email', !!errors.email)} {...register('email')} />
+          <FieldError id="email-error" message={errors.email?.message} />
         </div>
         <div className="form-group">
           <label htmlFor="employeeId">Bağlı Personel (opsiyonel)</label>
-          <select id="employeeId" {...register('employeeId')}>
+          <select id="employeeId" {...fieldAria('employeeId', !!errors.employeeId)} {...register('employeeId')}>
             <option value="">-- Personel seçin --</option>
             {(managedEmployees.data ?? []).map((emp) => (
               <option key={emp.id} value={emp.id}>
@@ -73,9 +71,7 @@ export function SalesRepFormModal({ onClose }: SalesRepFormModalProps) {
               </option>
             ))}
           </select>
-          {errors.employeeId && (
-            <span className="field-error">{errors.employeeId.message}</span>
-          )}
+          <FieldError id="employeeId-error" message={errors.employeeId?.message} />
         </div>
         <div className="modal-footer">
           <button type="button" className="btn btn-ghost" onClick={onClose}>

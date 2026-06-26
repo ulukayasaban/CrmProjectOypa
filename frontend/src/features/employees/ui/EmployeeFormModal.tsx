@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import { USER_ROLE_OPTIONS } from '../../../shared/constants/labels';
 import { useToast } from '../../../shared/components/toast/ToastProvider';
 import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
@@ -123,10 +125,8 @@ export function EmployeeFormModal({
         <form className="crm-form" onSubmit={onSubmitEdit}>
           <div className="form-group">
             <label htmlFor="edit-title">Ünvan</label>
-            <input id="edit-title" {...editForm.register('title')} />
-            {editForm.formState.errors.title && (
-              <span className="field-error">{editForm.formState.errors.title.message}</span>
-            )}
+            <input id="edit-title" {...fieldAria('title', !!editForm.formState.errors.title)} {...editForm.register('title')} />
+            <FieldError id="title-error" message={editForm.formState.errors.title?.message} />
           </div>
           <div className="form-row">
             <div className="form-group">
@@ -155,10 +155,8 @@ export function EmployeeFormModal({
         <form className="crm-form" onSubmit={onSubmitCreate}>
           <div className="form-group">
             <label htmlFor="create-title">Ünvan</label>
-            <input id="create-title" {...createForm.register('title')} />
-            {createForm.formState.errors.title && (
-              <span className="field-error">{createForm.formState.errors.title.message}</span>
-            )}
+            <input id="create-title" {...fieldAria('title', !!createForm.formState.errors.title)} {...createForm.register('title')} />
+            <FieldError id="title-error" message={createForm.formState.errors.title?.message} />
           </div>
           <div className="form-row">
             <div className="form-group">
@@ -189,14 +187,12 @@ export function EmployeeFormModal({
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="create-email">E-posta</label>
-                <input id="create-email" type="email" {...createForm.register('email')} />
-                {createForm.formState.errors.email && (
-                  <span className="field-error">{createForm.formState.errors.email.message}</span>
-                )}
+                <input id="create-email" type="email" {...fieldAria('email', !!createForm.formState.errors.email)} {...createForm.register('email')} />
+                <FieldError id="email-error" message={createForm.formState.errors.email?.message} />
               </div>
               <div className="form-group">
                 <label htmlFor="create-role">Rol</label>
-                <select id="create-role" defaultValue="" {...createForm.register('role')}>
+                <select id="create-role" defaultValue="" {...fieldAria('role', !!createForm.formState.errors.role)} {...createForm.register('role')}>
                   <option value="" disabled>Seçiniz</option>
                   {USER_ROLE_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -204,9 +200,7 @@ export function EmployeeFormModal({
                     </option>
                   ))}
                 </select>
-                {createForm.formState.errors.role && (
-                  <span className="field-error">{createForm.formState.errors.role.message}</span>
-                )}
+                <FieldError id="role-error" message={createForm.formState.errors.role?.message} />
               </div>
             </div>
           )}

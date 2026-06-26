@@ -7,6 +7,8 @@ import {
 } from '../features/auth/model/resetPasswordSchema';
 import { useResetPassword } from '../features/auth/model/useResetPassword';
 import { applyServerFieldErrors } from '../shared/lib/applyServerFieldErrors';
+import { FieldError } from '../shared/components/FieldError';
+import { fieldAria } from '../shared/lib/fieldAria';
 import { useToast } from '../shared/components/toast/ToastProvider';
 
 /**
@@ -92,11 +94,10 @@ export default function ResetPasswordPage() {
               type="password"
               autoComplete="new-password"
               placeholder="En az 8 karakter"
+              {...fieldAria('newPassword', !!errors.newPassword)}
               {...register('newPassword')}
             />
-            {errors.newPassword && (
-              <span className="field-error">{errors.newPassword.message}</span>
-            )}
+            <FieldError id="newPassword-error" message={errors.newPassword?.message} />
           </div>
           <div className="form-group">
             <label htmlFor="confirmPassword">Yeni Parola (Tekrar)</label>
@@ -105,11 +106,10 @@ export default function ResetPasswordPage() {
               type="password"
               autoComplete="new-password"
               placeholder="Parolayı tekrar girin"
+              {...fieldAria('confirmPassword', !!errors.confirmPassword)}
               {...register('confirmPassword')}
             />
-            {errors.confirmPassword && (
-              <span className="field-error">{errors.confirmPassword.message}</span>
-            )}
+            <FieldError id="confirmPassword-error" message={errors.confirmPassword?.message} />
           </div>
           <button
             type="submit"

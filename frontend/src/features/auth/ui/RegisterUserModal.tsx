@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import { USER_ROLE_OPTIONS } from '../../../shared/constants/labels';
 import { useToast } from '../../../shared/components/toast/ToastProvider';
 import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
@@ -44,22 +46,18 @@ export function RegisterUserModal({ onClose }: RegisterUserModalProps) {
       <form className="crm-form" onSubmit={onSubmit}>
         <div className="form-group">
           <label htmlFor="fullName">Ad Soyad</label>
-          <input id="fullName" {...register('fullName')} />
-          {errors.fullName && (
-            <span className="field-error">{errors.fullName.message}</span>
-          )}
+          <input id="fullName" {...fieldAria('fullName', !!errors.fullName)} {...register('fullName')} />
+          <FieldError id="fullName-error" message={errors.fullName?.message} />
         </div>
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="email">E-posta</label>
-            <input id="email" type="email" {...register('email')} />
-            {errors.email && (
-              <span className="field-error">{errors.email.message}</span>
-            )}
+            <input id="email" type="email" {...fieldAria('email', !!errors.email)} {...register('email')} />
+            <FieldError id="email-error" message={errors.email?.message} />
           </div>
           <div className="form-group">
             <label htmlFor="role">Rol</label>
-            <select id="role" defaultValue="" {...register('role')}>
+            <select id="role" defaultValue="" {...fieldAria('role', !!errors.role)} {...register('role')}>
               <option value="" disabled>
                 Seçiniz
               </option>
@@ -69,17 +67,13 @@ export function RegisterUserModal({ onClose }: RegisterUserModalProps) {
                 </option>
               ))}
             </select>
-            {errors.role && (
-              <span className="field-error">{errors.role.message}</span>
-            )}
+            <FieldError id="role-error" message={errors.role?.message} />
           </div>
         </div>
         <div className="form-group">
           <label htmlFor="password">Parola</label>
-          <input id="password" type="password" {...register('password')} />
-          {errors.password && (
-            <span className="field-error">{errors.password.message}</span>
-          )}
+          <input id="password" type="password" {...fieldAria('password', !!errors.password)} {...register('password')} />
+          <FieldError id="password-error" message={errors.password?.message} />
         </div>
         <div className="modal-footer">
           <button type="button" className="btn btn-ghost" onClick={onClose}>

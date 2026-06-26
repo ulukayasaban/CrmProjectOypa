@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import { useToast } from '../../../shared/components/toast/ToastProvider';
 import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
 import {
@@ -88,17 +90,13 @@ export function ContactFormModal({
       <form className="crm-form" onSubmit={onSubmit}>
         <div className="form-group">
           <label htmlFor="name">İsim Soyisim</label>
-          <input id="name" {...register('name')} />
-          {errors.name && (
-            <span className="field-error">{errors.name.message}</span>
-          )}
+          <input id="name" {...fieldAria('name', !!errors.name)} {...register('name')} />
+          <FieldError id="name-error" message={errors.name?.message} />
         </div>
         <div className="form-group">
           <label htmlFor="contact-email">E-posta</label>
-          <input id="contact-email" type="email" {...register('email')} />
-          {errors.email && (
-            <span className="field-error">{errors.email.message}</span>
-          )}
+          <input id="contact-email" type="email" {...fieldAria('email', !!errors.email)} {...register('email')} />
+          <FieldError id="email-error" message={errors.email?.message} />
         </div>
         <div className="form-group">
           <label htmlFor="contact-phone">Telefon</label>

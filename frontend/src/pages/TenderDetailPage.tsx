@@ -178,7 +178,7 @@ export default function TenderDetailPage() {
                 </button>
               </div>
               {changeTenderStatus.isError && (
-                <span className="field-error">
+                <span role="alert" className="field-error">
                   {getErrorMessage(changeTenderStatus.error)}
                 </span>
               )}
