@@ -59,6 +59,13 @@ public sealed class MeetingRepository(AppDbContext db) : Repository<Meeting>(db)
         return await query.CountAsync(cancellationToken);
     }
 
+    public async Task<Meeting?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default) =>
+        await Set.AsNoTracking()
+            .Include(m => m.Company)
+            .Include(m => m.SalesRep)
+            .Include(m => m.Contact)
+            .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+
     public async Task<(IReadOnlyList<Meeting> Items, int TotalCount)> ListPagedAsync(
         string? search,
         string? sortBy,

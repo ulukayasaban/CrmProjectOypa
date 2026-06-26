@@ -33,4 +33,10 @@ public interface IMeetingRepository : IRepository<Meeting>
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Tek bir görüşmeyi Company/SalesRep/Contact ilişkileriyle getirir.
+    /// ICS takvim daveti üretimi gibi, tüm liste gerekmeksizin detaya ihtiyaç duyulan senaryolar için.
+    /// </summary>
+    Task<Meeting?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
 }
