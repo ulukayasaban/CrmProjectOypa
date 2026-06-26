@@ -34,6 +34,10 @@ public sealed class CompanyConfiguration : IEntityTypeConfiguration<Company>
         builder.Property(c => c.LeadStatus).HasConversion<string>().HasMaxLength(20);
         builder.Property(c => c.CustomerStatus).HasConversion<string>().HasMaxLength(20);
 
+        // Müşteri yaşam döngüsü alanları
+        builder.Property(c => c.IsNewCustomer).HasDefaultValue(false);
+        builder.Property(c => c.LastInteractionAtUtc);
+
         builder.HasIndex(c => c.Type);
         builder.HasIndex(c => c.Email);
         builder.HasIndex(c => c.AssignedSalesRepId);

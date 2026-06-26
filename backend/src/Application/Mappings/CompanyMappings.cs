@@ -28,5 +28,7 @@ public static class CompanyMappings
         c.FirmType,
         c.SourceNote,
         c.LeadOwnerId,
-        c.LeadOwner?.Name);
+        c.LeadOwner?.Name,
+        c.IsNewCustomer,
+        c.LastInteractionAtUtc);
 }

@@ -77,6 +77,9 @@ builder.Services.AddHostedService<WeeklyGoalSnapshotHostedService>();
 // Süresi dolmuş RefreshToken temizleme — günde bir kez çalışır
 builder.Services.AddHostedService<RefreshTokenCleanupHostedService>();
 
+// Müşteri aktivite durumu — aktif müşterilerden 6 ay etkileşimsiz olanları pasife alır
+builder.Services.AddHostedService<CustomerActivityStatusHostedService>();
+
 // JWT Bearer — /hubs/notifications için query-string token desteği
 builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
 {

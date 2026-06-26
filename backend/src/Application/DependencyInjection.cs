@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IGoalService, GoalService>();
         services.AddScoped<ITenderService, TenderService>();
         services.AddScoped<ITenderReminderService, TenderReminderService>();
+        services.AddScoped<ICustomerActivityService, CustomerActivityService>();
 
         // Domain event handler'ları — her olay için bağımsız kayıt (çoklu handler desteği)
         services.AddScoped<IDomainEventHandler<MeetingScheduledEvent>, MeetingScheduledAuditHandler>();

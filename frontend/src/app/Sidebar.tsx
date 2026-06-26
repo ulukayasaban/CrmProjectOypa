@@ -30,6 +30,7 @@ const NAV_ITEMS: NavEntry[] = [
     label: 'Müşterilerimiz',
     icon: <UsersIcon />,
     children: [
+      { to: '/customers/tumu', label: 'Tümü', icon: <UsersIcon /> },
       { to: '/customers/aktif', label: 'Aktif Müşteriler', icon: <UsersIcon /> },
       { to: '/customers/pasif', label: 'Pasif Müşteriler', icon: <UsersIcon /> },
     ],

@@ -59,6 +59,9 @@ public sealed class MeetingService(
         var draft = BuildReminderDraft(meeting, company, rep, contact);
         await mailDrafts.AddAsync(draft, cancellationToken);
 
+        // Görüşme oluşturulduğunda firmada etkileşim kaydı güncellenir (pasifse aktife döner).
+        company.RegisterInteraction(DateTime.UtcNow, reactivate: true);
+
         // SaveChangesAsync domain event dispatch'i de yapar → MeetingScheduledNotificationHandler çalışır.
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

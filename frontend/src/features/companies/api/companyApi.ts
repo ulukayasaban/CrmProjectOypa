@@ -48,6 +48,13 @@ export interface ContactPayload {
   phone?: string;
 }
 
+/** POST /companies/{id}/convert body (tüm alanlar opsiyonel). */
+export interface ConvertPayload {
+  salesRepId?: string | null;
+  serviceSector?: ServiceSector | null;
+  isNewCustomer?: boolean;
+}
+
 export const companyApi = {
   async getLeads(status?: LeadStatus): Promise<CompanyDto[]> {
     const params = status ? { status } : {};
@@ -99,9 +106,10 @@ export const companyApi = {
   ): Promise<void> {
     await httpClient.patch(`/companies/${id}/customer-status`, { status });
   },
-  async convert(id: string): Promise<CompanyDto> {
+  async convert(id: string, payload?: ConvertPayload): Promise<CompanyDto> {
     const { data } = await httpClient.post<CompanyDto>(
       `/companies/${id}/convert`,
+      payload ?? {},
     );
     return data;
   },

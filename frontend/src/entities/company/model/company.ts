@@ -37,6 +37,10 @@ export interface CompanyDto {
   leadOwnerId: string | null;
   leadOwnerName: string | null;
   categories: CategoryDto[];
+  /** Dönüşüm sırasında "Yeni Müşteri" olarak işaretlendi mi? */
+  isNewCustomer: boolean;
+  /** Son etkileşim zamanı (UTC ISO string). */
+  lastInteractionAtUtc: string | null;
 }
 
 export interface ContactDto {

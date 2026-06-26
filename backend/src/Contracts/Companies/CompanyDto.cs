@@ -26,4 +26,6 @@ public sealed record CompanyDto(
     FirmType FirmType,
     string? SourceNote,
     Guid? LeadOwnerId,
-    string? LeadOwnerName);
+    string? LeadOwnerName,
+    bool IsNewCustomer,
+    DateTime? LastInteractionAtUtc);

@@ -6,7 +6,6 @@ import {
   useCompany,
   useCompanyContacts,
   useCompanyMeetings,
-  useConvertCompany,
   useDeleteContact,
   useUpdateCustomerStatus,
   useUpdateLeadStatus,
@@ -14,6 +13,7 @@ import {
 import { useSalesReps } from '../features/salesreps/model/useSalesReps';
 import { ContactFormModal } from '../features/companies/ui/ContactFormModal';
 import { CompanyFormModal } from '../features/companies/ui/CompanyFormModal';
+import { ConvertToCustomerModal } from '../features/companies/ui/ConvertToCustomerModal';
 import { StatusBadge } from '../features/companies/ui/StatusBadge';
 import { MeetingFormModal } from '../features/meetings/ui/MeetingFormModal';
 import { useUpdateMeetingStatus } from '../features/meetings/model/useMeetings';
@@ -123,6 +123,7 @@ export default function CompanyDetailPage() {
   const [editingContact, setEditingContact] = useState<ContactDto | undefined>(undefined);
   const [meetingModal, setMeetingModal] = useState(false);
   const [opportunityModal, setOpportunityModal] = useState(false);
+  const [convertModal, setConvertModal] = useState(false);
   const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
   const [categoryModal, setCategoryModal] = useState(false);
 
@@ -130,7 +131,6 @@ export default function CompanyDetailPage() {
   const company = useCompany(id);
   const contacts = useCompanyContacts(id);
   const meetings = useCompanyMeetings(id);
-  const convert = useConvertCompany(id);
   const updateLeadStatus = useUpdateLeadStatus(id);
   const updateCustomerStatus = useUpdateCustomerStatus(id);
   const updateStatus = useUpdateMeetingStatus();
@@ -146,22 +146,6 @@ export default function CompanyDetailPage() {
   const data = company.data;
   const isLead = data.type === 'Lead';
   const isCustomer = data.type === 'Customer';
-
-  async function handleConvert() {
-    const confirmed = await confirm({
-      title: 'Müşteriye Dönüştür',
-      message: 'Firmayı aktif müşteri portföyüne taşımak istiyor musunuz?',
-      confirmLabel: 'Dönüştür',
-    });
-    if (!confirmed) return;
-
-    try {
-      await convert.mutateAsync();
-      toast.success('Firma müşteriye dönüştürüldü.');
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    }
-  }
 
   /** İlgili kişiyi onay alarak siler. */
   async function handleDeleteContact(contact: ContactDto) {
@@ -195,7 +179,18 @@ export default function CompanyDetailPage() {
       <div className="detail-grid">
         <div className="detail-col">
           <div className="glass card">
-            <h3 style={{ marginBottom: 10 }}>{data.title}</h3>
+            <h3 style={{ marginBottom: 10 }}>
+              {data.title}
+              {data.isNewCustomer && (
+                <span
+                  className="badge badge-lead"
+                  style={{ marginLeft: 10, fontSize: '0.7rem', verticalAlign: 'middle' }}
+                  title="Yeni müşteri"
+                >
+                  YENİ
+                </span>
+              )}
+            </h3>
             <p className="muted" style={{ fontSize: '0.9rem' }}>
               {SECTOR_LABELS[data.sector]}
             </p>
@@ -365,12 +360,9 @@ export default function CompanyDetailPage() {
                 <button
                   type="button"
                   className="btn btn-primary"
-                  disabled={convert.isPending}
-                  onClick={() => void handleConvert()}
+                  onClick={() => setConvertModal(true)}
                 >
-                  {convert.isPending
-                    ? 'Dönüştürülüyor...'
-                    : 'Müşteriye Dönüştür'}
+                  Müşteriye Dönüştür
                 </button>
               )}
               {isCustomer && (
@@ -612,6 +604,12 @@ export default function CompanyDetailPage() {
 
       {ConfirmEl}
 
+      {convertModal && (
+        <ConvertToCustomerModal
+          companyId={id}
+          onClose={() => setConvertModal(false)}
+        />
+      )}
       {contactModal && (
         <ContactFormModal
           companyId={id}

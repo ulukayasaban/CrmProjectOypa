@@ -34,7 +34,7 @@ public sealed class TenderService(
 
     public async Task<TenderDto> CreateAsync(CreateTenderRequest request, CancellationToken cancellationToken = default)
     {
-        _ = await companies.GetByIdAsync(request.CompanyId, cancellationToken)
+        var company = await companies.GetByIdAsync(request.CompanyId, cancellationToken)
             ?? throw NotFoundException.For("Firma", request.CompanyId);
 
         if (request.AssignedSalesRepId is { } repId)
@@ -57,6 +57,10 @@ public sealed class TenderService(
             request.AssignedSalesRepId);
 
         await tenders.AddAsync(tender, cancellationToken);
+
+        // İhale oluşturulduğunda firmada etkileşim kaydı güncellenir (pasif müşteriyse aktife döner).
+        company.RegisterInteraction(clock.UtcNow, reactivate: true);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Detay navigation'ları ile yeniden çek

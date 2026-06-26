@@ -4,6 +4,7 @@ import {
   companyApi,
   type CompanyPayload,
   type ContactPayload,
+  type ConvertPayload,
   type CustomersPagedParams,
   type LeadsPagedParams,
 } from '../api/companyApi';
@@ -38,8 +39,9 @@ export function useLeadsPaged(params: LeadsPagedParams) {
 /**
  * Sunucu taraflı sayfalı müşteri sorgusu.
  * Tam-liste useCustomers hook'u bozulmaz.
+ * status opsiyoneldir; verilmezse tüm müşteriler (aktif+pasif) döner.
  */
-export function useCustomersPaged(params: CustomersPagedParams) {
+export function useCustomersPaged(params: Omit<CustomersPagedParams, 'status'> & { status?: CustomerStatus }) {
   return useQuery({
     queryKey: queryKeys.customersPaged(params),
     queryFn: () => companyApi.getCustomersPaged(params),
@@ -84,7 +86,7 @@ export function useCreateCompany() {
 export function useConvertCompany(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => companyApi.convert(id),
+    mutationFn: (payload?: ConvertPayload) => companyApi.convert(id, payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.company(id) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.leads });

@@ -13,15 +13,21 @@ import { formatDate } from '../shared/lib/format';
 import { getErrorMessage } from '../shared/lib/errorMessage';
 import type { CustomerStatus } from '../shared/types/enums';
 
-const SEGMENT_MAP: Record<string, CustomerStatus> = {
+/** Segment'ten CustomerStatus eşlemesi. `tumu` → undefined (status gönderilmez). */
+const SEGMENT_MAP: Record<string, CustomerStatus | undefined> = {
   aktif: 'Active',
   pasif: 'Passive',
+  tumu: undefined,
 };
 
 const SEGMENT_TITLE: Record<string, string> = {
   aktif: 'Aktif Müşteri Portföyü',
   pasif: 'Pasif Müşteri Portföyü',
+  tumu: 'Tüm Müşteriler',
 };
+
+/** Geçerli segment anahtarları. */
+const VALID_SEGMENTS = new Set(['aktif', 'pasif', 'tumu']);
 
 /** Müşteri tablosu sıralanabilir sütunları. */
 type CustomerSortField = 'title' | 'city' | 'createdAt';
@@ -34,12 +40,13 @@ export default function CustomersPage() {
   const navigate = useNavigate();
   const { segment = '' } = useParams<{ segment: string }>();
 
-  const status = SEGMENT_MAP[segment];
-
   // Geçersiz segment → aktif'e yönlendir
-  if (!status) {
+  if (!VALID_SEGMENTS.has(segment)) {
     return <Navigate to="/customers/aktif" replace />;
   }
+
+  // SEGMENT_MAP[segment] undefined olabilir (tumu), bu kasıtlı.
+  const status = SEGMENT_MAP[segment];
 
   return (
     <CustomersContent
@@ -51,7 +58,7 @@ export default function CustomersPage() {
 }
 
 interface CustomersContentProps {
-  status: CustomerStatus;
+  status: CustomerStatus | undefined;
   title: string;
   navigate: ReturnType<typeof useNavigate>;
 }
@@ -184,7 +191,9 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
                     ? `"${search}" için sonuç bulunamadı.`
                     : status === 'Active'
                       ? 'Henüz aktif müşteriniz bulunmuyor.'
-                      : 'Henüz pasif müşteriniz bulunmuyor.'}
+                      : status === 'Passive'
+                        ? 'Henüz pasif müşteriniz bulunmuyor.'
+                        : 'Henüz kayıtlı müşteriniz bulunmuyor.'}
                 </td>
               </tr>
             )}
@@ -196,6 +205,15 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
               >
                 <td>
                   <strong>{company.title}</strong>
+                  {company.isNewCustomer && (
+                    <span
+                      className="badge badge-lead"
+                      style={{ marginLeft: 8, fontSize: '0.65rem', verticalAlign: 'middle' }}
+                      title="Yeni müşteri"
+                    >
+                      YENİ
+                    </span>
+                  )}
                 </td>
                 <td>
                   <span className="badge badge-opportunity">

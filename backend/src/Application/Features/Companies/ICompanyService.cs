@@ -20,7 +20,11 @@ public interface ICompanyService
 
     Task SetCustomerStatusAsync(Guid id, CustomerStatus status, CancellationToken cancellationToken = default);
 
-    Task<CompanyDto> ConvertToCustomerAsync(Guid id, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Lead'i müşteriye dönüştürür.
+    /// Opsiyonel olarak satış temsilcisi atar, hizmet sektörü set eder ve yeni müşteri bayrağını işaretler.
+    /// </summary>
+    Task<CompanyDto> ConvertToCustomerAsync(Guid id, ConvertToCustomerRequest? request = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Firmaya satış temsilcisi atar. <paramref name="salesRepId"/> null ise firma havuza alınır.

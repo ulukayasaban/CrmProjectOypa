@@ -117,7 +117,7 @@ public sealed class CompanyService(
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<CompanyDto> ConvertToCustomerAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<CompanyDto> ConvertToCustomerAsync(Guid id, ConvertToCustomerRequest? request = null, CancellationToken cancellationToken = default)
     {
         var company = await companies.GetByIdAsync(id, cancellationToken)
                       ?? throw NotFoundException.For("Firma", id);
@@ -125,9 +125,45 @@ public sealed class CompanyService(
         if (company.Type == CompanyType.Customer)
             throw new ConflictException("Firma zaten müşteri.");
 
+        // Satış temsilcisi atama (opsiyonel)
+        if (request?.SalesRepId is { } salesRepId)
+        {
+            _ = await salesReps.GetByIdAsync(salesRepId, cancellationToken)
+                ?? throw NotFoundException.For("Satış temsilcisi", salesRepId);
+            company.AssignSalesRep(salesRepId);
+        }
+        else if (request is not null && request.SalesRepId is null)
+        {
+            // Null gönderilmişse havuza al (convert body geldiyse salesRepId null = havuz)
+            company.AssignSalesRep(null);
+        }
+
+        // Hizmet sektörü (opsiyonel)
+        if (request?.ServiceSector is { } serviceSector)
+        {
+            company.UpdateDetails(
+                company.Title,
+                company.Sector,
+                company.Phone,
+                company.Email,
+                company.Address,
+                company.City,
+                company.Website,
+                company.TaxNumber,
+                company.Source,
+                serviceSector,
+                company.FirmType,
+                company.SourceNote);
+        }
+
         // ConvertToCustomer() LeadConvertedToCustomerEvent tetikler;
         // event handler yönetici zincirine otomatik bildirim üretir.
         company.ConvertToCustomer();
+
+        // Yeni müşteri bayrağı
+        if (request is not null)
+            company.MarkNewCustomer(request.IsNewCustomer);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return company.ToDto();
     }

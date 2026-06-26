@@ -106,10 +106,14 @@ public sealed class CompaniesController(
         return Ok(ApiResponse.Ok("Müşteri durumu güncellendi."));
     }
 
+    /// <summary>
+    /// Lead'i müşteriye dönüştürür.
+    /// Body opsiyoneldir; verilirse salesRepId (null=Havuz), serviceSector, isNewCustomer uygulanır.
+    /// </summary>
     [HttpPost("{id:guid}/convert")]
-    public async Task<IActionResult> ConvertToCustomer(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> ConvertToCustomer(Guid id, [FromBody] ConvertToCustomerRequest? request, CancellationToken cancellationToken)
     {
-        var data = await companyService.ConvertToCustomerAsync(id, cancellationToken);
+        var data = await companyService.ConvertToCustomerAsync(id, request, cancellationToken);
         return Ok(ApiResponse<CompanyDto>.Ok(data, "Firma müşteriye dönüştürüldü."));
     }
 

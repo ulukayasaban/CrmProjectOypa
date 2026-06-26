@@ -11,6 +11,7 @@ public sealed class CompanyNoteService(
     IRepository<CompanyNote> companyNotes,
     ICurrentUser currentUser,
     IIdentityService identityService,
+    IDateTimeProvider clock,
     IUnitOfWork unitOfWork) : ICompanyNoteService
 {
     public async Task<IReadOnlyList<CompanyNoteDto>> GetByCompanyAsync(
@@ -33,13 +34,17 @@ public sealed class CompanyNoteService(
         CreateCompanyNoteRequest request,
         CancellationToken cancellationToken = default)
     {
-        _ = await companies.GetByIdAsync(companyId, cancellationToken)
+        var company = await companies.GetByIdAsync(companyId, cancellationToken)
             ?? throw NotFoundException.For("Firma", companyId);
 
         var authorName = await ResolveAuthorNameAsync(cancellationToken);
 
         var note = new CompanyNote(companyId, request.Content, currentUser.UserId, authorName);
         await companyNotes.AddAsync(note, cancellationToken);
+
+        // Not eklendiğinde firmada etkileşim kaydı güncellenir (pasif müşteriyse aktife döner).
+        company.RegisterInteraction(clock.UtcNow, reactivate: true);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return note.ToDto();

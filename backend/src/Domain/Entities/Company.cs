@@ -76,6 +76,19 @@ public class Company : BaseEntity, ISoftDelete
     /// <summary>Müşteriye dönüştürülme zamanı (yalnızca müşteriler için).</summary>
     public DateTime? ActivatedAtUtc { get; private set; }
 
+    /// <summary>
+    /// Firma yeni müşteri bayrağı.
+    /// Convert sırasında veya oluşturulurken set edilir; varsayılan false.
+    /// </summary>
+    public bool IsNewCustomer { get; private set; }
+
+    /// <summary>
+    /// Son etkileşim zaman damgası (UTC).
+    /// Görüşme, not veya ihale oluşturulduğunda güncellenir.
+    /// Null ise henüz etkileşim kaydedilmemiştir.
+    /// </summary>
+    public DateTime? LastInteractionAtUtc { get; private set; }
+
     /// <summary>Atanan satış temsilcisinin kimliği. Null ise firma havuzdadır.</summary>
     public Guid? AssignedSalesRepId { get; private set; }
 
@@ -191,6 +204,28 @@ public class Company : BaseEntity, ISoftDelete
         _categories.Clear();
         _categories.AddRange(categories);
         UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    /// <summary>Yeni müşteri bayrağını ayarlar.</summary>
+    public void MarkNewCustomer(bool value)
+    {
+        IsNewCustomer = value;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Son etkileşim zaman damgasını günceller.
+    /// <paramref name="reactivate"/> true ise ve firma pasif müşteriyse Active'e döndürür.
+    /// </summary>
+    public void RegisterInteraction(DateTime utcNow, bool reactivate)
+    {
+        LastInteractionAtUtc = utcNow;
+        UpdatedAtUtc = utcNow;
+
+        if (reactivate && Type == CompanyType.Customer && CustomerStatus == Enums.CustomerStatus.Passive)
+        {
+            CustomerStatus = Enums.CustomerStatus.Active;
+        }
     }
 
     /// <summary>Lead'i aktif müşteriye dönüştürür.</summary>
