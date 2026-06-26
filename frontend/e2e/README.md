@@ -42,5 +42,12 @@ npm run test:e2e
 
 ## CI
 
-Varsayılan CI'da kapalıdır (API LocalDB/Windows + tarayıcı indirme maliyeti). Ayrı bir
-`workflow_dispatch` job'u olarak eklenebilir: SQL Server servis konteyneri + `npx playwright install --with-deps chromium` + `npm run test:e2e`.
+`.github/workflows/ci.yml` içinde **`e2e`** job'u olarak tanımlıdır. Maliyetli olduğundan
+(SQL Server servis konteyneri + tarayıcı indirme) her push/PR'da değil, **yalnızca elle**
+(`workflow_dispatch`) çalışır — GitHub → Actions → CI → "Run workflow".
+
+Job şunları yapar: `mcr.microsoft.com/mssql/server:2022` servis konteyneri ayağa kaldırır,
+`ConnectionStrings__DefaultConnection` env'i ile API'yi bu SQL'e bağlar (LocalDB yok),
+`npx playwright install --with-deps chromium` ile tarayıcıyı kurar ve `npm run test:e2e`
+çalıştırır (Playwright `webServer` API'yi ve frontend'i kendisi başlatır). Hata olursa
+`test-results/` izleri artifact olarak yüklenir.
