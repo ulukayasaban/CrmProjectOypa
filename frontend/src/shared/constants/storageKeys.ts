@@ -1,4 +1,8 @@
 export const STORAGE_KEYS = {
-  // Access token is intentionally NOT in localStorage — kept in-memory only.
-  refreshToken: 'oypa_refresh_token',
+  // Token'lar localStorage'da TUTULMAZ:
+  //  - access token: yalnızca bellekte (in-memory)
+  //  - refresh token: HttpOnly çerez (sunucu yönetir; JS erişemez → XSS koruması)
+  // Yalnızca hassas olmayan bir "oturum ipucu" tutulur; sayfa yenilemede
+  // gereksiz /auth/refresh çağrısını önlemek için (anonim kullanıcıda atlanır).
+  sessionHint: 'oypa_session',
 } as const;

@@ -7,6 +7,7 @@ test.describe('Raporlar', () => {
     await page.goto('/raporlar');
     await expect(page.getByText('Görüşme Raporu (Excel)')).toBeVisible();
     await expect(page.getByText('İhale Raporu (Excel)')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'İndir' })).toHaveCount(2);
+    // 4 rapor kartı: Görüşme, İhale, Hedef, Müşteri — her birinde bir "İndir" butonu.
+    await expect(page.getByRole('button', { name: 'İndir' })).toHaveCount(4);
   });
 });

@@ -1,12 +1,12 @@
 import { STORAGE_KEYS } from '../constants/storageKeys';
 
 /**
- * Access token is stored in a module-scoped variable (in-memory) so it is
- * never accessible to third-party scripts via localStorage / sessionStorage,
- * reducing the XSS attack surface.
+ * Access token bellekte (module-scoped) tutulur → localStorage/sessionStorage'a
+ * yazılmadığından üçüncü-parti script'lerle (XSS) sızdırılamaz.
  *
- * Refresh token stays in localStorage so it survives hard page reloads;
- * the auth provider uses it to silently restore the session on startup.
+ * Refresh token artık HttpOnly çerezde (sunucu tarafı) tutulur; JS erişemez.
+ * Burada yalnızca hassas olmayan bir "oturum ipucu" bayrağı saklanır: sayfa
+ * yenilemede bootstrap'ın gereksiz /auth/refresh çağrısı yapmasını önler.
  */
 let _accessToken: string | null = null;
 
@@ -15,21 +15,19 @@ export const tokenStorage = {
     return _accessToken;
   },
 
-  getRefreshToken(): string | null {
-    return localStorage.getItem(STORAGE_KEYS.refreshToken);
-  },
-
-  setTokens(accessToken: string, refreshToken: string): void {
-    _accessToken = accessToken;
-    localStorage.setItem(STORAGE_KEYS.refreshToken, refreshToken);
-  },
-
+  /** Access token'ı belleğe yazar ve oturum ipucunu işaretler. */
   setAccessToken(accessToken: string): void {
     _accessToken = accessToken;
+    localStorage.setItem(STORAGE_KEYS.sessionHint, '1');
+  },
+
+  /** Daha önce giriş yapılmış mı? (refresh denemesi yapmaya değer mi) */
+  hasSessionHint(): boolean {
+    return localStorage.getItem(STORAGE_KEYS.sessionHint) === '1';
   },
 
   clear(): void {
     _accessToken = null;
-    localStorage.removeItem(STORAGE_KEYS.refreshToken);
+    localStorage.removeItem(STORAGE_KEYS.sessionHint);
   },
 };

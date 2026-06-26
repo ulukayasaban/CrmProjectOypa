@@ -10,7 +10,8 @@ test.describe('İhaleler', () => {
 
     const search = page.getByRole('searchbox', { name: 'İhale ara' });
     await search.fill('zzz-eslesmeyen-terim');
-    await expect(page.getByText('Bu kategoride ihale bulunamadı.')).toBeVisible();
+    // Arama sonucu boşsa standart "... için sonuç bulunamadı." mesajı gösterilir.
+    await expect(page.getByText('için sonuç bulunamadı', { exact: false })).toBeVisible();
 
     await search.fill('');
     await expect(page.getByText('Global Enerji', { exact: false })).toBeVisible();

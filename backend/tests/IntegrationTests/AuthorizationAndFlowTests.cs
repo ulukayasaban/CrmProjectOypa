@@ -196,23 +196,61 @@ public sealed class AuthorizationAndFlowTests : IClassFixture<CustomWebApplicati
     // ---- Refresh rotasyonu + yeniden kullanım tespiti ----
 
     [Fact]
-    public async Task Refresh_ValidToken_IssuesNewToken_AndReuseOfOldReturns401()
+    public async Task Refresh_ValidCookie_IssuesNewToken_AndReuseOfOldReturns401()
     {
-        var auth = await LoginAsync(CustomWebApplicationFactory.AdminEmail, CustomWebApplicationFactory.AdminPassword);
-        var originalRefresh = auth.RefreshToken;
+        // Refresh token artık HttpOnly çerezde taşınır. Çerezi elle kontrol edebilmek
+        // (eski token'ı tekrar oynatabilmek) için otomatik çerez yönetimi kapalı client.
+        using var client = _factory.CreateClient(
+            new WebApplicationFactoryClientOptions { HandleCookies = false });
 
-        // İlk refresh: yeni token üretir, eskisini iptal eder.
-        var firstRefresh = await _client.PostAsJsonAsync("/api/auth/refresh",
-            new RefreshTokenRequest(originalRefresh), JsonOptions);
+        var loginResp = await client.PostAsJsonAsync("/api/auth/login",
+            new LoginRequest(CustomWebApplicationFactory.AdminEmail, CustomWebApplicationFactory.AdminPassword),
+            JsonOptions);
+        loginResp.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // Gövdede refresh token SIZDIRILMAMALI (yalnızca çerezde).
+        var loginBody = await loginResp.Content.ReadFromJsonAsync<ApiResponse<AuthResponse>>(JsonOptions);
+        loginBody!.Data!.RefreshToken.ShouldBeNullOrEmpty();
+
+        var originalCookie = ExtractRefreshCookie(loginResp);
+        originalCookie.ShouldNotBeNullOrWhiteSpace();
+
+        // İlk refresh: çerezi elle gönder → yeni token + yeni çerez üretir, eskisini iptal eder.
+        var firstRefresh = await SendWithRefreshCookieAsync(client, originalCookie!);
         firstRefresh.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var refreshed = await firstRefresh.Content.ReadFromJsonAsync<ApiResponse<AuthResponse>>(JsonOptions);
-        refreshed!.Data!.RefreshToken.ShouldNotBeNullOrWhiteSpace();
-        refreshed.Data.RefreshToken.ShouldNotBe(originalRefresh);
+        var newCookie = ExtractRefreshCookie(firstRefresh);
+        newCookie.ShouldNotBeNullOrWhiteSpace();
+        newCookie.ShouldNotBe(originalCookie);
 
-        // Eski (iptal edilmiş) refresh token tekrar kullanılırsa 401.
-        var reuse = await _client.PostAsJsonAsync("/api/auth/refresh",
-            new RefreshTokenRequest(originalRefresh), JsonOptions);
+        // Eski (iptal edilmiş) çerez tekrar kullanılırsa 401.
+        var reuse = await SendWithRefreshCookieAsync(client, originalCookie!);
         reuse.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    private static Task<HttpResponseMessage> SendWithRefreshCookieAsync(HttpClient client, string cookieValue)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/auth/refresh");
+        request.Headers.Add("Cookie", $"oypa_rt={cookieValue}");
+        return client.SendAsync(request);
+    }
+
+    /// <summary>Set-Cookie başlığından oypa_rt çerezinin değerini çıkarır.</summary>
+    private static string? ExtractRefreshCookie(HttpResponseMessage response)
+    {
+        if (!response.Headers.TryGetValues("Set-Cookie", out var cookies))
+            return null;
+
+        foreach (var cookie in cookies)
+        {
+            if (!cookie.StartsWith("oypa_rt=", StringComparison.Ordinal))
+                continue;
+
+            var value = cookie["oypa_rt=".Length..];
+            var semicolon = value.IndexOf(';');
+            return semicolon >= 0 ? value[..semicolon] : value;
+        }
+
+        return null;
     }
 
     // ---- Contact + meeting happy path -> maildraft ----

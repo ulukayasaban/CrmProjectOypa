@@ -13,10 +13,9 @@ export interface RegisterPayload {
   role: string;
 }
 
-/** Minimal shape returned by /auth/refresh (same envelope as login but user field optional). */
+/** /auth/refresh yanıtı — refresh token gövdede değil HttpOnly çerezde döner. */
 export interface RefreshResponse {
   accessToken: string;
-  refreshToken: string;
 }
 
 /** POST /auth/change-password — kimlik doğrulama gerektirir */
@@ -52,15 +51,13 @@ export const authApi = {
     );
     return data;
   },
-  async refresh(refreshToken: string): Promise<RefreshResponse> {
-    const { data } = await httpClient.post<RefreshResponse>(
-      '/auth/refresh',
-      { refreshToken },
-    );
+  async refresh(): Promise<RefreshResponse> {
+    // Refresh token HttpOnly çerezde; gövde gönderilmez (withCredentials çerezi taşır).
+    const { data } = await httpClient.post<RefreshResponse>('/auth/refresh');
     return data;
   },
-  async logout(refreshToken: string): Promise<void> {
-    await httpClient.post('/auth/logout', { refreshToken });
+  async logout(): Promise<void> {
+    await httpClient.post('/auth/logout');
   },
   async me(): Promise<UserDto> {
     const { data } = await httpClient.get<UserDto>('/auth/me');

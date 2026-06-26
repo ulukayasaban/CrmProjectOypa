@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Oypa.Crm.Api.Extensions;
+using Oypa.Crm.Application.Common.Exceptions;
 using Oypa.Crm.Application.Common.Interfaces;
+using Oypa.Crm.Application.Common.Options;
 using Oypa.Crm.Application.Features.Auth;
 using Oypa.Crm.Contracts.Auth;
 using Oypa.Crm.Contracts.Common;
@@ -14,31 +18,56 @@ namespace Oypa.Crm.Api.Controllers;
 public sealed class AuthController(
     IAuthService authService,
     IIdentityService identityService,
-    ICurrentUser currentUser) : ControllerBase
+    ICurrentUser currentUser,
+    IHostEnvironment environment,
+    IDateTimeProvider clock,
+    IOptions<JwtOptions> jwtOptions) : ControllerBase
 {
+    /// <summary>
+    /// Refresh token'ın taşındığı HttpOnly çerez adı. localStorage yerine çerez
+    /// kullanılması XSS ile token sızdırılmasını engeller (JS erişemez).
+    /// </summary>
+    private const string RefreshCookieName = "oypa_rt";
+
+    /// <summary>Çerez yalnızca auth uçlarına gönderilsin diye dar path.</summary>
+    private const string RefreshCookiePath = "/api/auth";
+
+    private readonly JwtOptions _jwt = jwtOptions.Value;
+
     [HttpPost("login")]
     [AllowAnonymous]
     [EnableRateLimiting(RateLimitingExtensions.AuthLogin)]
     public async Task<IActionResult> Login(LoginRequest request, CancellationToken cancellationToken)
     {
         var result = await authService.LoginAsync(request, ClientIp(), cancellationToken);
-        return Ok(ApiResponse<AuthResponse>.Ok(result, "Giriş başarılı."));
+        SetRefreshCookie(result.RefreshToken);
+        return Ok(ApiResponse<AuthResponse>.Ok(WithoutRefreshToken(result), "Giriş başarılı."));
     }
 
     [HttpPost("refresh")]
     [AllowAnonymous]
     [EnableRateLimiting(RateLimitingExtensions.AuthRefresh)]
-    public async Task<IActionResult> Refresh(RefreshTokenRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Refresh(CancellationToken cancellationToken)
     {
-        var result = await authService.RefreshAsync(request.RefreshToken, ClientIp(), cancellationToken);
-        return Ok(ApiResponse<AuthResponse>.Ok(result, "Token yenilendi."));
+        // Refresh token artık istek gövdesinde değil, HttpOnly çerezde taşınır.
+        var refreshToken = Request.Cookies[RefreshCookieName];
+        if (string.IsNullOrEmpty(refreshToken))
+            throw new UnauthorizedAppException("Refresh token bulunamadı.");
+
+        var result = await authService.RefreshAsync(refreshToken, ClientIp(), cancellationToken);
+        SetRefreshCookie(result.RefreshToken);
+        return Ok(ApiResponse<AuthResponse>.Ok(WithoutRefreshToken(result), "Token yenilendi."));
     }
 
     [HttpPost("logout")]
     [Authorize]
-    public async Task<IActionResult> Logout(RefreshTokenRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
-        await authService.LogoutAsync(request.RefreshToken, cancellationToken);
+        var refreshToken = Request.Cookies[RefreshCookieName];
+        if (!string.IsNullOrEmpty(refreshToken))
+            await authService.LogoutAsync(refreshToken, cancellationToken);
+
+        ClearRefreshCookie();
         return Ok(ApiResponse.Ok("Çıkış yapıldı."));
     }
 
@@ -140,4 +169,40 @@ public sealed class AuthController(
     }
 
     private string? ClientIp() => HttpContext.Connection.RemoteIpAddress?.ToString();
+
+    /// <summary>
+    /// Refresh token'ı HttpOnly çereze yazar. Development'ta (http localhost)
+    /// Secure=false + SameSite=Lax (aksi halde tarayıcı http'de çerezi göndermez);
+    /// production'da (https) Secure=true + SameSite=None (farklı alan adı senaryosu).
+    /// </summary>
+    private void SetRefreshCookie(string token)
+    {
+        Response.Cookies.Append(RefreshCookieName, token, BuildCookieOptions(
+            clock.UtcNow.AddDays(_jwt.RefreshTokenDays)));
+    }
+
+    private void ClearRefreshCookie()
+    {
+        // Silmek için aynı Path/Secure/SameSite ile geçmiş tarihli çerez gönderilir.
+        Response.Cookies.Append(RefreshCookieName, string.Empty, BuildCookieOptions(
+            clock.UtcNow.AddDays(-1)));
+    }
+
+    private CookieOptions BuildCookieOptions(DateTimeOffset expires)
+    {
+        var isDev = environment.IsDevelopment();
+        return new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !isDev,
+            SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
+            Path = RefreshCookiePath,
+            Expires = expires,
+            IsEssential = true,
+        };
+    }
+
+    /// <summary>Gövdede refresh token sızdırmamak için boşaltılmış kopya döner.</summary>
+    private static AuthResponse WithoutRefreshToken(AuthResponse response) =>
+        response with { RefreshToken = string.Empty };
 }

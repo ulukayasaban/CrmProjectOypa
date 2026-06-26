@@ -29,21 +29,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setSessionExpiredHandler(() => setUser(null));
   }, []);
 
-  // Restore the session on a hard refresh.
-  // Access token lives only in memory and is lost on reload, so we use the
-  // persisted refresh token to silently obtain a new access token, then
-  // fetch the current user.  If the refresh token is absent or invalid we
-  // drop the session and redirect to login (via ProtectedRoute).
+  // Sayfa yenilemede oturumu geri yükle.
+  // Access token yalnızca bellekte olduğundan reload'da kaybolur; refresh token
+  // ise HttpOnly çerezdedir (JS göremez). Daha önce giriş yapılmışsa (oturum
+  // ipucu) sessizce /auth/refresh çağrılır (çerez otomatik gider) ve yeni access
+  // token + kullanıcı alınır. Çerez yoksa/geçersizse oturum düşürülür.
   useEffect(() => {
     let active = true;
     async function bootstrap() {
-      if (!tokenStorage.getRefreshToken()) {
+      if (!tokenStorage.hasSessionHint()) {
         setIsInitializing(false);
         return;
       }
       try {
-        const refreshed = await authApi.refresh(tokenStorage.getRefreshToken()!);
-        tokenStorage.setTokens(refreshed.accessToken, refreshed.refreshToken);
+        const refreshed = await authApi.refresh();
+        tokenStorage.setAccessToken(refreshed.accessToken);
         const me = await authApi.me();
         if (active) setUser(me);
       } catch {
@@ -60,18 +60,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = useCallback(async (payload: LoginPayload) => {
     const response = await authApi.login(payload);
-    tokenStorage.setTokens(response.accessToken, response.refreshToken);
+    tokenStorage.setAccessToken(response.accessToken);
     setUser(response.user);
   }, []);
 
   const logout = useCallback(async () => {
-    const refreshToken = tokenStorage.getRefreshToken();
-    if (refreshToken) {
-      try {
-        await authApi.logout(refreshToken);
-      } catch {
-        // Ignore logout failures; the local session is cleared regardless.
-      }
+    try {
+      // Çerez otomatik gönderilir; sunucu refresh token'ı iptal eder ve çerezi siler.
+      await authApi.logout();
+    } catch {
+      // Logout hatası yok sayılır; yerel oturum yine de temizlenir.
     }
     clearSession();
   }, [clearSession]);

@@ -22,7 +22,6 @@ interface RetriableConfig extends InternalAxiosRequestConfig {
 
 interface RawAuthResponse {
   accessToken: string;
-  refreshToken: string;
 }
 
 /**
@@ -37,6 +36,9 @@ export function setSessionExpiredHandler(handler: () => void): void {
 
 export const httpClient: AxiosInstance = axios.create({
   baseURL,
+  // Refresh token HttpOnly çerezde taşındığından, isteklerde çerezin gönderilmesi
+  // için withCredentials zorunlu (CORS tarafında AllowCredentials + sabit origin var).
+  withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -62,15 +64,12 @@ function toApiError(error: AxiosError<ApiEnvelope<unknown>>): ApiError {
 let refreshPromise: Promise<string> | null = null;
 
 async function refreshAccessToken(): Promise<string> {
-  const refreshToken = tokenStorage.getRefreshToken();
-  if (!refreshToken) {
-    throw new ApiError('Oturum süresi doldu.', [], 401);
-  }
-
+  // Refresh token gövdede DEĞİL; HttpOnly çerezde. withCredentials ile çerez
+  // otomatik gönderilir. Çerez yoksa/süresi dolmuşsa sunucu 401 döner.
   const response = await axios.post<ApiEnvelope<RawAuthResponse>>(
     `${baseURL}/auth/refresh`,
-    { refreshToken },
-    { headers: { 'Content-Type': 'application/json' } },
+    undefined,
+    { withCredentials: true, headers: { 'Content-Type': 'application/json' } },
   );
 
   const envelope = response.data;
@@ -78,10 +77,7 @@ async function refreshAccessToken(): Promise<string> {
     throw new ApiError(envelope.message, envelope.errors, 401);
   }
 
-  tokenStorage.setTokens(
-    envelope.data.accessToken,
-    envelope.data.refreshToken,
-  );
+  tokenStorage.setAccessToken(envelope.data.accessToken);
   return envelope.data.accessToken;
 }
 
