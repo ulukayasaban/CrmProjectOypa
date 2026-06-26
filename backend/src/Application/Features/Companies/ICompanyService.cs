@@ -27,6 +27,12 @@ public interface ICompanyService
     /// </summary>
     Task AssignSalesRepAsync(Guid id, Guid? salesRepId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Lead ile iletişim kuran satış temsilcisini atar.
+    /// <paramref name="salesRepId"/> null ise mevcut atama kaldırılır.
+    /// </summary>
+    Task SetLeadOwnerAsync(Guid id, Guid? salesRepId, CancellationToken cancellationToken = default);
+
     /// <summary>Firmaya kategorileri toptan atar ve güncel CompanyDto döner.</summary>
     Task<CompanyDto> SetCategoriesAsync(Guid companyId, IReadOnlyList<Guid> categoryIds, CancellationToken cancellationToken = default);
 

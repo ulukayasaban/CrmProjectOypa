@@ -16,6 +16,7 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
         CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking()
             .Include(c => c.AssignedSalesRep)
+            .Include(c => c.LeadOwner)
             .Include(c => c.Categories)
             .Where(c => c.Type == CompanyType.Lead && (status == null || c.LeadStatus == status))
             .ToListAsync(cancellationToken);
@@ -25,6 +26,7 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
         CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking()
             .Include(c => c.AssignedSalesRep)
+            .Include(c => c.LeadOwner)
             .Include(c => c.Categories)
             .Where(c => c.Type == CompanyType.Customer && (status == null || c.CustomerStatus == status))
             .ToListAsync(cancellationToken);
@@ -34,6 +36,7 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
         CancellationToken cancellationToken = default) =>
         await Set
             .Include(c => c.AssignedSalesRep)
+            .Include(c => c.LeadOwner)
             .Include(c => c.Categories)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
@@ -42,6 +45,7 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
         CancellationToken cancellationToken = default) =>
         await Set
             .Include(c => c.AssignedSalesRep)
+            .Include(c => c.LeadOwner)
             .Include(c => c.Categories)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
@@ -114,6 +118,7 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
         var query = Set.AsNoTracking()
             .Include(c => c.AssignedSalesRep)
                 .ThenInclude(r => r!.Employee)
+            .Include(c => c.LeadOwner)
             .Include(c => c.Categories)
             .Where(c => c.Type == type)
             .AsQueryable();
@@ -128,7 +133,8 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
                 c.Address.ToLower().Contains(term) ||
                 c.Phone.ToLower().Contains(term) ||
                 c.Email.ToLower().Contains(term) ||
-                (c.AssignedSalesRep != null && c.AssignedSalesRep.Name.ToLower().Contains(term)));
+                (c.AssignedSalesRep != null && c.AssignedSalesRep.Name.ToLower().Contains(term)) ||
+                (c.LeadOwner != null && c.LeadOwner.Name.ToLower().Contains(term)));
         }
 
         return query;

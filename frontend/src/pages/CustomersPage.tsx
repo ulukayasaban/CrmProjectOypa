@@ -8,7 +8,7 @@ import { SortableTh } from '../shared/components/SortableTh';
 import { TableSkeleton } from '../shared/components/TableSkeleton';
 import { StateBlock } from '../shared/components/StateBlock';
 import { useDebouncedValue } from '../shared/hooks/useDebouncedValue';
-import { SECTOR_LABELS } from '../shared/constants/labels';
+import { SECTOR_LABELS, SERVICE_SECTOR_LABELS } from '../shared/constants/labels';
 import { formatDate } from '../shared/lib/format';
 import { getErrorMessage } from '../shared/lib/errorMessage';
 import type { CustomerStatus } from '../shared/types/enums';
@@ -108,7 +108,7 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
   const totalPages = data?.totalPages ?? 1;
   const totalCount = data?.totalCount ?? 0;
 
-  if (isLoading) return <TableSkeleton columns={7} />;
+  if (isLoading) return <TableSkeleton columns={9} />;
   if (isError || !data) return <StateBlock message={getErrorMessage(error)} />;
 
   return (
@@ -169,6 +169,8 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
                 Aktif Geçiş Tarihi
               </SortableTh>
               <th>Kategoriler</th>
+              <th>Hizmet Sektörü</th>
+              <th>Atanan Lead</th>
               <th>İletişim</th>
               <th>Temsilci</th>
               <th>İşlem</th>
@@ -177,7 +179,7 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
           <tbody>
             {items.length === 0 && (
               <tr>
-                <td colSpan={7} className="table-empty">
+                <td colSpan={9} className="table-empty">
                   {search
                     ? `"${search}" için sonuç bulunamadı.`
                     : status === 'Active'
@@ -200,11 +202,23 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
                     {SECTOR_LABELS[company.sector]}
                   </span>
                 </td>
+                <td style={{ fontSize: '0.85rem' }}>
+                  {formatDate(company.activatedAtUtc)}
+                </td>
                 <td>
                   <CategoryBadges categories={company.categories} />
                 </td>
                 <td style={{ fontSize: '0.85rem' }}>
-                  {formatDate(company.activatedAtUtc)}
+                  {company.serviceSector ? (
+                    <span className="badge badge-neutral">
+                      {SERVICE_SECTOR_LABELS[company.serviceSector]}
+                    </span>
+                  ) : (
+                    <span className="muted">-</span>
+                  )}
+                </td>
+                <td style={{ fontSize: '0.85rem' }}>
+                  {company.leadOwnerName ?? <span className="muted">-</span>}
                 </td>
                 <td style={{ fontSize: '0.85rem' }}>{company.email}</td>
                 <td style={{ fontSize: '0.85rem' }}>

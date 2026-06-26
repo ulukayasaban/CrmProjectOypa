@@ -27,7 +27,10 @@ public class Company : BaseEntity, ISoftDelete
         string? city = null,
         string? website = null,
         string? taxNumber = null,
-        CompanySource? source = null)
+        CompanySource? source = null,
+        ServiceSector? serviceSector = null,
+        FirmType firmType = FirmType.DisFirma,
+        string? sourceNote = null)
     {
         Title = title;
         Sector = sector;
@@ -38,6 +41,9 @@ public class Company : BaseEntity, ISoftDelete
         Website = website;
         TaxNumber = taxNumber;
         Source = source;
+        ServiceSector = serviceSector;
+        FirmType = firmType;
+        SourceNote = sourceNote;
         Type = CompanyType.Lead;
         LeadStatus = Enums.LeadStatus.New;
     }
@@ -54,6 +60,15 @@ public class Company : BaseEntity, ISoftDelete
     public string? TaxNumber { get; private set; }
     public CompanySource? Source { get; private set; }
 
+    /// <summary>OYPA'nın bu firmaya sunduğu hizmet sektörü (nullable).</summary>
+    public ServiceSector? ServiceSector { get; private set; }
+
+    /// <summary>Firmanın OYAK grubu içi / dışı sınıflandırması. Varsayılan: DisFirma.</summary>
+    public FirmType FirmType { get; private set; } = FirmType.DisFirma;
+
+    /// <summary>Kaynak alanına ek serbest not (ör. "Belgin Öner referansı").</summary>
+    public string? SourceNote { get; private set; }
+
     public CompanyType Type { get; private set; }
     public LeadStatus? LeadStatus { get; private set; }
     public CustomerStatus? CustomerStatus { get; private set; }
@@ -66,6 +81,12 @@ public class Company : BaseEntity, ISoftDelete
 
     /// <summary>Atanan satış temsilcisi navigasyon özelliği.</summary>
     public SalesRep? AssignedSalesRep { get; private set; }
+
+    /// <summary>Lead ile iletişim kuran satış temsilcisinin kimliği (AssignedSalesRep'ten bağımsız).</summary>
+    public Guid? LeadOwnerId { get; private set; }
+
+    /// <summary>Lead owner navigasyon özelliği.</summary>
+    public SalesRep? LeadOwner { get; private set; }
 
     public IReadOnlyCollection<Contact> Contacts => _contacts.AsReadOnly();
     public IReadOnlyCollection<Meeting> Meetings => _meetings.AsReadOnly();
@@ -104,7 +125,10 @@ public class Company : BaseEntity, ISoftDelete
         string? city = null,
         string? website = null,
         string? taxNumber = null,
-        CompanySource? source = null)
+        CompanySource? source = null,
+        ServiceSector? serviceSector = null,
+        FirmType firmType = FirmType.DisFirma,
+        string? sourceNote = null)
     {
         Title = title;
         Sector = sector;
@@ -115,6 +139,19 @@ public class Company : BaseEntity, ISoftDelete
         Website = website;
         TaxNumber = taxNumber;
         Source = source;
+        ServiceSector = serviceSector;
+        FirmType = firmType;
+        SourceNote = sourceNote;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Lead ile iletişim kuran satış temsilcisini atar.
+    /// <paramref name="salesRepId"/> null ise mevcut atama kaldırılır.
+    /// </summary>
+    public void SetLeadOwner(Guid? salesRepId)
+    {
+        LeadOwnerId = salesRepId;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 

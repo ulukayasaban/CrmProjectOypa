@@ -29,10 +29,12 @@ import { PlusIcon } from '../shared/components/icons';
 import { useToast } from '../shared/components/toast/ToastProvider';
 import { useConfirm } from '../shared/hooks/useConfirm';
 import {
+  FIRM_TYPE_LABELS,
   LEAD_STATUS_OPTIONS,
   MEETING_METHOD_LABELS,
   MEETING_STATUS_LABELS,
   SECTOR_LABELS,
+  SERVICE_SECTOR_LABELS,
   SOURCE_LABELS,
 } from '../shared/constants/labels';
 import { queryKeys } from '../shared/api/queryKeys';
@@ -196,8 +198,14 @@ export default function CompanyDetailPage() {
             <p className="muted" style={{ fontSize: '0.9rem' }}>
               {SECTOR_LABELS[data.sector]}
             </p>
-            <div style={{ marginTop: 15 }}>
+            <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <StatusBadge company={data} />
+              <span
+                className={`badge ${data.firmType === 'IcFirma' ? 'badge-lead' : 'badge-neutral'}`}
+                title="Firma Tipi"
+              >
+                {FIRM_TYPE_LABELS[data.firmType]}
+              </span>
             </div>
             {isLead && (
               <div className="form-group" style={{ marginTop: 15 }}>
@@ -271,6 +279,27 @@ export default function CompanyDetailPage() {
                   📌 <strong>Kaynak:</strong>
                   <br />
                   {SOURCE_LABELS[data.source]}
+                </span>
+              )}
+              {data.sourceNote && (
+                <span>
+                  📝 <strong>Kaynak Notu:</strong>
+                  <br />
+                  {data.sourceNote}
+                </span>
+              )}
+              {data.serviceSector && (
+                <span>
+                  🏷️ <strong>Hizmet Verilecek Sektör:</strong>
+                  <br />
+                  {SERVICE_SECTOR_LABELS[data.serviceSector]}
+                </span>
+              )}
+              {data.leadOwnerName && (
+                <span>
+                  🤝 <strong>Atanan Lead:</strong>
+                  <br />
+                  {data.leadOwnerName}
                 </span>
               )}
               <span>
@@ -598,6 +627,9 @@ export default function CompanyDetailPage() {
             phone: data.phone,
             email: data.email,
             address: data.address,
+            city: data.city ?? undefined,
+            website: data.website ?? undefined,
+            taxNumber: data.taxNumber ?? undefined,
           }}
           onClose={() => setOpportunityModal(false)}
         />

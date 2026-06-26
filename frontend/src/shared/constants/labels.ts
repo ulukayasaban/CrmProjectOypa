@@ -2,10 +2,12 @@ import type {
   CompanySource,
   CompanyType,
   CustomerStatus,
+  FirmType,
   LeadStatus,
   MeetingMethod,
   MeetingStatus,
   Sector,
+  ServiceSector,
   UserRole,
 } from '../types/enums';
 import type { TenderStatus } from '../../entities/tender/model/tender';
@@ -118,4 +120,31 @@ export const TENDER_STATUS_OPTIONS: ReadonlyArray<{
 }> = (Object.keys(TENDER_STATUS_LABELS) as TenderStatus[]).map((value) => ({
   value,
   label: TENDER_STATUS_LABELS[value],
+}));
+
+export const SERVICE_SECTOR_LABELS: Record<ServiceSector, string> = {
+  TesisYonetimi: 'Tesis Yönetimi',
+  Turizm: 'Turizm',
+  Perakende: 'Perakende',
+};
+
+export const SERVICE_SECTOR_OPTIONS: ReadonlyArray<{
+  value: ServiceSector;
+  label: string;
+}> = (Object.keys(SERVICE_SECTOR_LABELS) as ServiceSector[]).map((value) => ({
+  value,
+  label: SERVICE_SECTOR_LABELS[value],
+}));
+
+export const FIRM_TYPE_LABELS: Record<FirmType, string> = {
+  IcFirma: 'İç Firma (OYAK Grubu)',
+  DisFirma: 'Dış Firma',
+};
+
+export const FIRM_TYPE_OPTIONS: ReadonlyArray<{
+  value: FirmType;
+  label: string;
+}> = (Object.keys(FIRM_TYPE_LABELS) as FirmType[]).map((value) => ({
+  value,
+  label: FIRM_TYPE_LABELS[value],
 }));

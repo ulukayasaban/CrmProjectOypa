@@ -23,5 +23,10 @@ public static class CompanyMappings
         c.CreatedAtUtc,
         c.AssignedSalesRepId,
         c.AssignedSalesRep?.Name,
-        c.Categories.Select(cat => cat.ToDto()).ToList().AsReadOnly());
+        c.Categories.Select(cat => cat.ToDto()).ToList().AsReadOnly(),
+        c.ServiceSector,
+        c.FirmType,
+        c.SourceNote,
+        c.LeadOwnerId,
+        c.LeadOwner?.Name);
 }

@@ -11,7 +11,7 @@ import { TableSkeleton } from '../shared/components/TableSkeleton';
 import { StateBlock } from '../shared/components/StateBlock';
 import { PlusIcon } from '../shared/components/icons';
 import { useDebouncedValue } from '../shared/hooks/useDebouncedValue';
-import { LEAD_STATUS_LABELS, SECTOR_LABELS } from '../shared/constants/labels';
+import { LEAD_STATUS_LABELS, SECTOR_LABELS, SERVICE_SECTOR_LABELS } from '../shared/constants/labels';
 import { getErrorMessage } from '../shared/lib/errorMessage';
 import type { LeadStatus } from '../shared/types/enums';
 
@@ -150,7 +150,7 @@ export default function LeadsPage() {
         </select>
       </div>
 
-      {isLoading && <TableSkeleton columns={7} />}
+      {isLoading && <TableSkeleton columns={9} />}
       {isError && <StateBlock message={getErrorMessage(error)} />}
 
       {!isLoading && !isError && (
@@ -178,6 +178,8 @@ export default function LeadsPage() {
                   </SortableTh>
                   <th>Durum</th>
                   <th>Kategoriler</th>
+                  <th>Hizmet Sektörü</th>
+                  <th>Atanan Lead</th>
                   <th>Temsilci</th>
                   <th>İşlem</th>
                 </tr>
@@ -185,7 +187,7 @@ export default function LeadsPage() {
               <tbody>
                 {items.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="table-empty">
+                    <td colSpan={9} className="table-empty">
                       {search
                         ? `"${search}" için sonuç bulunamadı.`
                         : 'Sistemde lead bulunmuyor.'}
@@ -214,6 +216,20 @@ export default function LeadsPage() {
                     </td>
                     <td>
                       <CategoryBadges categories={company.categories} />
+                    </td>
+                    <td style={{ fontSize: '0.85rem' }}>
+                      {company.serviceSector ? (
+                        <span className="badge badge-neutral">
+                          {SERVICE_SECTOR_LABELS[company.serviceSector]}
+                        </span>
+                      ) : (
+                        <span className="muted">-</span>
+                      )}
+                    </td>
+                    <td style={{ fontSize: '0.85rem' }}>
+                      {company.leadOwnerName ?? (
+                        <span className="muted">-</span>
+                      )}
                     </td>
                     <td style={{ fontSize: '0.85rem' }}>
                       {company.assignedSalesRepName ?? (

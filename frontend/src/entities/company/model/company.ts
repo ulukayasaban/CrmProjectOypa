@@ -2,8 +2,10 @@ import type {
   CompanySource,
   CompanyType,
   CustomerStatus,
+  FirmType,
   LeadStatus,
   Sector,
+  ServiceSector,
 } from '../../../shared/types/enums';
 import type { CategoryDto } from '../../category/model/category';
 
@@ -18,6 +20,8 @@ export interface CompanyDto {
   website: string | null;
   taxNumber: string | null;
   source: CompanySource | null;
+  /** Kaynak altındaki serbest not (ör. "Belgin Öner referansı"). */
+  sourceNote: string | null;
   type: CompanyType;
   leadStatus: LeadStatus | null;
   customerStatus: CustomerStatus | null;
@@ -25,6 +29,13 @@ export interface CompanyDto {
   createdAtUtc: string;
   assignedSalesRepId: string | null;
   assignedSalesRepName: string | null;
+  /** OYPA'nın bu firmaya hangi sektörde hizmet verdiği. */
+  serviceSector: ServiceSector | null;
+  /** Firmanın OYAK Grubu içi mi dışı mı olduğu. */
+  firmType: FirmType;
+  /** Lead aşamasında iletişim kuran temsilci. */
+  leadOwnerId: string | null;
+  leadOwnerName: string | null;
   categories: CategoryDto[];
 }
 

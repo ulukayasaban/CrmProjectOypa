@@ -7,8 +7,10 @@ import type { MeetingDto } from '../../../entities/meeting/model/meeting';
 import type {
   CompanySource,
   CustomerStatus,
+  FirmType,
   LeadStatus,
   Sector,
+  ServiceSector,
 } from '../../../shared/types/enums';
 import type { PagedParams, PagedResult } from '../../../shared/types/paged';
 
@@ -22,6 +24,10 @@ export interface CompanyPayload {
   website?: string;
   taxNumber?: string;
   source?: CompanySource;
+  sourceNote?: string;
+  serviceSector?: ServiceSector;
+  firmType?: FirmType;
+  leadOwnerId?: string;
 }
 
 /** /companies/leads/paged ucu için parametre tipi. */

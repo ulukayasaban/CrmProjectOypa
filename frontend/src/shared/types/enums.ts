@@ -5,6 +5,12 @@ export type Sector =
   | 'Energy'
   | 'Other';
 
+/** OYPA'nın hizmet verdiği sektör (firma sektöründen ayrı kavram). */
+export type ServiceSector = 'TesisYonetimi' | 'Turizm' | 'Perakende';
+
+/** Firmanın OYAK Grubu içinden mi dışından mı olduğunu belirtir. */
+export type FirmType = 'IcFirma' | 'DisFirma';
+
 export type CompanyType = 'Lead' | 'Customer';
 
 export type LeadStatus = 'New' | 'Contacted' | 'Qualified' | 'Lost';

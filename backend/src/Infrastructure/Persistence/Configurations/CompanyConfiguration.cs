@@ -24,6 +24,12 @@ public sealed class CompanyConfiguration : IEntityTypeConfiguration<Company>
         builder.Property(c => c.TaxNumber).HasMaxLength(20);
         builder.Property(c => c.Source).HasConversion<string>().HasMaxLength(20);
 
+        // Yeni alanlar
+        builder.Property(c => c.ServiceSector).HasConversion<string>().HasMaxLength(40);
+        builder.Property(c => c.FirmType).HasConversion<string>().HasMaxLength(20)
+            .HasDefaultValue(Oypa.Crm.Domain.Enums.FirmType.DisFirma);
+        builder.Property(c => c.SourceNote).HasMaxLength(500);
+
         builder.Property(c => c.Type).HasConversion<string>().HasMaxLength(20);
         builder.Property(c => c.LeadStatus).HasConversion<string>().HasMaxLength(20);
         builder.Property(c => c.CustomerStatus).HasConversion<string>().HasMaxLength(20);
@@ -31,11 +37,17 @@ public sealed class CompanyConfiguration : IEntityTypeConfiguration<Company>
         builder.HasIndex(c => c.Type);
         builder.HasIndex(c => c.Email);
         builder.HasIndex(c => c.AssignedSalesRepId);
+        builder.HasIndex(c => c.LeadOwnerId);
 
         builder.HasOne(c => c.AssignedSalesRep)
             .WithMany()
             .HasForeignKey(c => c.AssignedSalesRepId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(c => c.LeadOwner)
+            .WithMany()
+            .HasForeignKey(c => c.LeadOwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(c => c.Contacts)
             .WithOne(c => c.Company!)

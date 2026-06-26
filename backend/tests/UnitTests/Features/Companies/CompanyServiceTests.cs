@@ -7,6 +7,7 @@ using Oypa.Crm.Contracts.Companies;
 using Oypa.Crm.Domain.Entities;
 using Oypa.Crm.Domain.Enums;
 using Shouldly;
+using ServiceSector = Oypa.Crm.Domain.Enums.ServiceSector;
 
 namespace Oypa.Crm.UnitTests.Features.Companies;
 
@@ -22,6 +23,16 @@ public sealed class CompanyServiceTests
 
     private static Company NewLead() =>
         new("Acme", Sector.Retail, "111", "a@b.c", "Adres");
+
+    private static Company NewLeadWithRevize() =>
+        new("Acme",
+            Sector.Retail,
+            "111",
+            "a@b.c",
+            "Adres",
+            serviceSector: ServiceSector.TesisYonetimi,
+            firmType: FirmType.IcFirma,
+            sourceNote: "Test notu");
 
     // ---- mevcut testler ----
 
@@ -285,6 +296,164 @@ public sealed class CompanyServiceTests
         await sut.AssignSalesRepAsync(company.Id, null);
 
         company.AssignedSalesRepId.ShouldBeNull();
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    // ---- Company entity unit testleri: revize alanlar ----
+
+    [Fact]
+    public void Company_Ctor_DefaultFirmType_IsDisFirma()
+    {
+        var company = new Company("Test A.Ş.", Sector.Retail, "111", "t@t.com", "Adres");
+
+        company.FirmType.ShouldBe(FirmType.DisFirma);
+        company.ServiceSector.ShouldBeNull();
+        company.SourceNote.ShouldBeNull();
+        company.LeadOwnerId.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Company_Ctor_WithRevizeFields_SetsAllFields()
+    {
+        var company = new Company(
+            "Test A.Ş.",
+            Sector.FacilityManagement,
+            "111",
+            "t@t.com",
+            "Adres",
+            serviceSector: ServiceSector.TesisYonetimi,
+            firmType: FirmType.IcFirma,
+            sourceNote: "Belgin Öner referansı");
+
+        company.ServiceSector.ShouldBe(ServiceSector.TesisYonetimi);
+        company.FirmType.ShouldBe(FirmType.IcFirma);
+        company.SourceNote.ShouldBe("Belgin Öner referansı");
+    }
+
+    [Fact]
+    public void Company_UpdateDetails_UpdatesRevizeFields()
+    {
+        var company = new Company("Test A.Ş.", Sector.Retail, "111", "t@t.com", "Adres");
+
+        company.UpdateDetails(
+            "Test A.Ş.",
+            Sector.Retail,
+            "111",
+            "t@t.com",
+            "Adres",
+            serviceSector: ServiceSector.Turizm,
+            firmType: FirmType.IcFirma,
+            sourceNote: "Güncelleme notu");
+
+        company.ServiceSector.ShouldBe(ServiceSector.Turizm);
+        company.FirmType.ShouldBe(FirmType.IcFirma);
+        company.SourceNote.ShouldBe("Güncelleme notu");
+    }
+
+    [Fact]
+    public void Company_SetLeadOwner_SetsLeadOwnerId()
+    {
+        var company = new Company("Test A.Ş.", Sector.Retail, "111", "t@t.com", "Adres");
+        var repId = Guid.NewGuid();
+
+        company.SetLeadOwner(repId);
+
+        company.LeadOwnerId.ShouldBe(repId);
+    }
+
+    [Fact]
+    public void Company_SetLeadOwner_NullClearsLeadOwner()
+    {
+        var company = new Company("Test A.Ş.", Sector.Retail, "111", "t@t.com", "Adres");
+        company.SetLeadOwner(Guid.NewGuid());
+
+        company.SetLeadOwner(null);
+
+        company.LeadOwnerId.ShouldBeNull();
+    }
+
+    // ---- CreateAsync ile revize alanlar DTO'ya taşınıyor ----
+
+    [Fact]
+    public async Task CreateAsync_WithRevizeFields_MapsToDto()
+    {
+        var sut = CreateSut();
+        var request = new CreateCompanyRequest(
+            "Revize A.Ş.",
+            Sector.FacilityManagement,
+            "222",
+            "revize@b.com",
+            "Adres",
+            ServiceSector: ServiceSector.TesisYonetimi,
+            FirmType: FirmType.IcFirma,
+            SourceNote: "Test kaynağı");
+
+        Company? captured = null;
+        await _companies.AddAsync(Arg.Do<Company>(c => captured = c), Arg.Any<CancellationToken>());
+
+        var result = await sut.CreateAsync(request);
+
+        result.ServiceSector.ShouldBe(ServiceSector.TesisYonetimi);
+        result.FirmType.ShouldBe(FirmType.IcFirma);
+        result.SourceNote.ShouldBe("Test kaynağı");
+        result.LeadOwnerId.ShouldBeNull();
+
+        captured.ShouldNotBeNull();
+        captured!.ServiceSector.ShouldBe(ServiceSector.TesisYonetimi);
+        captured.FirmType.ShouldBe(FirmType.IcFirma);
+        captured.SourceNote.ShouldBe("Test kaynağı");
+
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    // ---- SetLeadOwnerAsync service metodu ----
+
+    [Fact]
+    public async Task SetLeadOwnerAsync_CompanyNotFound_ThrowsNotFound()
+    {
+        _companyRepository.GetByIdWithRepAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns((Company?)null);
+        var sut = CreateSut();
+
+        await Should.ThrowAsync<NotFoundException>(() => sut.SetLeadOwnerAsync(Guid.NewGuid(), Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task SetLeadOwnerAsync_LeadOwnerRepNotFound_ThrowsNotFound()
+    {
+        var company = NewLead();
+        _companyRepository.GetByIdWithRepAsync(company.Id, Arg.Any<CancellationToken>()).Returns(company);
+        _salesReps.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns((SalesRep?)null);
+        var sut = CreateSut();
+
+        await Should.ThrowAsync<NotFoundException>(() => sut.SetLeadOwnerAsync(company.Id, Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task SetLeadOwnerAsync_ValidRep_SetsLeadOwnerAndSaves()
+    {
+        var company = NewLead();
+        var rep = new SalesRep("Lead Owner", "lo@oypa.com");
+        _companyRepository.GetByIdWithRepAsync(company.Id, Arg.Any<CancellationToken>()).Returns(company);
+        _salesReps.GetByIdAsync(rep.Id, Arg.Any<CancellationToken>()).Returns(rep);
+        var sut = CreateSut();
+
+        await sut.SetLeadOwnerAsync(company.Id, rep.Id);
+
+        company.LeadOwnerId.ShouldBe(rep.Id);
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task SetLeadOwnerAsync_NullRepId_ClearsLeadOwnerAndSaves()
+    {
+        var company = NewLead();
+        company.SetLeadOwner(Guid.NewGuid());
+        _companyRepository.GetByIdWithRepAsync(company.Id, Arg.Any<CancellationToken>()).Returns(company);
+        var sut = CreateSut();
+
+        await sut.SetLeadOwnerAsync(company.Id, null);
+
+        company.LeadOwnerId.ShouldBeNull();
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }

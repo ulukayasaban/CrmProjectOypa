@@ -46,7 +46,18 @@ public sealed class CompanyService(
             request.City,
             request.Website,
             request.TaxNumber,
-            request.Source);
+            request.Source,
+            request.ServiceSector,
+            request.FirmType,
+            request.SourceNote);
+
+        if (request.LeadOwnerId.HasValue)
+        {
+            _ = await salesReps.GetByIdAsync(request.LeadOwnerId.Value, cancellationToken)
+                ?? throw NotFoundException.For("Satış temsilcisi (LeadOwner)", request.LeadOwnerId.Value);
+            company.SetLeadOwner(request.LeadOwnerId.Value);
+        }
+
         await companies.AddAsync(company, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return company.ToDto();
@@ -66,7 +77,18 @@ public sealed class CompanyService(
             request.City,
             request.Website,
             request.TaxNumber,
-            request.Source);
+            request.Source,
+            request.ServiceSector,
+            request.FirmType,
+            request.SourceNote);
+
+        if (request.LeadOwnerId.HasValue)
+        {
+            _ = await salesReps.GetByIdAsync(request.LeadOwnerId.Value, cancellationToken)
+                ?? throw NotFoundException.For("Satış temsilcisi (LeadOwner)", request.LeadOwnerId.Value);
+        }
+
+        company.SetLeadOwner(request.LeadOwnerId);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return company.ToDto();
     }
@@ -163,6 +185,21 @@ public sealed class CompanyService(
 
         var dtos = items.Select(c => c.ToDto()).ToList();
         return new PagedResult<CompanyDto>(dtos, query.Page, query.PageSize, totalCount);
+    }
+
+    public async Task SetLeadOwnerAsync(Guid id, Guid? salesRepId, CancellationToken cancellationToken = default)
+    {
+        var company = await companyRepository.GetByIdWithRepAsync(id, cancellationToken)
+                      ?? throw NotFoundException.For("Firma", id);
+
+        if (salesRepId.HasValue)
+        {
+            _ = await salesReps.GetByIdAsync(salesRepId.Value, cancellationToken)
+                ?? throw NotFoundException.For("Satış temsilcisi (LeadOwner)", salesRepId.Value);
+        }
+
+        company.SetLeadOwner(salesRepId);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<CompanyDto> SetCategoriesAsync(

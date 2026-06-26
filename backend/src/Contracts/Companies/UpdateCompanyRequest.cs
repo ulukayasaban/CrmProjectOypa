@@ -11,4 +11,8 @@ public sealed record UpdateCompanyRequest(
     string? City = null,
     string? Website = null,
     string? TaxNumber = null,
-    CompanySource? Source = null);
+    CompanySource? Source = null,
+    ServiceSector? ServiceSector = null,
+    FirmType FirmType = FirmType.DisFirma,
+    string? SourceNote = null,
+    Guid? LeadOwnerId = null);

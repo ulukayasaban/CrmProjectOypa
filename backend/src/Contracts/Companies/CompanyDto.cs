@@ -21,4 +21,9 @@ public sealed record CompanyDto(
     DateTime CreatedAtUtc,
     Guid? AssignedSalesRepId,
     string? AssignedSalesRepName,
-    IReadOnlyList<CategoryDto> Categories);
+    IReadOnlyList<CategoryDto> Categories,
+    ServiceSector? ServiceSector,
+    FirmType FirmType,
+    string? SourceNote,
+    Guid? LeadOwnerId,
+    string? LeadOwnerName);

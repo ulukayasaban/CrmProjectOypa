@@ -17,5 +17,10 @@ public sealed class UpdateCompanyRequestValidator : AbstractValidator<UpdateComp
         RuleFor(x => x.Website).MaximumLength(200).When(x => x.Website != null);
         RuleFor(x => x.TaxNumber).MaximumLength(20).When(x => x.TaxNumber != null);
         RuleFor(x => x.Source).IsInEnum().When(x => x.Source != null);
+
+        // Yeni alanlar
+        RuleFor(x => x.ServiceSector).IsInEnum().When(x => x.ServiceSector != null);
+        RuleFor(x => x.FirmType).IsInEnum();
+        RuleFor(x => x.SourceNote).MaximumLength(500).When(x => x.SourceNote != null);
     }
 }
