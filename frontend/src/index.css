@@ -114,6 +114,19 @@ a {
   text-decoration: none;
 }
 
+/* Klavye odak halkası — yalnızca klavye/yardımcı teknoloji navigasyonunda görünür
+   (fare tıklamasında çıkmaz). Tüm interaktif öğeleri (buton, link, input, sıralanabilir
+   başlık, takvim hücresi, tıklanabilir satır) tek kuralla kapsar. */
+:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+/* Fare tıklamasında tarayıcı varsayılan outline'ını bastır (focus-visible yönetir). */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 .app-container {
   display: flex;
   height: 100vh;

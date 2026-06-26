@@ -4,6 +4,7 @@
  * App (router üst seviyesi) bu bileşenle sarılır.
  */
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { AlertIcon } from './icons';
 
 interface Props {
   children: ReactNode;
@@ -40,7 +41,9 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="center-screen">
           <div className="glass card" style={{ maxWidth: 480, textAlign: 'center', padding: 48 }}>
-            <div style={{ fontSize: '3rem', marginBottom: 16 }}>⚠️</div>
+            <div style={{ marginBottom: 16, color: 'var(--error)' }}>
+              <AlertIcon size={48} />
+            </div>
             <h2 style={{ marginBottom: 12 }}>Bir şeyler ters gitti</h2>
             <p
               className="muted"

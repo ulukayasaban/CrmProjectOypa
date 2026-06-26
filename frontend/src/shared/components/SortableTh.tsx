@@ -30,7 +30,17 @@ export function SortableTh({
   return (
     <th
       onClick={handleClick}
+      onKeyDown={(event) => {
+        // Klavye ile sıralama: Enter / Space
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
       aria-sort={isActive ? (activeSortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+      title="Sıralamak için tıklayın"
       style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
     >
       {children}

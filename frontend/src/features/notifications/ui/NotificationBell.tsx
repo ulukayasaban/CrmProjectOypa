@@ -12,6 +12,7 @@ import { useAuth } from '../../../app/providers/useAuth';
 import { useManagedEmployees } from '../../employees/model/useEmployees';
 import { NotificationComposeModal } from './NotificationComposeModal';
 import { NotificationPreferencesModal } from './NotificationPreferencesModal';
+import { BellIcon } from '../../../shared/components/icons';
 import { getErrorMessage } from '../../../shared/lib/errorMessage';
 import type { NotificationDto } from '../../../entities/notification/model/notification';
 
@@ -156,7 +157,7 @@ export function NotificationBell() {
           onClick={() => setOpen((value) => !value)}
           aria-label="Bildirimler"
         >
-          🔔
+          <BellIcon size={20} />
           {count > 0 && <span className="badge-count">{count}</span>}
         </button>
         {open && (

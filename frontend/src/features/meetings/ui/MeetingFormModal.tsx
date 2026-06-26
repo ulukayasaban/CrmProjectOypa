@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import { MEETING_METHOD_OPTIONS } from '../../../shared/constants/labels';
 import { useToast } from '../../../shared/components/toast/ToastProvider';
 import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
@@ -144,6 +146,7 @@ export function MeetingFormModal({
             id="companyId"
             defaultValue={isEdit ? meeting.companyId : (company?.id ?? '')}
             disabled={Boolean(company) || isEdit}
+            {...fieldAria('companyId', !!errors.companyId)}
             {...register('companyId')}
           >
             <option value="" disabled>
@@ -159,9 +162,7 @@ export function MeetingFormModal({
               <option value={meeting.companyId}>{meeting.companyTitle}</option>
             )}
           </select>
-          {errors.companyId && (
-            <span className="field-error">{errors.companyId.message}</span>
-          )}
+          <FieldError id="companyId-error" message={errors.companyId?.message} />
         </div>
         <div className="form-group">
           <label htmlFor="contactId">Firma İlgili Kişisi</label>
@@ -177,7 +178,7 @@ export function MeetingFormModal({
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="salesRepId">OYPA Temsilcisi</label>
-            <select id="salesRepId" defaultValue={meeting?.salesRepId ?? ''} {...register('salesRepId')}>
+            <select id="salesRepId" defaultValue={meeting?.salesRepId ?? ''} {...fieldAria('salesRepId', !!errors.salesRepId)} {...register('salesRepId')}>
               <option value="" disabled>
                 Seçiniz
               </option>
@@ -187,22 +188,18 @@ export function MeetingFormModal({
                 </option>
               ))}
             </select>
-            {errors.salesRepId && (
-              <span className="field-error">{errors.salesRepId.message}</span>
-            )}
+            <FieldError id="salesRepId-error" message={errors.salesRepId?.message} />
           </div>
           <div className="form-group">
             <label htmlFor="method">Yöntem</label>
-            <select id="method" defaultValue={meeting?.method ?? 'Visit'} {...register('method')}>
+            <select id="method" defaultValue={meeting?.method ?? 'Visit'} {...fieldAria('method', !!errors.method)} {...register('method')}>
               {MEETING_METHOD_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
-            {errors.method && (
-              <span className="field-error">{errors.method.message}</span>
-            )}
+            <FieldError id="method-error" message={errors.method?.message} />
           </div>
         </div>
         <div className="form-row">
@@ -211,6 +208,7 @@ export function MeetingFormModal({
             <input
               id="date"
               type="date"
+              {...fieldAria('date', !!errors.date)}
               {...register('date')}
               onClick={(e) => {
                 // Alanın herhangi bir yerine tıklayınca native picker açılsın
@@ -222,15 +220,14 @@ export function MeetingFormModal({
                 }
               }}
             />
-            {errors.date && (
-              <span className="field-error">{errors.date.message}</span>
-            )}
+            <FieldError id="date-error" message={errors.date?.message} />
           </div>
           <div className="form-group">
             <label htmlFor="time">Saat</label>
             <input
               id="time"
               type="time"
+              {...fieldAria('time', !!errors.time)}
               {...register('time')}
               onClick={(e) => {
                 try {
@@ -240,17 +237,13 @@ export function MeetingFormModal({
                 }
               }}
             />
-            {errors.time && (
-              <span className="field-error">{errors.time.message}</span>
-            )}
+            <FieldError id="time-error" message={errors.time?.message} />
           </div>
         </div>
         <div className="form-group">
           <label htmlFor="meeting-address">Görüşme Adresi</label>
-          <input id="meeting-address" {...register('address')} />
-          {errors.address && (
-            <span className="field-error">{errors.address.message}</span>
-          )}
+          <input id="meeting-address" {...fieldAria('address', !!errors.address)} {...register('address')} />
+          <FieldError id="address-error" message={errors.address?.message} />
         </div>
         <div className="modal-footer">
           <button type="button" className="btn btn-ghost" onClick={onClose}>

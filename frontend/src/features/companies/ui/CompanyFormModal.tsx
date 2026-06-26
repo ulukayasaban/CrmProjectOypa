@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import { SECTOR_OPTIONS, SOURCE_OPTIONS } from '../../../shared/constants/labels';
 import { useToast } from '../../../shared/components/toast/ToastProvider';
 import { applyServerFieldErrors } from '../../../shared/lib/applyServerFieldErrors';
@@ -104,14 +106,12 @@ export function CompanyFormModal({ onClose, onCreated, prefill }: CompanyFormMod
         )}
         <div className="form-group">
           <label htmlFor="title">Firma Ünvanı</label>
-          <input id="title" {...register('title')} />
-          {errors.title && (
-            <span className="field-error">{errors.title.message}</span>
-          )}
+          <input id="title" {...fieldAria('title', !!errors.title)} {...register('title')} />
+          <FieldError id="title-error" message={errors.title?.message} />
         </div>
         <div className="form-group">
           <label htmlFor="sector">Sektör</label>
-          <select id="sector" defaultValue="" {...register('sector')}>
+          <select id="sector" defaultValue="" {...fieldAria('sector', !!errors.sector)} {...register('sector')}>
             <option value="" disabled>
               Seçiniz
             </option>
@@ -121,9 +121,7 @@ export function CompanyFormModal({ onClose, onCreated, prefill }: CompanyFormMod
               </option>
             ))}
           </select>
-          {errors.sector && (
-            <span className="field-error">{errors.sector.message}</span>
-          )}
+          <FieldError id="sector-error" message={errors.sector?.message} />
         </div>
         {COPY_FIELDS.map(({ field, label, type }) => (
           <div className="form-group" key={field}>
@@ -132,6 +130,7 @@ export function CompanyFormModal({ onClose, onCreated, prefill }: CompanyFormMod
               id={field}
               type={type ?? 'text'}
               disabled={isOpportunity && copied[field]}
+              {...fieldAria(field, !!errors[field])}
               {...register(field)}
             />
             {isOpportunity && (
@@ -144,35 +143,27 @@ export function CompanyFormModal({ onClose, onCreated, prefill }: CompanyFormMod
                 <span>Mevcutla aynı</span>
               </label>
             )}
-            {errors[field] && (
-              <span className="field-error">{errors[field]?.message}</span>
-            )}
+            <FieldError id={`${field}-error`} message={errors[field]?.message} />
           </div>
         ))}
         <div className="form-group">
           <label htmlFor="city">Şehir</label>
-          <input id="city" {...register('city')} />
-          {errors.city && (
-            <span className="field-error">{errors.city.message}</span>
-          )}
+          <input id="city" {...fieldAria('city', !!errors.city)} {...register('city')} />
+          <FieldError id="city-error" message={errors.city?.message} />
         </div>
         <div className="form-group">
           <label htmlFor="website">Web Sitesi</label>
-          <input id="website" type="url" placeholder="https://" {...register('website')} />
-          {errors.website && (
-            <span className="field-error">{errors.website.message}</span>
-          )}
+          <input id="website" type="url" placeholder="https://" {...fieldAria('website', !!errors.website)} {...register('website')} />
+          <FieldError id="website-error" message={errors.website?.message} />
         </div>
         <div className="form-group">
           <label htmlFor="taxNumber">Vergi No</label>
-          <input id="taxNumber" {...register('taxNumber')} />
-          {errors.taxNumber && (
-            <span className="field-error">{errors.taxNumber.message}</span>
-          )}
+          <input id="taxNumber" {...fieldAria('taxNumber', !!errors.taxNumber)} {...register('taxNumber')} />
+          <FieldError id="taxNumber-error" message={errors.taxNumber?.message} />
         </div>
         <div className="form-group">
           <label htmlFor="source">Kaynak</label>
-          <select id="source" defaultValue="" {...register('source')}>
+          <select id="source" defaultValue="" {...fieldAria('source', !!errors.source)} {...register('source')}>
             <option value="">Seçiniz (opsiyonel)</option>
             {SOURCE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -180,9 +171,7 @@ export function CompanyFormModal({ onClose, onCreated, prefill }: CompanyFormMod
               </option>
             ))}
           </select>
-          {errors.source && (
-            <span className="field-error">{errors.source.message}</span>
-          )}
+          <FieldError id="source-error" message={errors.source?.message} />
         </div>
         <div className="modal-footer">
           <button type="button" className="btn btn-ghost" onClick={onClose}>

@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '../../../shared/components/Modal';
+import { FieldError } from '../../../shared/components/FieldError';
+import { fieldAria } from '../../../shared/lib/fieldAria';
 import {
   SECTOR_OPTIONS,
   TENDER_STATUS_OPTIONS,
@@ -116,7 +118,7 @@ export function TenderFormModal({ onClose, tender }: TenderFormModalProps) {
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="companyId">Firma</label>
-            <select id="companyId" defaultValue="" {...register('companyId')}>
+            <select id="companyId" defaultValue="" {...fieldAria('companyId', !!errors.companyId)} {...register('companyId')}>
               <option value="" disabled>
                 Seçiniz
               </option>
@@ -126,13 +128,11 @@ export function TenderFormModal({ onClose, tender }: TenderFormModalProps) {
                 </option>
               ))}
             </select>
-            {errors.companyId && (
-              <span className="field-error">{errors.companyId.message}</span>
-            )}
+            <FieldError id="companyId-error" message={errors.companyId?.message} />
           </div>
           <div className="form-group">
             <label htmlFor="sector">İş Kolu</label>
-            <select id="sector" defaultValue="" {...register('sector')}>
+            <select id="sector" defaultValue="" {...fieldAria('sector', !!errors.sector)} {...register('sector')}>
               <option value="" disabled>
                 Seçiniz
               </option>
@@ -142,19 +142,15 @@ export function TenderFormModal({ onClose, tender }: TenderFormModalProps) {
                 </option>
               ))}
             </select>
-            {errors.sector && (
-              <span className="field-error">{errors.sector.message}</span>
-            )}
+            <FieldError id="sector-error" message={errors.sector?.message} />
           </div>
         </div>
 
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="title">İhale Başlığı</label>
-            <input id="title" type="text" {...register('title')} />
-            {errors.title && (
-              <span className="field-error">{errors.title.message}</span>
-            )}
+            <input id="title" type="text" {...fieldAria('title', !!errors.title)} {...register('title')} />
+            <FieldError id="title-error" message={errors.title?.message} />
           </div>
           <div className="form-group">
             <label htmlFor="tenderNumber">İhale No (opsiyonel)</label>
@@ -165,10 +161,8 @@ export function TenderFormModal({ onClose, tender }: TenderFormModalProps) {
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="tenderDate">İhale Tarihi</label>
-            <input id="tenderDate" type="date" {...register('tenderDate')} />
-            {errors.tenderDate && (
-              <span className="field-error">{errors.tenderDate.message}</span>
-            )}
+            <input id="tenderDate" type="date" {...fieldAria('tenderDate', !!errors.tenderDate)} {...register('tenderDate')} />
+            <FieldError id="tenderDate-error" message={errors.tenderDate?.message} />
           </div>
           {isEdit && (
             <div className="form-group">
@@ -192,13 +186,10 @@ export function TenderFormModal({ onClose, tender }: TenderFormModalProps) {
               type="number"
               min={0}
               step={1}
+              {...fieldAria('personnelCount', !!errors.personnelCount)}
               {...register('personnelCount', { setValueAs: toNullableNumber })}
             />
-            {errors.personnelCount && (
-              <span className="field-error">
-                {errors.personnelCount.message}
-              </span>
-            )}
+            <FieldError id="personnelCount-error" message={errors.personnelCount?.message} />
           </div>
           <div className="form-group">
             <label htmlFor="estimatedValue">Tahmini Değer (₺)</label>
@@ -207,13 +198,10 @@ export function TenderFormModal({ onClose, tender }: TenderFormModalProps) {
               type="number"
               min={0}
               step={0.01}
+              {...fieldAria('estimatedValue', !!errors.estimatedValue)}
               {...register('estimatedValue', { setValueAs: toNullableNumber })}
             />
-            {errors.estimatedValue && (
-              <span className="field-error">
-                {errors.estimatedValue.message}
-              </span>
-            )}
+            <FieldError id="estimatedValue-error" message={errors.estimatedValue?.message} />
           </div>
         </div>
 
@@ -225,11 +213,10 @@ export function TenderFormModal({ onClose, tender }: TenderFormModalProps) {
               type="number"
               min={0}
               step={0.01}
+              {...fieldAria('volume', !!errors.volume)}
               {...register('volume', { setValueAs: toNullableNumber })}
             />
-            {errors.volume && (
-              <span className="field-error">{errors.volume.message}</span>
-            )}
+            <FieldError id="volume-error" message={errors.volume?.message} />
           </div>
           <div className="form-group">
             <label htmlFor="quantity">Miktar</label>
@@ -238,11 +225,10 @@ export function TenderFormModal({ onClose, tender }: TenderFormModalProps) {
               type="number"
               min={0}
               step={1}
+              {...fieldAria('quantity', !!errors.quantity)}
               {...register('quantity', { setValueAs: toNullableNumber })}
             />
-            {errors.quantity && (
-              <span className="field-error">{errors.quantity.message}</span>
-            )}
+            <FieldError id="quantity-error" message={errors.quantity?.message} />
           </div>
         </div>
 
