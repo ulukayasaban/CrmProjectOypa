@@ -114,7 +114,12 @@ function CustomersContent({ status, title, navigate }: CustomersContentProps) {
   return (
     <>
       <div className="page-head">
-        <h3>{title}</h3>
+        <div>
+          <h3>{title}</h3>
+          <p className="muted" style={{ fontSize: '0.9rem' }}>
+            Müşteri portföyünüzü görüntüleyin ve firma dosyalarına erişin.
+          </p>
+        </div>
       </div>
 
       {/* Arama kutusu ve kategori filtresi */}

@@ -85,7 +85,12 @@ export default function MeetingHistoryPage() {
   return (
     <>
       <div className="page-head">
-        <h3>Görüşme Geçmişi</h3>
+        <div>
+          <h3>Görüşme Geçmişi</h3>
+          <p className="muted" style={{ fontSize: '0.9rem' }}>
+            Tamamlanan ve planlı görüşmeleri inceleyin, notları yönetin.
+          </p>
+        </div>
         <button
           type="button"
           className="btn btn-primary btn-sm"

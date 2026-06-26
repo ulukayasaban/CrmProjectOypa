@@ -83,7 +83,12 @@ export default function ReportsPage() {
   return (
     <>
       <div className="page-head">
-        <h3>Raporlar</h3>
+        <div>
+          <h3>Raporlar</h3>
+          <p className="muted" style={{ fontSize: '0.9rem' }}>
+            Görüşme, ihale, hedef ve müşteri raporlarını Excel olarak indirin.
+          </p>
+        </div>
       </div>
 
       {/* Tarih aralığı filtresi — tarih bazlı raporlara (Görüşme, İhale, Müşteri) uygulanır. */}

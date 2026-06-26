@@ -6,7 +6,7 @@ import { SalesRepFormModal } from '../features/salesreps/ui/SalesRepFormModal';
 import { RegisterUserModal } from '../features/auth/ui/RegisterUserModal';
 import { useDeleteUser, useUsers } from '../features/auth/model/useUsers';
 import { CategoryManagementSection } from '../features/categories/ui/CategoryManagementSection';
-import { Spinner } from '../shared/components/Spinner';
+import { TableSkeleton } from '../shared/components/TableSkeleton';
 import { StateBlock } from '../shared/components/StateBlock';
 import { PlusIcon } from '../shared/components/icons';
 import { useToast } from '../shared/components/toast/ToastProvider';
@@ -47,6 +47,15 @@ export default function ManagementPage() {
 
   return (
     <>
+      <div className="page-head">
+        <div>
+          <h3>Yönetim</h3>
+          <p className="muted" style={{ fontSize: '0.9rem' }}>
+            Satış temsilcileri, kullanıcı hesapları ve kategori tanımlarını yönetin.
+          </p>
+        </div>
+      </div>
+
       <div className="dashboard-grid">
         <div className="glass full-width card">
           <div className="card-head">
@@ -59,7 +68,7 @@ export default function ManagementPage() {
               <PlusIcon size={14} /> Yeni Temsilci
             </button>
           </div>
-          {salesReps.isLoading && <Spinner />}
+          {salesReps.isLoading && <TableSkeleton columns={2} rows={4} />}
           {salesReps.isError && (
             <StateBlock message={getErrorMessage(salesReps.error)} />
           )}
@@ -106,7 +115,7 @@ export default function ManagementPage() {
               <PlusIcon size={14} /> Yeni Kullanıcı
             </button>
           </div>
-          {users.isLoading && <Spinner />}
+          {users.isLoading && <TableSkeleton columns={4} rows={4} />}
           {users.isError && (
             <StateBlock message={getErrorMessage(users.error)} />
           )}

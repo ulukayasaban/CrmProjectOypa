@@ -96,7 +96,12 @@ export default function LeadsPage() {
   return (
     <>
       <div className="page-head">
-        <h3>Lead & Fırsat Listesi</h3>
+        <div>
+          <h3>Lead & Fırsat Listesi</h3>
+          <p className="muted" style={{ fontSize: '0.9rem' }}>
+            Potansiyel müşterileri ve satış fırsatlarını takip edin.
+          </p>
+        </div>
         <button
           type="button"
           className="btn btn-primary"

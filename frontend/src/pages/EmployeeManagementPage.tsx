@@ -170,42 +170,43 @@ export default function EmployeeManagementPage() {
 
   return (
     <>
-      <div className="glass full-width card">
-        <div className="card-head">
+      <div className="page-head">
+        <div>
           <h3>Personel Listesi</h3>
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={() => setActiveModal({ type: 'create' })}
-          >
-            <PlusIcon size={14} /> Yeni Personel
-          </button>
+          <p className="muted" style={{ fontSize: '0.9rem' }}>
+            Kapsamınızdaki personeli, hesaplarını ve rollerini yönetin.
+          </p>
         </div>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setActiveModal({ type: 'create' })}
+        >
+          <PlusIcon size={14} /> Yeni Personel
+        </button>
+      </div>
 
-        {/* Arama kutusu */}
-        <div style={{ margin: '12px 0' }}>
-          <input
-            type="search"
-            placeholder="Ad, ünvan veya e-posta ara..."
-            aria-label="Personel ara"
-            value={searchInput}
-            onChange={(event) => handleSearchChange(event.target.value)}
-            style={{ maxWidth: 320 }}
-          />
-        </div>
+      {/* Arama kutusu */}
+      <div style={{ marginBottom: 12 }}>
+        <input
+          type="search"
+          placeholder="Ad, ünvan veya e-posta ara..."
+          aria-label="Personel ara"
+          value={searchInput}
+          onChange={(event) => handleSearchChange(event.target.value)}
+          style={{ maxWidth: 320 }}
+        />
+      </div>
 
-        {pagedQuery.isLoading && <TableSkeleton columns={6} />}
-        {pagedQuery.isError && (
-          <StateBlock message={getErrorMessage(pagedQuery.error)} />
-        )}
+      {pagedQuery.isLoading && <TableSkeleton columns={6} />}
+      {pagedQuery.isError && (
+        <StateBlock message={getErrorMessage(pagedQuery.error)} />
+      )}
 
-        {!pagedQuery.isLoading && !pagedQuery.isError && (
-          <>
-            <div
-              className="data-table-container"
-              style={{ background: 'none', border: 'none', marginTop: 8 }}
-            >
-              <table className="data-table">
+      {!pagedQuery.isLoading && !pagedQuery.isError && (
+        <>
+          <div className="data-table-container glass">
+            <table className="data-table">
                 <thead>
                   <tr>
                     <SortableTh
@@ -376,7 +377,6 @@ export default function EmployeeManagementPage() {
             />
           </>
         )}
-      </div>
 
       {ConfirmEl}
 

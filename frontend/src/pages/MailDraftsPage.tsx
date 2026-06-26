@@ -5,7 +5,7 @@ import {
 } from '../features/maildrafts/model/useMailDrafts';
 import { mailDraftApi } from '../features/maildrafts/api/mailDraftApi';
 import { Modal } from '../shared/components/Modal';
-import { Spinner } from '../shared/components/Spinner';
+import { TableSkeleton } from '../shared/components/TableSkeleton';
 import { StateBlock } from '../shared/components/StateBlock';
 import { formatDateTime } from '../shared/lib/format';
 import { getErrorMessage } from '../shared/lib/errorMessage';
@@ -28,7 +28,7 @@ export default function MailDraftsPage() {
     }
   }
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) return <TableSkeleton columns={5} />;
   if (isError || !data) return <StateBlock message={getErrorMessage(error)} />;
 
   return (

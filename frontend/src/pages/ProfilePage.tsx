@@ -28,6 +28,15 @@ export default function ProfilePage() {
 
   return (
     <>
+      <div className="page-head">
+        <div>
+          <h3>Profilim</h3>
+          <p className="muted" style={{ fontSize: '0.9rem' }}>
+            Hesap bilgilerinizi görüntüleyin ve güncelleyin.
+          </p>
+        </div>
+      </div>
+
       <div className="glass profile-card">
         {/* Avatar — ad soyadının ilk harfi */}
         <div className="avatar profile-avatar">{data.fullName[0]}</div>

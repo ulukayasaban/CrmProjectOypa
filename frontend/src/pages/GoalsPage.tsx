@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGoals, useDeleteGoal } from '../features/goals/model/useGoals';
 import { GoalFormModal } from '../features/goals/ui/GoalFormModal';
 import { GoalWeeksModal } from '../features/goals/ui/GoalWeeksModal';
-import { Spinner } from '../shared/components/Spinner';
+import { TableSkeleton } from '../shared/components/TableSkeleton';
 import { StateBlock } from '../shared/components/StateBlock';
 import { PlusIcon } from '../shared/components/icons';
 import { useToast } from '../shared/components/toast/ToastProvider';
@@ -26,7 +26,7 @@ export default function GoalsPage() {
   const [editGoal, setEditGoal] = useState<GoalDto | null>(null);
   const [weeksGoal, setWeeksGoal] = useState<GoalDto | null>(null);
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) return <TableSkeleton columns={5} />;
   if (isError) return <StateBlock message={getErrorMessage(error)} />;
 
   const handleDelete = async (goal: GoalDto) => {
@@ -49,41 +49,42 @@ export default function GoalsPage() {
 
   return (
     <>
-      <div className="glass full-width card">
-        <div className="card-head">
+      <div className="page-head">
+        <div>
           <h3>Hedefler</h3>
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={() => setCreateModal(true)}
-          >
-            <PlusIcon size={14} /> Yeni Hedef
-          </button>
+          <p className="muted" style={{ fontSize: '0.9rem' }}>
+            Ekip ve segment bazlı haftalık görüşme hedeflerini yönetin.
+          </p>
         </div>
-
-        <div
-          className="data-table-container"
-          style={{ background: 'none', border: 'none', marginTop: 15 }}
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setCreateModal(true)}
         >
-          <table className="data-table">
-            <thead>
+          <PlusIcon size={14} /> Yeni Hedef
+        </button>
+      </div>
+
+      <div className="data-table-container glass">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Atanan</th>
+              <th>Segment</th>
+              <th>Haftalık Hedef</th>
+              <th>Bu Hafta</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(!data || data.length === 0) && (
               <tr>
-                <th>Atanan</th>
-                <th>Segment</th>
-                <th>Haftalık Hedef</th>
-                <th>Bu Hafta</th>
-                <th>İşlemler</th>
+                <td colSpan={5} className="table-empty">
+                  Henüz tanımlı hedef yok.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {(!data || data.length === 0) && (
-                <tr>
-                  <td colSpan={5} className="table-empty">
-                    Henüz tanımlanmış hedef yok.
-                  </td>
-                </tr>
-              )}
-              {(data ?? []).map((goal) => {
+            )}
+            {(data ?? []).map((goal) => {
                 const pct = Math.min(100, Math.round(goal.currentPercent));
                 return (
                   <tr key={goal.id}>
@@ -137,7 +138,6 @@ export default function GoalsPage() {
               })}
             </tbody>
           </table>
-        </div>
       </div>
 
       {ConfirmEl}

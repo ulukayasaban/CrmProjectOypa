@@ -159,40 +159,44 @@ function TendersContent({ segment }: TendersContentProps) {
                 ? 'Kazanılan İhaleler'
                 : 'Kaybedilen İhaleler'}
           </h3>
+          <p className="muted" style={{ fontSize: '0.9rem' }}>
+            İhale sürecini takip edin; teklif, durum ve sonuçları yönetin.
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Arama kutusu */}
-          <input
-            type="search"
-            placeholder="İhale veya firma ara..."
-            aria-label="İhale ara"
-            value={searchInput}
-            onChange={(event) => handleSearchChange(event.target.value)}
-            style={{ minWidth: 200 }}
-          />
-          <select
-            value={sectorFilter}
-            aria-label="İş koluna göre filtrele"
-            onChange={(event) =>
-              handleSectorChange(toSectorFilter(event.target.value))
-            }
-            style={{ minWidth: 160 }}
-          >
-            <option value="">Tüm İş Kolları</option>
-            {SECTOR_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => setCreateModal(true)}
-          >
-            <PlusIcon /> Yeni İhale
-          </button>
-        </div>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setCreateModal(true)}
+        >
+          <PlusIcon /> Yeni İhale
+        </button>
+      </div>
+
+      {/* Arama kutusu ve iş kolu filtresi */}
+      <div style={{ marginBottom: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <input
+          type="search"
+          placeholder="İhale veya firma ara..."
+          aria-label="İhale ara"
+          value={searchInput}
+          onChange={(event) => handleSearchChange(event.target.value)}
+          style={{ minWidth: 200 }}
+        />
+        <select
+          value={sectorFilter}
+          aria-label="İş koluna göre filtrele"
+          onChange={(event) =>
+            handleSectorChange(toSectorFilter(event.target.value))
+          }
+          style={{ minWidth: 160 }}
+        >
+          <option value="">Tüm İş Kolları</option>
+          {SECTOR_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="data-table-container glass">
@@ -252,8 +256,8 @@ function TendersContent({ segment }: TendersContentProps) {
               <tr>
                 <td colSpan={11} className="table-empty">
                   {search
-                    ? `"${search}" için bu kategoride ihale bulunamadı.`
-                    : 'Bu kategoride ihale bulunamadı.'}
+                    ? `"${search}" için sonuç bulunamadı.`
+                    : 'Bu kategoride henüz ihale yok.'}
                 </td>
               </tr>
             )}

@@ -169,16 +169,23 @@ export default function OrgChartPage() {
   const roots = buildTree(data);
 
   return (
-    <div
-      className="glass card"
-      style={{ padding: 24 }}
-    >
-      <h3 style={{ marginBottom: 20 }}>Organizasyon Şeması</h3>
-      <div>
-        {roots.map((root) => (
-          <OrgNodeCard key={root.id} node={root} depth={0} />
-        ))}
+    <>
+      <div className="page-head">
+        <div>
+          <h3>Organizasyon Şeması</h3>
+          <p className="muted" style={{ fontSize: '0.9rem' }}>
+            Ekip hiyerarşisini ve pozisyonlara bağlı hesapları görüntüleyin.
+          </p>
+        </div>
       </div>
-    </div>
+
+      <div className="glass card" style={{ padding: 24 }}>
+        <div>
+          {roots.map((root) => (
+            <OrgNodeCard key={root.id} node={root} depth={0} />
+          ))}
+        </div>
+      </div>
+    </>
   );
 }
