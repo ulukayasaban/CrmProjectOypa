@@ -16,6 +16,35 @@
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-blur: blur(12px);
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 0.15s ease;
+
+  /* Yüzey katmanları (beyaz-alfa) — dağınık opaklık değerleri yerine tek kaynak */
+  --surface-1: rgba(255, 255, 255, 0.03);
+  --surface-2: rgba(255, 255, 255, 0.05);
+  --surface-3: rgba(255, 255, 255, 0.08);
+
+  /* Overlay, popover ve gölgeler */
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+  --bg-popover: #111a2e;
+  --shadow-popover: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --shadow-toast: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+  /* Metin / durum açık renkleri */
+  --text-on-dark: #fff;
+  --success-text: #7dffb3;
+  --error-text: #ffb4b4;
+  --badge-tender-text: #8bbcf2;
+
+  /* Köşe yuvarlama ölçeği (mevcut değerlerle birebir) */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-pill: 999px;
+
+  /* Spacing ölçeği (referans — yeni/değişen kodda kullanın): 4 / 8 / 12 / 16 / 20 / 24 / 32 px */
+
   /* Native kontrollerin (date/time picker, select açılır listesi, takvim ikonu)
      koyu temada doğru render edilmesi için. color-scheme tanımlı olmadığında
      tarayıcı sayfayı açık-tema sanıp date input'un takvim ikonunu siyah çiziyor
@@ -98,7 +127,7 @@ a {
 
 .btn {
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: none;
   cursor: pointer;
   font-weight: 600;
@@ -140,13 +169,13 @@ h1,
 h2,
 h3,
 h4 {
-  color: white;
+  color: var(--text-on-dark);
   letter-spacing: -0.02em;
 }
 
 .badge {
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -158,23 +187,23 @@ h4 {
 }
 .badge-customer {
   background: var(--success);
-  color: white;
+  color: var(--text-on-dark);
 }
 .badge-opportunity {
   background: var(--primary-light);
-  color: white;
+  color: var(--text-on-dark);
 }
 .badge-neutral {
   background: rgba(255, 255, 255, 0.1);
-  color: white;
+  color: var(--text-on-dark);
 }
 .badge-danger {
   background: var(--error);
-  color: white;
+  color: var(--text-on-dark);
 }
 
 .side-module {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-1);
   border: 1px solid var(--glass-border);
   transition: var(--transition-smooth);
   font-size: 0.8rem;
@@ -237,7 +266,7 @@ h4 {
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   color: var(--text-muted);
   transition: var(--transition-smooth);
@@ -254,7 +283,7 @@ h4 {
 .nav-item:hover,
 .nav-item.active {
   background: var(--glass-border);
-  color: white;
+  color: var(--text-on-dark);
 }
 .nav-item.active {
   border-left: 3px solid var(--accent-gold);
@@ -267,7 +296,7 @@ h4 {
   justify-content: space-between;
   padding: 0 32px;
   margin: 16px 24px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   /* Stacking bağlamı: backdrop-filter kullanan dashboard kartlarının üstünde kalır */
   position: relative;
   z-index: 50;
@@ -338,7 +367,7 @@ h4 {
 }
 .tab-btn {
   padding: 8px 16px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--glass-border);
   background: rgba(255, 255, 255, 0.04);
   color: var(--text-muted);
@@ -346,11 +375,12 @@ h4 {
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background var(--transition-fast), color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 .tab-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
+  background: var(--surface-3);
+  color: var(--text-on-dark);
 }
 .tab-btn--active {
   background: var(--accent-gold);
@@ -374,7 +404,7 @@ h4 {
 }
 .stat-card {
   padding: 24px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -391,7 +421,7 @@ h4 {
 .stat-value {
   font-size: 2rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-on-dark);
 }
 .full-width {
   grid-column: span 3;
@@ -404,7 +434,7 @@ h4 {
 
 .data-table-container {
   margin-top: 24px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   /* Geniş tablolar (örn. 11 kolonlu İhale tablosu) kırpılıp üst üste binmesin;
      sığmadığında yatay kaydırma çubuğu çıksın. */
   overflow-x: auto;
@@ -424,7 +454,7 @@ h4 {
   vertical-align: middle;
 }
 .data-table th {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-2);
   color: var(--text-muted);
   font-size: 0.8rem;
   text-transform: uppercase;
@@ -450,7 +480,7 @@ h4 {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -463,7 +493,7 @@ h4 {
   max-height: calc(100vh - 64px);
   overflow-y: auto;
   padding: 32px;
-  border-radius: 20px;
+  border-radius: var(--radius-2xl);
   animation: modalAppear 0.3s ease-out;
   position: relative;
 }
@@ -508,10 +538,10 @@ h4 {
 .form-group select,
 .form-group textarea {
   padding: 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
   border: 1px solid var(--glass-border);
-  color: white;
+  color: var(--text-on-dark);
   outline: none;
   font-size: 0.9rem;
   width: 100%;
@@ -527,10 +557,10 @@ h4 {
    düşmesin diye koyu tema stili uygulanır; 5 liste sayfasını tek kuralla kapsar. */
 input[type='search'] {
   padding: 10px 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
   border: 1px solid var(--glass-border);
-  color: white;
+  color: var(--text-on-dark);
   outline: none;
   font-size: 0.9rem;
   width: 100%;
@@ -548,10 +578,10 @@ input[type='search']::placeholder {
    kendi stilini korur; bu kural yalnızca çıplak textarea'lara uygulanır. */
 textarea {
   padding: 10px 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
   border: 1px solid var(--glass-border);
-  color: white;
+  color: var(--text-on-dark);
   outline: none;
   font-family: inherit;
   font-size: 0.9rem;
@@ -565,15 +595,15 @@ textarea::placeholder {
 }
 .form-group select option {
   background: var(--primary-navy);
-  color: white;
+  color: var(--text-on-dark);
 }
 /* Tüm <select>'ler koyu temaya uysun — özellikle .form-group dışındaki
    sayfa filtre select'leri (varsayılan beyaz kutu yerine temalı görünüm). */
 select {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-2);
   border: 1px solid var(--glass-border);
-  color: white;
-  border-radius: 8px;
+  color: var(--text-on-dark);
+  border-radius: var(--radius-md);
   padding: 8px 12px;
   font-size: 0.85rem;
   outline: none;
@@ -584,7 +614,7 @@ select:focus {
 }
 select option {
   background: var(--primary-navy);
-  color: white;
+  color: var(--text-on-dark);
 }
 .form-row {
   display: grid;
@@ -598,9 +628,9 @@ select option {
 .form-error {
   background: rgba(235, 87, 87, 0.12);
   border: 1px solid var(--error);
-  color: #ffb4b4;
+  color: var(--error-text);
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 0.85rem;
 }
 
@@ -612,7 +642,7 @@ select option {
 }
 .calendar-grid {
   padding: 24px;
-  border-radius: 20px;
+  border-radius: var(--radius-2xl);
 }
 .cal-header {
   display: flex;
@@ -642,14 +672,14 @@ select option {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-1);
   transition: var(--transition-smooth);
   position: relative;
 }
 .cal-cell:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-3);
 }
 .cal-cell.empty {
   background: transparent;
@@ -685,7 +715,7 @@ select option {
   background: var(--accent-gold);
 }
 .cal-dot--tender {
-  background: var(--accent-blue, #4a90e2);
+  background: var(--accent-blue);
 }
 
 /* Görüşme/İhale renk kodu açıklaması */
@@ -706,19 +736,19 @@ select option {
 /* Seçili gün etkinlik kartları (görüşme + ihale ortak görünüm) */
 .cal-event {
   padding: 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   border-left: 3px solid transparent;
   transition: var(--transition-smooth);
 }
 .cal-event:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-3);
 }
 .cal-event--meeting {
   border-left-color: var(--accent-gold);
 }
 .cal-event--tender {
-  border-left-color: var(--accent-blue, #4a90e2);
+  border-left-color: var(--accent-blue);
 }
 .cal-event-head {
   display: flex;
@@ -739,7 +769,7 @@ select option {
 }
 .badge-tender {
   background: rgba(74, 144, 226, 0.2);
-  color: #8bbcf2;
+  color: var(--badge-tender-text);
 }
 
 .notification-bell {
@@ -755,7 +785,7 @@ select option {
   top: -5px;
   right: -10px;
   background: var(--error);
-  color: white;
+  color: var(--text-on-dark);
   font-size: 0.7rem;
   padding: 2px 5px;
   border-radius: 10px;
@@ -768,15 +798,15 @@ select option {
   max-width: calc(100vw - 32px);
   max-height: 420px;
   overflow-y: auto;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 16px;
   /* .header-right stacking context içinde kalır; 200 yeterli — modal (1000) altında */
   z-index: 200;
   /* Floating popover OPAK olmalı; aksi halde --bg-card (%95 saydam) yüzünden
      arkadaki sayfa içeriği görünüp üst üste biniyordu. */
-  background: #111a2e;
+  background: var(--bg-popover);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-popover);
 }
 .notification-popover-head {
   display: flex;
@@ -804,7 +834,7 @@ select option {
   border-bottom: none;
 }
 .notification-item.unread {
-  color: white;
+  color: var(--text-on-dark);
 }
 .notification-item.read {
   color: var(--text-muted);
@@ -851,7 +881,7 @@ select option {
 .progress-track {
   width: 250px;
   height: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-2);
   border-radius: 10px;
   margin-top: 10px;
   overflow: hidden;
@@ -910,7 +940,7 @@ select option {
 }
 .card {
   padding: 24px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
 }
 .card-head {
   display: flex;
@@ -925,7 +955,7 @@ select option {
 }
 .contact-card {
   padding: 15px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   font-size: 0.85rem;
 }
 .detail-info {
@@ -966,7 +996,7 @@ select option {
 .profile-card {
   margin-top: 20px;
   padding: 40px;
-  border-radius: 20px;
+  border-radius: var(--radius-2xl);
   text-align: center;
   max-width: 600px;
 }
@@ -980,7 +1010,7 @@ select option {
   text-align: left;
   background: rgba(0, 0, 0, 0.2);
   padding: 20px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   font-size: 0.9rem;
   display: flex;
   flex-direction: column;
@@ -1059,7 +1089,7 @@ select option {
 .meeting-notes__item {
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-1);
   border: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
@@ -1122,12 +1152,12 @@ select option {
   align-items: flex-start;
   gap: 12px;
   padding: 14px 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   min-width: 280px;
   max-width: 400px;
   backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-toast);
   animation: toastIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 0.88rem;
   line-height: 1.4;
@@ -1145,12 +1175,12 @@ select option {
 .toast--success {
   background: rgba(39, 174, 96, 0.18);
   border-color: rgba(39, 174, 96, 0.4);
-  color: #7dffb3;
+  color: var(--success-text);
 }
 .toast--error {
   background: rgba(235, 87, 87, 0.18);
   border-color: rgba(235, 87, 87, 0.4);
-  color: #ffb4b4;
+  color: var(--error-text);
 }
 .toast--info {
   background: rgba(26, 95, 122, 0.28);
