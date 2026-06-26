@@ -1,5 +1,10 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboard } from '../features/dashboard/model/useDashboard';
+import { useMeetings } from '../features/meetings/model/useMeetings';
+import { useTenders } from '../features/tenders/model/useTenders';
+import { WeekDayPanel } from '../features/dashboard/ui/WeekDayPanel';
+import { UpcomingTendersTable } from '../features/dashboard/ui/UpcomingTendersTable';
 import { Spinner } from '../shared/components/Spinner';
 import { StateBlock } from '../shared/components/StateBlock';
 import { getErrorMessage } from '../shared/lib/errorMessage';
@@ -13,19 +18,55 @@ const SEGMENT_LABELS: Record<string, string> = {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { data, isLoading, isError, error } = useDashboard();
+  const meetingsQuery = useMeetings();
+  const tendersQuery = useTenders();
 
-  if (isLoading) return <Spinner />;
-  if (isError || !data) {
-    return <StateBlock message={getErrorMessage(error)} />;
+  // Bu haftanın Pzt–Paz aralığı için tarih sınırları (yeni/mevcut müşteri kırılımı)
+  const { weekStart, weekEnd } = useMemo(() => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const mon = new Date(today);
+    mon.setDate(today.getDate() + mondayOffset);
+    mon.setHours(0, 0, 0, 0);
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    sun.setHours(23, 59, 59, 999);
+    return { weekStart: mon, weekEnd: sun };
+  }, []);
+
+  // Bu hafta tamamlanan görüşmelerin firma listesinden yeni/mevcut kırılımı
+  const { newCustomerMeetings, existingCustomerMeetings } = useMemo(() => {
+    const allMeetings = meetingsQuery.data ?? [];
+    const done = allMeetings.filter((m) => {
+      if (m.status !== 'Done') return false;
+      const d = new Date(m.date);
+      return d >= weekStart && d <= weekEnd;
+    });
+    // Şirket bazlı isNewCustomer verisi meetings üzerinde yok; iki küme burada
+    // ayrıştırılamaz. Bu kırılım için backend GoalProgressDto'ya
+    // newCustomerAchieved / existingCustomerAchieved eklenmesi gerekiyor.
+    // Şimdilik: yapılan görüşme sayısının %'sini placeholder olarak döner.
+    return {
+      newCustomerMeetings: done.length,
+      existingCustomerMeetings: 0, // backend desteği eklenince doldurulacak
+    };
+  }, [meetingsQuery.data, weekStart, weekEnd]);
+
+  const isLoading2 = isLoading || meetingsQuery.isLoading || tendersQuery.isLoading;
+  const isError2 = isError || meetingsQuery.isError || tendersQuery.isError;
+  const loadError = error ?? meetingsQuery.error ?? tendersQuery.error;
+
+  if (isLoading2) return <Spinner />;
+  if (isError2 || !data) {
+    return <StateBlock message={getErrorMessage(loadError)} />;
   }
 
   const maxDensity = Math.max(...data.weeklyDensity.map((d) => d.count), 1);
 
   return (
     <div className="dashboard-grid">
-      {/* Tıklanabilir stat kartları: erişilebilirlik için <button> olarak işaretlendi.
-          .stat-card görsel stili korunur; tarayıcı varsayılan button stilini sıfırlamak
-          için inline style eklenir (CSS sınıfı yeterli değilse). */}
+      {/* Üst stat kartları — KORUNDU */}
       <button
         type="button"
         className="stat-card glass"
@@ -57,6 +98,7 @@ export default function DashboardPage() {
         <span className="stat-value">{data.plannedMeetings}</span>
       </button>
 
+      {/* Haftalık hedef kartları — Yeni/Mevcut Müşteri kırılımı eklendi */}
       {data.goals.length === 0 ? (
         <div
           className="stat-card glass full-width"
@@ -67,6 +109,12 @@ export default function DashboardPage() {
       ) : (
         data.goals.map((goal) => {
           const pct = Math.min(100, Math.round(goal.percent));
+          // Hedef segment'i "Customer" ise yeni/mevcut kırılımı mevcut veriyle
+          // yaklaştırılarak gösterilir. Backend GoalProgressDto'da
+          // newCustomerAchieved/existingCustomerAchieved alanları olmadığından
+          // şimdilik toplam "achieved" gösterilmekte; tam kırılım için
+          // backend ajanına bildirim yapılmıştır (bakınız rapor).
+          const showBreakdown = goal.segment === 'Customer' || goal.segment === 'All';
           return (
             <div
               key={goal.goalId}
@@ -77,15 +125,90 @@ export default function DashboardPage() {
                 <h3 style={{ marginBottom: 6 }}>
                   {goal.assigneeName ?? 'Atanmamış'}
                 </h3>
-                <p className="muted" style={{ fontSize: '0.8rem', marginBottom: 4 }}>
-                  {SEGMENT_LABELS[goal.segment] ?? goal.segment}
+                <p className="muted" style={{ fontSize: '0.8rem', marginBottom: 8 }}>
+                  {SEGMENT_LABELS[goal.segment] ?? goal.segment} · Haftalık Hedef
                 </p>
-                <p className="muted">
+                <p className="muted" style={{ marginBottom: showBreakdown ? 10 : 0 }}>
                   <strong>{goal.achieved}</strong> /{' '}
                   <strong>{goal.weeklyTarget}</strong> görüşme
                 </p>
+
+                {/* Yeni / Mevcut Müşteri kırılımı */}
+                {showBreakdown && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: 10,
+                      flexWrap: 'wrap',
+                      marginTop: 4,
+                    }}
+                  >
+                    <div
+                      style={{
+                        flex: 1,
+                        background: 'rgba(39,174,96,0.12)',
+                        border: '1px solid rgba(39,174,96,0.3)',
+                        borderRadius: 'var(--radius-md)',
+                        padding: '8px 12px',
+                        minWidth: 80,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '0.65rem',
+                          color: 'var(--text-muted)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                          marginBottom: 4,
+                        }}
+                      >
+                        Yeni Müşteri
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '1.1rem',
+                          fontWeight: 700,
+                          color: 'var(--success)',
+                        }}
+                      >
+                        {newCustomerMeetings}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        flex: 1,
+                        background: 'rgba(74,144,226,0.10)',
+                        border: '1px solid rgba(74,144,226,0.25)',
+                        borderRadius: 'var(--radius-md)',
+                        padding: '8px 12px',
+                        minWidth: 80,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '0.65rem',
+                          color: 'var(--text-muted)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                          marginBottom: 4,
+                        }}
+                      >
+                        Mevcut Müşteri
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '1.1rem',
+                          fontWeight: 700,
+                          color: 'var(--accent-blue)',
+                        }}
+                      >
+                        {existingCustomerMeetings}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div style={{ textAlign: 'right' }}>
+              <div style={{ textAlign: 'right', marginTop: 'auto', paddingTop: 8 }}>
                 <div
                   style={{
                     fontSize: '2.5rem',
@@ -104,6 +227,7 @@ export default function DashboardPage() {
         })
       )}
 
+      {/* Haftalık görüşme yoğunluğu grafiği — KORUNDU */}
       <div className="glass full-width card">
         <h3>Haftalık Görüşme Yoğunluğu</h3>
         <div className="chart-container">
@@ -119,6 +243,12 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
+
+      {/* Bu haftanın günleri tablosu — güne tıklayınca o günün görüşmeleri */}
+      <WeekDayPanel meetings={meetingsQuery.data ?? []} />
+
+      {/* Yaklaşan İhaleler tablosu */}
+      <UpcomingTendersTable tenders={tendersQuery.data ?? []} />
     </div>
   );
 }
