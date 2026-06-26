@@ -12,6 +12,7 @@ import {
   TenderIcon,
   UsersIcon,
 } from '../shared/components/icons';
+import { OyakLogo } from '../shared/components/OyakLogo';
 
 interface NavEntry {
   to: string;
@@ -152,10 +153,7 @@ export function Sidebar({ open = false }: SidebarProps) {
           if (e.key === 'Enter' || e.key === ' ') navigate('/');
         }}
       >
-        <div className="logo-mark">O</div>
-        <h1>
-          OYPA<span>CRM</span>
-        </h1>
+        <OyakLogo height={32} />
       </div>
       <nav className="nav-menu">
         {items.map((item) => {

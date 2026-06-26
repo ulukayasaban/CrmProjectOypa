@@ -308,7 +308,7 @@ export default function EmployeeManagementPage() {
                             style={{
                               background:
                                 emp.role === 'Admin'
-                                  ? 'rgba(255,180,0,0.18)'
+                                  ? 'rgba(227,6,19,0.18)'
                                   : 'rgba(0,200,150,0.18)',
                               color:
                                 emp.role === 'Admin'

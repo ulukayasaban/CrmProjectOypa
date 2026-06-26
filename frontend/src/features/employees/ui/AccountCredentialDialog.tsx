@@ -24,7 +24,7 @@ export function AccountCredentialDialog({ credentials, onClose }: AccountCredent
       <div className="crm-form">
         <p
           className="form-error"
-          style={{ background: 'rgba(255,180,0,0.12)', color: 'var(--accent-gold)', border: '1px solid var(--accent-gold)' }}
+          style={{ background: 'rgba(227,6,19,0.12)', color: 'var(--accent-gold)', border: '1px solid var(--accent-gold)' }}
         >
           Bu bilgiler yalnızca bir kez gösterilir. Kullanıcıya iletmeyi unutmayın.
         </p>

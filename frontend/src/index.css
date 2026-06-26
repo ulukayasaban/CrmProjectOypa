@@ -1,7 +1,10 @@
 :root {
   --primary-navy: #002b5b;
   --primary-light: #1a5f7a;
-  --accent-gold: #d4af37;
+  --oyak-red: #e30613;
+  /* Marka rengi OYAK kırmızısına çevrildi. Eski "accent-gold" token adı,
+     dağınık kullanımları tek noktadan kırmızıya işaret etsin diye korunuyor. */
+  --accent-gold: var(--oyak-red);
   --accent-blue: #4a90e2;
   --silver: #c0c0c0;
   --bg-dark: #0a0f1d;
@@ -157,7 +160,7 @@ a {
 }
 .btn-primary {
   background: var(--accent-gold);
-  color: var(--primary-navy);
+  color: var(--text-on-dark);
 }
 .btn-primary:hover:not(:disabled) {
   filter: brightness(1.08);
@@ -253,7 +256,7 @@ h4 {
   width: 40px;
   border-radius: 10px;
   background: var(--accent-gold);
-  color: var(--primary-navy);
+  color: var(--text-on-dark);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -398,7 +401,7 @@ h4 {
 .tab-btn--active {
   background: var(--accent-gold);
   border-color: var(--accent-gold);
-  color: var(--primary-navy);
+  color: var(--text-on-dark);
   font-weight: 600;
 }
 
@@ -704,7 +707,7 @@ select option {
   font-weight: 700;
 }
 .cal-cell.selected {
-  background: rgba(212, 175, 55, 0.2);
+  background: rgba(227, 6, 19, 0.2);
 }
 .cal-day-num {
   line-height: 1;
@@ -777,7 +780,7 @@ select option {
 
 /* Takvim etkinlik tipi rozetleri */
 .badge-meeting {
-  background: rgba(212, 175, 55, 0.18);
+  background: rgba(227, 6, 19, 0.18);
   color: var(--accent-gold);
 }
 .badge-tender {
@@ -880,7 +883,7 @@ select option {
   background: linear-gradient(
     180deg,
     var(--accent-gold) 0%,
-    rgba(212, 175, 55, 0.2) 100%
+    rgba(227, 6, 19, 0.2) 100%
   );
   border-radius: 4px 4px 0 0;
   transition: height 0.6s ease-out;

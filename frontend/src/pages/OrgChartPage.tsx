@@ -54,9 +54,9 @@ function roleBadge(emp: EmployeeDto): React.ReactNode {
       <span
         className="badge"
         style={{
-          background: 'rgba(197,160,72,0.18)',
+          background: 'rgba(227,6,19,0.18)',
           color: 'var(--accent-gold)',
-          border: '1px solid rgba(197,160,72,0.35)',
+          border: '1px solid rgba(227,6,19,0.35)',
         }}
       >
         Yönetici
@@ -94,7 +94,7 @@ function OrgNodeCard({ node, depth }: OrgNodeCardProps) {
         className="glass org-card"
         style={{
           background: isRoot
-            ? 'rgba(197,160,72,0.08)'
+            ? 'rgba(227,6,19,0.08)'
             : 'rgba(255,255,255,0.04)',
           borderTop: isRoot ? '2px solid var(--accent-gold)' : undefined,
         }}
@@ -105,7 +105,7 @@ function OrgNodeCard({ node, depth }: OrgNodeCardProps) {
             height: 36,
             borderRadius: '50%',
             background: isRoot
-              ? 'rgba(197,160,72,0.22)'
+              ? 'rgba(227,6,19,0.22)'
               : 'rgba(255,255,255,0.08)',
             display: 'flex',
             alignItems: 'center',

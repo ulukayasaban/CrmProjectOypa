@@ -8,6 +8,7 @@ import {
   type LoginFormValues,
 } from '../features/auth/model/loginSchema';
 import { FieldError } from '../shared/components/FieldError';
+import { OyakLogo } from '../shared/components/OyakLogo';
 import { fieldAria } from '../shared/lib/fieldAria';
 import { getErrorMessage } from '../shared/lib/errorMessage';
 
@@ -45,9 +46,7 @@ export default function LoginPage() {
     <div className="center-screen">
       <div className="login-card glass">
         <div className="login-logo">
-          <h1>
-            OYPA<span>CRM</span>
-          </h1>
+          <OyakLogo height={44} />
           <p>Satış ve Pazarlama Yönetim Platformu</p>
         </div>
         <form className="crm-form" onSubmit={onSubmit}>
