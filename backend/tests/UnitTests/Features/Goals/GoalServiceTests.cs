@@ -628,6 +628,8 @@ public sealed class GoalServiceTests
         result[0].GoalId.ShouldBe(goal.Id);
         result[0].WeeklyTarget.ShouldBe(10);
         result[0].Segment.ShouldBe("All");
+        result[0].NewCustomerAchieved.ShouldBe(0);
+        result[0].ExistingCustomerAchieved.ShouldBe(0);
     }
 
     // ========================================================================
@@ -667,5 +669,66 @@ public sealed class GoalServiceTests
         result.Count.ShouldBe(1);
         result[0].Achieved.ShouldBe(0);
         result[0].Percent.ShouldBe(0);
+    }
+
+    // ========================================================================
+    // GetScopedProgressAsync — yeni/mevcut müşteri kırılımı
+    // ========================================================================
+
+    [Fact]
+    public async Task GetScopedProgressAsync_WithLinkedRep_ReturnsCustomerBreakdown()
+    {
+        // Arrange — alt-ağaçta EmployeeId bağlı bir SalesRep var;
+        // 2 yeni müşteri + 3 mevcut müşteri görüşmesi dönsün.
+        var empId = Guid.NewGuid();
+        var repId = Guid.NewGuid();
+        var goal = MakeGoal(empId, GoalSegment.Customer, 10);
+
+        var rep = MakeSalesRep("Halil", empId);
+        rep.Id = repId;
+
+        _orgScope.ResolveAsync(Arg.Any<CancellationToken>())
+            .Returns(new OrgScope(true, []));
+        _orgScope.GetSubtreeIdsAsync(empId, Arg.Any<CancellationToken>())
+            .Returns(new HashSet<Guid> { empId });
+
+        _goals.ListAsync(Arg.Any<Expression<Func<Goal, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(new[] { goal });
+
+        _salesReps.ListAsync(Arg.Any<Expression<Func<SalesRep, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(new[] { rep });
+
+        _meetingRepository.CountDoneByRepsAndSegmentAsync(
+            Arg.Any<IReadOnlyCollection<Guid>>(),
+            Arg.Any<DateOnly>(),
+            Arg.Any<DateOnly>(),
+            GoalSegment.Customer,
+            Arg.Any<CancellationToken>())
+            .Returns(5);
+
+        _meetingRepository.CountDoneByRepsCustomerBreakdownAsync(
+            Arg.Any<IReadOnlyCollection<Guid>>(),
+            Arg.Any<DateOnly>(),
+            Arg.Any<DateOnly>(),
+            Arg.Any<CancellationToken>())
+            .Returns((NewCustomer: 2, ExistingCustomer: 3));
+
+        _employees.GetByIdAsync(empId, Arg.Any<CancellationToken>())
+            .Returns(MakeEmployee("Halil YÜKSEL"));
+
+        _clock.Today.Returns(new DateOnly(2026, 6, 9)); // Pazartesi
+
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.GetScopedProgressAsync();
+
+        // Assert
+        result.Count.ShouldBe(1);
+        result[0].Achieved.ShouldBe(5);
+        result[0].NewCustomerAchieved.ShouldBe(2);
+        result[0].ExistingCustomerAchieved.ShouldBe(3);
+        // NewCustomer + ExistingCustomer ≤ Achieved (Customer-only subset)
+        (result[0].NewCustomerAchieved + result[0].ExistingCustomerAchieved).ShouldBeLessThanOrEqualTo(result[0].Achieved);
     }
 }

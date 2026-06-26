@@ -37,7 +37,7 @@ public sealed class DashboardServiceTests
 
         var goalProgress = new List<GoalProgressDto>
         {
-            new(Guid.NewGuid(), "Umur KUTLU", "All", 5, 2, 40)
+            new(Guid.NewGuid(), "Umur KUTLU", "All", 5, 2, 40, 1, 1)
         };
         _goalService.GetScopedProgressAsync(Arg.Any<CancellationToken>())
             .Returns(goalProgress);

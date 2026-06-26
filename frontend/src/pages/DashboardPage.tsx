@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboard } from '../features/dashboard/model/useDashboard';
 import { useMeetings } from '../features/meetings/model/useMeetings';
@@ -20,38 +19,6 @@ export default function DashboardPage() {
   const { data, isLoading, isError, error } = useDashboard();
   const meetingsQuery = useMeetings();
   const tendersQuery = useTenders();
-
-  // Bu haftanın Pzt–Paz aralığı için tarih sınırları (yeni/mevcut müşteri kırılımı)
-  const { weekStart, weekEnd } = useMemo(() => {
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const mon = new Date(today);
-    mon.setDate(today.getDate() + mondayOffset);
-    mon.setHours(0, 0, 0, 0);
-    const sun = new Date(mon);
-    sun.setDate(mon.getDate() + 6);
-    sun.setHours(23, 59, 59, 999);
-    return { weekStart: mon, weekEnd: sun };
-  }, []);
-
-  // Bu hafta tamamlanan görüşmelerin firma listesinden yeni/mevcut kırılımı
-  const { newCustomerMeetings, existingCustomerMeetings } = useMemo(() => {
-    const allMeetings = meetingsQuery.data ?? [];
-    const done = allMeetings.filter((m) => {
-      if (m.status !== 'Done') return false;
-      const d = new Date(m.date);
-      return d >= weekStart && d <= weekEnd;
-    });
-    // Şirket bazlı isNewCustomer verisi meetings üzerinde yok; iki küme burada
-    // ayrıştırılamaz. Bu kırılım için backend GoalProgressDto'ya
-    // newCustomerAchieved / existingCustomerAchieved eklenmesi gerekiyor.
-    // Şimdilik: yapılan görüşme sayısının %'sini placeholder olarak döner.
-    return {
-      newCustomerMeetings: done.length,
-      existingCustomerMeetings: 0, // backend desteği eklenince doldurulacak
-    };
-  }, [meetingsQuery.data, weekStart, weekEnd]);
 
   const isLoading2 = isLoading || meetingsQuery.isLoading || tendersQuery.isLoading;
   const isError2 = isError || meetingsQuery.isError || tendersQuery.isError;
@@ -171,7 +138,7 @@ export default function DashboardPage() {
                           color: 'var(--success)',
                         }}
                       >
-                        {newCustomerMeetings}
+                        {goal.newCustomerAchieved}
                       </div>
                     </div>
                     <div
@@ -202,7 +169,7 @@ export default function DashboardPage() {
                           color: 'var(--accent-blue)',
                         }}
                       >
-                        {existingCustomerMeetings}
+                        {goal.existingCustomerAchieved}
                       </div>
                     </div>
                   </div>

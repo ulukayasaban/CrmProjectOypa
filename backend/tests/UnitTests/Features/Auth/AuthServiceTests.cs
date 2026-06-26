@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using Oypa.Crm.Application.Common.Exceptions;
@@ -20,6 +21,8 @@ public sealed class AuthServiceTests
     private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
     private readonly IDateTimeProvider _clock = Substitute.For<IDateTimeProvider>();
     private readonly IEmailSender _emailSender = Substitute.For<IEmailSender>();
+    private readonly IRepository<Employee> _employees = Substitute.For<IRepository<Employee>>();
+    private readonly IRepository<SalesRep> _salesReps = Substitute.For<IRepository<SalesRep>>();
     private readonly IOptions<JwtOptions> _jwtOptions =
         Options.Create(new JwtOptions { RefreshTokenDays = 7, AccessTokenMinutes = 15 });
     private readonly IOptions<AppOptions> _appOptions =
@@ -29,7 +32,7 @@ public sealed class AuthServiceTests
         Guid.NewGuid(), "admin@oypa.com.tr", "Admin", "Pos", "555", new[] { "Admin" });
 
     private AuthService CreateSut() =>
-        new(_identity, _jwt, _refreshTokens, _unitOfWork, _currentUser, _clock, _jwtOptions, _emailSender, _appOptions);
+        new(_identity, _jwt, _refreshTokens, _unitOfWork, _currentUser, _clock, _jwtOptions, _emailSender, _appOptions, _employees, _salesReps);
 
     public AuthServiceTests()
     {
@@ -38,6 +41,12 @@ public sealed class AuthServiceTests
             .Returns(new TokenResult("access-token", new DateTime(2026, 6, 8, 0, 15, 0, DateTimeKind.Utc)));
         _jwt.GenerateRefreshToken().Returns("raw-refresh");
         _jwt.HashToken(Arg.Any<string>()).Returns(ci => "hash:" + ci.Arg<string>());
+
+        // Varsayılan: boş liste döndür; GetCurrentUserAsync testleri kendi stub'larını tanımlar.
+        _employees.ListAsync(Arg.Any<Expression<Func<Employee, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Employee>());
+        _salesReps.ListAsync(Arg.Any<Expression<Func<SalesRep, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<SalesRep>());
     }
 
     [Fact]
@@ -110,5 +119,63 @@ public sealed class AuthServiceTests
         await _refreshTokens.Received(1).AddAsync(
             Arg.Is<RefreshToken>(t => t.TokenHash == "hash:new-raw"), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    // ========================================================================
+    // GetCurrentUserAsync — AssignedSalesRepId çözümlemesi
+    // ========================================================================
+
+    [Fact]
+    public async Task GetCurrentUserAsync_WhenUserHasLinkedSalesRep_ReturnsAssignedSalesRepId()
+    {
+        // Arrange — ApplicationUser → Employee → SalesRep zinciri kuruldu
+        var userId = _user.Id;
+        var employeeId = Guid.NewGuid();
+        var salesRepId = Guid.NewGuid();
+
+        _currentUser.UserId.Returns(userId);
+        _identity.GetByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(_user);
+
+        var employee = new Employee("Unvan", "Admin", "admin@oypa.com.tr");
+        employee.Id = employeeId;
+        employee.LinkAccount(userId);
+
+        var salesRep = new SalesRep("Admin Rep", "admin-rep@oypa.com.tr");
+        salesRep.Id = salesRepId;
+        salesRep.LinkEmployee(employeeId);
+
+        _employees.ListAsync(Arg.Any<Expression<Func<Employee, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(new[] { employee });
+        _salesReps.ListAsync(Arg.Any<Expression<Func<SalesRep, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(new[] { salesRep });
+
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.GetCurrentUserAsync();
+
+        // Assert
+        result.AssignedSalesRepId.ShouldBe(salesRepId);
+        result.Email.ShouldBe(_user.Email);
+    }
+
+    [Fact]
+    public async Task GetCurrentUserAsync_WhenUserHasNoLinkedEmployee_AssignedSalesRepIdIsNull()
+    {
+        // Arrange — Employee kaydı yok
+        var userId = _user.Id;
+
+        _currentUser.UserId.Returns(userId);
+        _identity.GetByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(_user);
+
+        // Varsayılan stub'lar zaten boş liste döndürüyor (kurucu içinde tanımlı)
+
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.GetCurrentUserAsync();
+
+        // Assert
+        result.AssignedSalesRepId.ShouldBeNull();
     }
 }

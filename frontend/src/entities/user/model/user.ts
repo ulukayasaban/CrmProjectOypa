@@ -5,6 +5,11 @@ export interface UserDto {
   position: string | null;
   phone: string | null;
   roles: string[];
+  /**
+   * Kullanıcıya bağlı SalesRep kaydının id'si (Employee→ApplicationUser zincirinden).
+   * Yalnızca /auth/me yanıtında dolu gelir; portföy eşleşmesinde kullanılır. Yoksa null.
+   */
+  assignedSalesRepId?: string | null;
 }
 
 export interface AuthResponse {

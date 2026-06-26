@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using Oypa.Crm.Application.Common.Exceptions;
@@ -6,6 +7,7 @@ using Oypa.Crm.Application.Common.Models;
 using Oypa.Crm.Application.Common.Options;
 using Oypa.Crm.Application.Features.Auth;
 using Oypa.Crm.Contracts.Auth;
+using Oypa.Crm.Domain.Entities;
 using Shouldly;
 
 namespace Oypa.Crm.UnitTests.Features.Auth;
@@ -23,6 +25,8 @@ public sealed class AccountManagementServiceTests
     private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
     private readonly IDateTimeProvider _clock = Substitute.For<IDateTimeProvider>();
     private readonly IEmailSender _emailSender = Substitute.For<IEmailSender>();
+    private readonly IRepository<Employee> _employees = Substitute.For<IRepository<Employee>>();
+    private readonly IRepository<SalesRep> _salesReps = Substitute.For<IRepository<SalesRep>>();
     private readonly IOptions<JwtOptions> _jwtOptions =
         Options.Create(new JwtOptions { RefreshTokenDays = 7, AccessTokenMinutes = 15 });
     private readonly IOptions<AppOptions> _appOptions =
@@ -31,13 +35,19 @@ public sealed class AccountManagementServiceTests
     private readonly Guid _userId = Guid.NewGuid();
 
     private AuthService CreateSut() =>
-        new(_identity, _jwt, _refreshTokens, _unitOfWork, _currentUser, _clock, _jwtOptions, _emailSender, _appOptions);
+        new(_identity, _jwt, _refreshTokens, _unitOfWork, _currentUser, _clock, _jwtOptions, _emailSender, _appOptions, _employees, _salesReps);
 
     public AccountManagementServiceTests()
     {
         _clock.UtcNow.Returns(new DateTime(2026, 6, 24, 0, 0, 0, DateTimeKind.Utc));
         // Kimliği doğrulanmış kullanıcı: _userId
         _currentUser.UserId.Returns(_userId);
+
+        // Varsayılan: boş liste döndür
+        _employees.ListAsync(Arg.Any<Expression<Func<Employee, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<Employee>());
+        _salesReps.ListAsync(Arg.Any<Expression<Func<SalesRep, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<SalesRep>());
     }
 
     // ---- change-password ----

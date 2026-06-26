@@ -8,6 +8,10 @@ export interface GoalProgressDto {
   weeklyTarget: number;
   achieved: number;
   percent: number;
+  /** Bu hafta tamamlanan görüşmelerden yeni müşteri firmalarıyla olanlar. */
+  newCustomerAchieved: number;
+  /** Bu hafta tamamlanan görüşmelerden mevcut (yeni olmayan) müşterilerle olanlar. */
+  existingCustomerAchieved: number;
 }
 
 /** Hedef kaydı (GET /api/goals). İçinde bulunulan haftanın ilerlemesi düz alanlarda. */

@@ -178,13 +178,30 @@ public sealed class GoalService(
 
         var today = clock.Today;
         var weekStart = GetMonday(today);
+        var weekEnd = weekStart.AddDays(6);
 
         var result = new List<GoalProgressDto>();
         foreach (var goal in scopedGoals)
         {
+            var subtree = await orgScope.GetSubtreeIdsAsync(goal.AssigneeEmployeeId, cancellationToken);
+            var repIds = (await salesReps.ListAsync(
+                r => r.EmployeeId.HasValue && subtree.Contains(r.EmployeeId.Value),
+                cancellationToken))
+                .Select(r => r.Id)
+                .ToList();
+
             var achieved = await ComputeAchievedAsync(goal, weekStart, cancellationToken);
             var percent = ComputePercent(achieved, goal.WeeklyTarget);
             var assigneeName = await GetEmployeeNameAsync(goal.AssigneeEmployeeId, cancellationToken);
+
+            int newCustomerAchieved = 0;
+            int existingCustomerAchieved = 0;
+            if (repIds.Count > 0)
+            {
+                (newCustomerAchieved, existingCustomerAchieved) =
+                    await meetingRepository.CountDoneByRepsCustomerBreakdownAsync(
+                        repIds, weekStart, weekEnd, cancellationToken);
+            }
 
             result.Add(new GoalProgressDto(
                 goal.Id,
@@ -192,7 +209,9 @@ public sealed class GoalService(
                 goal.Segment.ToString(),
                 goal.WeeklyTarget,
                 achieved,
-                percent));
+                percent,
+                newCustomerAchieved,
+                existingCustomerAchieved));
         }
 
         return result;

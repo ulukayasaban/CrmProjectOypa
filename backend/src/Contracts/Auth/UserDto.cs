@@ -6,4 +6,5 @@ public sealed record UserDto(
     string FullName,
     string? Position,
     string? Phone,
-    IReadOnlyList<string> Roles);
+    IReadOnlyList<string> Roles,
+    Guid? AssignedSalesRepId = null);

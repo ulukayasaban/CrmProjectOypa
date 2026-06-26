@@ -17,7 +17,9 @@ public sealed class AuthService(
     IDateTimeProvider clock,
     IOptions<JwtOptions> jwtOptions,
     IEmailSender emailSender,
-    IOptions<AppOptions> appOptions) : IAuthService
+    IOptions<AppOptions> appOptions,
+    IRepository<Employee> employees,
+    IRepository<SalesRep> salesReps) : IAuthService
 {
     private readonly JwtOptions _jwt = jwtOptions.Value;
     private readonly AppOptions _app = appOptions.Value;
@@ -92,7 +94,9 @@ public sealed class AuthService(
         var userId = currentUser.UserId ?? throw new UnauthorizedAppException("Oturum bulunamadı.");
         var user = await identityService.GetByIdAsync(userId, cancellationToken)
                    ?? throw new UnauthorizedAppException("Kullanıcı bulunamadı.");
-        return ToUserDto(user);
+
+        var assignedSalesRepId = await ResolveAssignedSalesRepIdAsync(userId, cancellationToken);
+        return ToUserDto(user, assignedSalesRepId);
     }
 
     public async Task ChangePasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken = default)
@@ -166,6 +170,26 @@ public sealed class AuthService(
             token.Revoke();
     }
 
-    private static UserDto ToUserDto(AuthUserInfo user) =>
-        new(user.Id, user.Email, user.FullName, user.Position, user.Phone, user.Roles);
+    /// <summary>
+    /// Kullanıcıya bağlı SalesRep kaydının Id'sini döndürür.
+    /// Employee → ApplicationUserId zinciriyle çözülür; eşleşme yoksa null.
+    /// </summary>
+    private async Task<Guid?> ResolveAssignedSalesRepIdAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var employee = (await employees.ListAsync(
+            e => e.ApplicationUserId == userId,
+            cancellationToken)).FirstOrDefault();
+
+        if (employee is null)
+            return null;
+
+        var rep = (await salesReps.ListAsync(
+            r => r.EmployeeId == employee.Id,
+            cancellationToken)).FirstOrDefault();
+
+        return rep?.Id;
+    }
+
+    private static UserDto ToUserDto(AuthUserInfo user, Guid? assignedSalesRepId = null) =>
+        new(user.Id, user.Email, user.FullName, user.Position, user.Phone, user.Roles, assignedSalesRepId);
 }

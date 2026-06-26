@@ -7,4 +7,6 @@ public sealed record GoalProgressDto(
     string Segment,
     int WeeklyTarget,
     int Achieved,
-    int Percent);
+    int Percent,
+    int NewCustomerAchieved,
+    int ExistingCustomerAchieved);

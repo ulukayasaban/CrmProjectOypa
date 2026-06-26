@@ -59,6 +59,31 @@ public sealed class MeetingRepository(AppDbContext db) : Repository<Meeting>(db)
         return await query.CountAsync(cancellationToken);
     }
 
+    public async Task<(int NewCustomer, int ExistingCustomer)> CountDoneByRepsCustomerBreakdownAsync(
+        IReadOnlyCollection<Guid> salesRepIds,
+        DateOnly weekStart,
+        DateOnly weekEnd,
+        CancellationToken cancellationToken = default)
+    {
+        var baseQuery = Set.AsNoTracking()
+            .Include(m => m.Company)
+            .Where(m =>
+                salesRepIds.Contains(m.SalesRepId) &&
+                m.Status == MeetingStatus.Done &&
+                m.Date >= weekStart &&
+                m.Date <= weekEnd &&
+                m.Company != null &&
+                m.Company.Type == CompanyType.Customer);
+
+        var newCustomer = await baseQuery
+            .CountAsync(m => m.Company!.IsNewCustomer, cancellationToken);
+
+        var existingCustomer = await baseQuery
+            .CountAsync(m => !m.Company!.IsNewCustomer, cancellationToken);
+
+        return (newCustomer, existingCustomer);
+    }
+
     public async Task<Meeting?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking()
             .Include(m => m.Company)

@@ -23,6 +23,17 @@ public interface IMeetingRepository : IRepository<Meeting>
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Belirtilen temsilci kümesine ait, belirtilen tarih aralığında tamamlanmış (Done)
+    /// Customer tipindeki görüşmeleri IsNewCustomer bayrağına göre ikiye bölerek döndürür.
+    /// Lead firmalar her iki sayıya da dahil edilmez.
+    /// </summary>
+    Task<(int NewCustomer, int ExistingCustomer)> CountDoneByRepsCustomerBreakdownAsync(
+        IReadOnlyCollection<Guid> salesRepIds,
+        DateOnly weekStart,
+        DateOnly weekEnd,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Görüşmeleri sayfa kesimiyle, arama ve sıralamayı destekleyerek getirir.
     /// search: company.title VEYA salesRep adı ile eşleşme (case-insensitive contains).
     /// </summary>

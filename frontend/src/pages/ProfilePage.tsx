@@ -36,12 +36,12 @@ export default function ProfilePage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
-  // Giriş yapan kullanıcının portföyü: assignedSalesRepName == fullName (case-insensitive)
+  // Giriş yapan kullanıcının portföyü: kullanıcının SalesRep id'si ile firmanın
+  // atanan temsilci id'si KESİN eşleşmesi. assignedSalesRepId yoksa portföy boştur.
   const myPortfolio = useMemo(() => {
-    if (!data || !customersQuery.data) return [];
-    const normalizedName = data.fullName.trim().toLowerCase();
+    if (!data?.assignedSalesRepId || !customersQuery.data) return [];
     return customersQuery.data.filter(
-      (c) => c.assignedSalesRepName?.trim().toLowerCase() === normalizedName,
+      (c) => c.assignedSalesRepId === data.assignedSalesRepId,
     );
   }, [data, customersQuery.data]);
 
