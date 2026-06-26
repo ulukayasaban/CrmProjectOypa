@@ -34,6 +34,7 @@ export function Pagination({
 
   return (
     <div
+      className="pagination-bar"
       style={{
         display: 'flex',
         alignItems: 'center',

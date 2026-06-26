@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from '../shared/components/Modal';
+import { RowActionsMenu, type RowAction } from '../shared/components/RowActionsMenu';
 import { TableSkeleton } from '../shared/components/TableSkeleton';
 import { StateBlock } from '../shared/components/StateBlock';
 import { Pagination } from '../shared/components/Pagination';
@@ -164,6 +165,52 @@ export default function EmployeeManagementPage() {
     setPage(1);
   }
 
+  /** Satır aksiyon menüsü öğelerini personelin hesap durumuna göre kurar. */
+  function buildRowActions(emp: EmployeeDto): RowAction[] {
+    const actions: RowAction[] = [
+      {
+        label: 'Yönetici Ata',
+        onClick: () => setActiveModal({ type: 'assign-manager', employee: emp }),
+      },
+    ];
+
+    if (!emp.hasAccount) {
+      actions.push({
+        label: 'Hesap Oluştur',
+        onClick: () => void handleCreateAccount(emp),
+      });
+    } else {
+      actions.push(
+        {
+          label: 'Rol Ata',
+          onClick: () => setActiveModal({ type: 'assign-role', employee: emp }),
+        },
+        {
+          label: 'Parola Sıfırla',
+          onClick: () => void handleResetPassword(emp),
+          disabled: resetPassword.isPending,
+        },
+        {
+          label: 'Hesabı Ayır',
+          onClick: () => void handleUnlinkAccount(emp),
+          disabled: unlinkAccount.isPending,
+        },
+      );
+    }
+
+    actions.push({
+      label: 'Sil',
+      danger: true,
+      disabled: removeEmployee.isPending && pendingDeleteId === emp.id,
+      onClick: () => {
+        setPendingDeleteId(emp.id);
+        void handleDelete(emp.id);
+      },
+    });
+
+    return actions;
+  }
+
   const items = pagedQuery.data?.items ?? [];
   const totalPages = pagedQuery.data?.totalPages ?? 1;
   const totalCount = pagedQuery.data?.totalCount ?? 0;
@@ -281,7 +328,7 @@ export default function EmployeeManagementPage() {
                         )}
                       </td>
                       <td>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                           <button
                             type="button"
                             className="btn btn-ghost btn-sm"
@@ -291,74 +338,7 @@ export default function EmployeeManagementPage() {
                           >
                             Düzenle
                           </button>
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            onClick={() =>
-                              setActiveModal({
-                                type: 'assign-manager',
-                                employee: emp,
-                              })
-                            }
-                          >
-                            Yönetici Ata
-                          </button>
-                          {!emp.hasAccount && (
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-sm"
-                              onClick={() => void handleCreateAccount(emp)}
-                            >
-                              Hesap Oluştur
-                            </button>
-                          )}
-                          {emp.hasAccount && (
-                            <>
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-sm"
-                                onClick={() =>
-                                  setActiveModal({
-                                    type: 'assign-role',
-                                    employee: emp,
-                                  })
-                                }
-                              >
-                                Rol Ata
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-sm"
-                                disabled={resetPassword.isPending}
-                                onClick={() => void handleResetPassword(emp)}
-                              >
-                                Parola Sıfırla
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-sm"
-                                disabled={unlinkAccount.isPending}
-                                onClick={() => void handleUnlinkAccount(emp)}
-                              >
-                                Hesabı Ayır
-                              </button>
-                            </>
-                          )}
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            style={{ color: '#e05555' }}
-                            disabled={
-                              removeEmployee.isPending &&
-                              pendingDeleteId === emp.id
-                            }
-                            onClick={() => {
-                              setPendingDeleteId(emp.id);
-                              void handleDelete(emp.id);
-                            }}
-                          >
-                            Sil
-                          </button>
+                          <RowActionsMenu actions={buildRowActions(emp)} />
                         </div>
                       </td>
                     </tr>

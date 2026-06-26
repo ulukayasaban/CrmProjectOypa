@@ -1044,6 +1044,37 @@ select option {
   flex-wrap: wrap;
 }
 
+/* Satır aksiyon menüsü (RowActionsMenu) — body'ye portal'lanan açılır liste.
+   Opak arka plan (popover gibi) ve tablo overflow'undan bağımsız konum. */
+.row-actions-menu {
+  z-index: 1400;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-popover);
+  box-shadow: var(--shadow-popover);
+}
+.row-actions-menu__item {
+  background: none;
+  border: none;
+  color: var(--text-main);
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.row-actions-menu__item:hover:not(:disabled) {
+  background: var(--surface-3);
+}
+.row-actions-menu__item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Yeni Fırsat formundaki "Mevcutla aynı" satır-içi onay kutusu */
 .checkbox-inline {
   display: inline-flex;
@@ -1323,5 +1354,13 @@ select option {
   /* Haftalık grafik dar ekranda kapsayıcıya sığsın (kolon aralığı daraltılır). */
   .chart-container {
     gap: 4px;
+  }
+  /* Modal dar ekranda daha az iç boşlukla daha fazla içerik alanı bıraksın. */
+  .modal-content {
+    padding: 20px;
+  }
+  /* Sayfalama: dar ekranda üç bölüm ortalanarak alt alta sığar. */
+  .pagination-bar {
+    justify-content: center;
   }
 }
