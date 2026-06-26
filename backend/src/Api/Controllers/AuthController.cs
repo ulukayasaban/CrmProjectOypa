@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Oypa.Crm.Api.Extensions;
 using Oypa.Crm.Application.Common.Exceptions;
@@ -19,7 +18,6 @@ public sealed class AuthController(
     IAuthService authService,
     IIdentityService identityService,
     ICurrentUser currentUser,
-    IHostEnvironment environment,
     IDateTimeProvider clock,
     IOptions<JwtOptions> jwtOptions) : ControllerBase
 {
@@ -171,9 +169,8 @@ public sealed class AuthController(
     private string? ClientIp() => HttpContext.Connection.RemoteIpAddress?.ToString();
 
     /// <summary>
-    /// Refresh token'ı HttpOnly çereze yazar. Development'ta (http localhost)
-    /// Secure=false + SameSite=Lax (aksi halde tarayıcı http'de çerezi göndermez);
-    /// production'da (https) Secure=true + SameSite=None (farklı alan adı senaryosu).
+    /// Refresh token'ı HttpOnly çereze yazar. Güvenlik bayrakları isteğin gerçek
+    /// şemasına göre belirlenir (ortam bayrağına değil) — bkz. BuildCookieOptions.
     /// </summary>
     private void SetRefreshCookie(string token)
     {
@@ -190,12 +187,18 @@ public sealed class AuthController(
 
     private CookieOptions BuildCookieOptions(DateTimeOffset expires)
     {
-        var isDev = environment.IsDevelopment();
+        // Çerez güvenliği, ASPNETCORE_ENVIRONMENT bayrağına değil isteğin GERÇEK
+        // şemasına göre belirlenir → hem http hem https aynı kodla doğru çalışır:
+        //   - HTTP  → Secure=false + SameSite=Lax  (http sunucu/lokal testte çerez gider)
+        //   - HTTPS → Secure=true  + SameSite=None (production + çapraz alan adı senaryosu)
+        // Not: TLS'i ters proxy sonlandırıyorsa Request.IsHttps'in doğru gelmesi için
+        // ForwardedHeaders middleware (X-Forwarded-Proto) etkin olmalı.
+        var secure = Request.IsHttps;
         return new CookieOptions
         {
             HttpOnly = true,
-            Secure = !isDev,
-            SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
+            Secure = secure,
+            SameSite = secure ? SameSiteMode.None : SameSiteMode.Lax,
             Path = RefreshCookiePath,
             Expires = expires,
             IsEssential = true,
