@@ -107,7 +107,7 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
 
     /// <summary>
     /// Temel firma sorgusunu hazırlar: type filtresi, AssignedSalesRep include ve
-    /// serbest metin araması (title, phone, email veya temsilci adı).
+    /// serbest metin araması (title, şehir, adres, telefon, e-posta veya temsilci adı).
     /// </summary>
     private IQueryable<Company> BuildCompanyQuery(CompanyType type, string? search)
     {
@@ -123,6 +123,9 @@ public sealed class CompanyRepository(AppDbContext db) : Repository<Company>(db)
             var term = search.Trim().ToLower();
             query = query.Where(c =>
                 c.Title.ToLower().Contains(term) ||
+                // Şehir araması eklendi (önceden kapsanmıyordu → şehirle arayınca sonuç gelmiyordu).
+                (c.City != null && c.City.ToLower().Contains(term)) ||
+                c.Address.ToLower().Contains(term) ||
                 c.Phone.ToLower().Contains(term) ||
                 c.Email.ToLower().Contains(term) ||
                 (c.AssignedSalesRep != null && c.AssignedSalesRep.Name.ToLower().Contains(term)));
