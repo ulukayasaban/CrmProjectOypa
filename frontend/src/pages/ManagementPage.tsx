@@ -4,7 +4,9 @@ import { useAuth } from '../app/providers/useAuth';
 import { useSalesReps } from '../features/salesreps/model/useSalesReps';
 import { SalesRepFormModal } from '../features/salesreps/ui/SalesRepFormModal';
 import { RegisterUserModal } from '../features/auth/ui/RegisterUserModal';
-import { useDeleteUser, useUsers } from '../features/auth/model/useUsers';
+import { UserRoleModal } from '../features/auth/ui/UserRoleModal';
+import { useDeleteUser, useResetUserPassword, useUsers } from '../features/auth/model/useUsers';
+import { AccountCredentialDialog } from '../features/employees/ui/AccountCredentialDialog';
 import { CategoryManagementSection } from '../features/categories/ui/CategoryManagementSection';
 import { TableSkeleton } from '../shared/components/TableSkeleton';
 import { StateBlock } from '../shared/components/StateBlock';
@@ -12,15 +14,20 @@ import { PlusIcon } from '../shared/components/icons';
 import { useToast } from '../shared/components/toast/ToastProvider';
 import { useConfirm } from '../shared/hooks/useConfirm';
 import { getErrorMessage } from '../shared/lib/errorMessage';
+import type { UserDto } from '../entities/user/model/user';
+import type { AccountCredentials } from '../features/employees/api/employeeApi';
 
 export default function ManagementPage() {
   const { hasRole, user: currentUser } = useAuth();
   const [salesRepModal, setSalesRepModal] = useState(false);
   const [userModal, setUserModal] = useState(false);
+  const [roleModalUser, setRoleModalUser] = useState<UserDto | null>(null);
+  const [credentials, setCredentials] = useState<AccountCredentials | null>(null);
 
   const salesReps = useSalesReps();
   const users = useUsers();
   const deleteUser = useDeleteUser();
+  const resetPassword = useResetUserPassword();
   const toast = useToast();
   const { confirm, ConfirmEl } = useConfirm();
 
@@ -40,6 +47,24 @@ export default function ManagementPage() {
     try {
       await deleteUser.mutateAsync(userId);
       toast.success('Kullanıcı silindi.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  }
+
+  /** Parolayı onay alarak sıfırlar; dönen geçici parolayı dialog ile gösterir. */
+  async function handleResetPassword(userId: string, fullName: string) {
+    const confirmed = await confirm({
+      title: 'Parolayı Sıfırla',
+      message: `"${fullName}" kullanıcısının parolasını sıfırlamak istiyor musunuz? Geçici bir parola oluşturulacak.`,
+      confirmLabel: 'Sıfırla',
+    });
+    if (!confirmed) return;
+
+    try {
+      const result = await resetPassword.mutateAsync(userId);
+      setCredentials(result);
+      toast.success('Parola sıfırlandı. Geçici parolayı kullanıcıya iletmeyi unutmayın.');
     } catch (err) {
       toast.error(getErrorMessage(err));
     }
@@ -141,28 +166,49 @@ export default function ManagementPage() {
                       </td>
                     </tr>
                   )}
-                  {users.data.map((u) => (
-                    <tr key={u.id}>
-                      <td>{u.fullName}</td>
-                      <td>{u.email}</td>
-                      <td>{u.roles.join(', ')}</td>
-                      <td>
-                        {/* Giriş yapan admin kendini silemez (backend de engeller); UI'da da gizle */}
-                        {u.id !== currentUser?.id && (
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            disabled={deleteUser.isPending}
-                            onClick={() =>
-                              void handleDeleteUser(u.id, u.fullName)
-                            }
-                          >
-                            Sil
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {users.data.map((u) => {
+                    const isSelf = u.id === currentUser?.id;
+                    return (
+                      <tr key={u.id}>
+                        <td>{u.fullName}</td>
+                        <td>{u.email}</td>
+                        <td>{u.roles.join(', ')}</td>
+                        <td>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                            {/* Giriş yapan admin kendi rolünü değiştiremez; backend 403 döner, UI'da da gizlenir */}
+                            {!isSelf && (
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => setRoleModalUser(u)}
+                              >
+                                Rol Değiştir
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              disabled={resetPassword.isPending}
+                              onClick={() => void handleResetPassword(u.id, u.fullName)}
+                            >
+                              Parola Sıfırla
+                            </button>
+                            {/* Giriş yapan admin kendini silemez (backend de engeller); UI'da da gizle */}
+                            {!isSelf && (
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                disabled={deleteUser.isPending}
+                                onClick={() => void handleDeleteUser(u.id, u.fullName)}
+                              >
+                                Sil
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -181,10 +227,19 @@ export default function ManagementPage() {
         <RegisterUserModal
           onClose={() => {
             setUserModal(false);
-            // Yeni kullanıcı eklendikten sonra listeyi tazele
-            // (RegisterUserModal içindeki onSuccess callback'i kapanır ve
-            //  queryClient invalidate useRegisterUser içinde yoksa burada tetikleriz)
           }}
+        />
+      )}
+      {roleModalUser && (
+        <UserRoleModal
+          user={roleModalUser}
+          onClose={() => setRoleModalUser(null)}
+        />
+      )}
+      {credentials && (
+        <AccountCredentialDialog
+          credentials={credentials}
+          onClose={() => setCredentials(null)}
         />
       )}
     </>

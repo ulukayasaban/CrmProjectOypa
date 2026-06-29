@@ -23,6 +23,7 @@ public sealed class AuthServiceTests
     private readonly IEmailSender _emailSender = Substitute.For<IEmailSender>();
     private readonly IRepository<Employee> _employees = Substitute.For<IRepository<Employee>>();
     private readonly IRepository<SalesRep> _salesReps = Substitute.For<IRepository<SalesRep>>();
+    private readonly IAuditLogWriter _auditLogWriter = Substitute.For<IAuditLogWriter>();
     private readonly IOptions<JwtOptions> _jwtOptions =
         Options.Create(new JwtOptions { RefreshTokenDays = 7, AccessTokenMinutes = 15 });
     private readonly IOptions<AppOptions> _appOptions =
@@ -32,7 +33,7 @@ public sealed class AuthServiceTests
         Guid.NewGuid(), "admin@oypa.com.tr", "Admin", "Pos", "555", new[] { "Admin" });
 
     private AuthService CreateSut() =>
-        new(_identity, _jwt, _refreshTokens, _unitOfWork, _currentUser, _clock, _jwtOptions, _emailSender, _appOptions, _employees, _salesReps);
+        new(_identity, _jwt, _refreshTokens, _unitOfWork, _currentUser, _clock, _jwtOptions, _emailSender, _appOptions, _employees, _salesReps, _auditLogWriter);
 
     public AuthServiceTests()
     {

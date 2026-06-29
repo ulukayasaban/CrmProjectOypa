@@ -4,7 +4,9 @@ using Oypa.Crm.Application.Common.Interfaces;
 using Oypa.Crm.Application.Common.Models;
 using Oypa.Crm.Application.Common.Options;
 using Oypa.Crm.Contracts.Auth;
+using Oypa.Crm.Contracts.Employees;
 using Oypa.Crm.Domain.Entities;
+using Oypa.Crm.Domain.Enums;
 
 namespace Oypa.Crm.Application.Features.Auth;
 
@@ -19,7 +21,8 @@ public sealed class AuthService(
     IEmailSender emailSender,
     IOptions<AppOptions> appOptions,
     IRepository<Employee> employees,
-    IRepository<SalesRep> salesReps) : IAuthService
+    IRepository<SalesRep> salesReps,
+    IAuditLogWriter auditLogWriter) : IAuthService
 {
     private readonly JwtOptions _jwt = jwtOptions.Value;
     private readonly AppOptions _app = appOptions.Value;
@@ -86,6 +89,13 @@ public sealed class AuthService(
         if (!result.Succeeded || result.UserId is null)
             throw new ConflictException(string.Join(" ", result.Errors.DefaultIfEmpty("Kullanıcı oluşturulamadı.")));
 
+        // A3: Kullanıcı oluşturma audit kaydı
+        await WriteUserAuditAsync(
+            result.UserId.Value,
+            AuditAction.Created,
+            changes: $"E-posta: {request.Email}, Rol: {request.Role}",
+            cancellationToken);
+
         return result.UserId.Value;
     }
 
@@ -149,6 +159,81 @@ public sealed class AuthService(
 
         return ToUserDto(updated);
     }
+
+    public async Task ChangeUserRoleAsync(Guid targetUserId, string role, CancellationToken cancellationToken = default)
+    {
+        var actorId = currentUser.UserId ?? throw new UnauthorizedAppException("Oturum bulunamadı.");
+
+        // Kendini kilitlemesini engelle
+        if (targetUserId == actorId)
+            throw new ForbiddenAppException("Kendi rolünüzü değiştiremezsiniz.");
+
+        // Hedef kullanıcının mevcut rolünü al (audit için)
+        var targetUser = await identityService.GetByIdAsync(targetUserId, cancellationToken)
+            ?? throw new NotFoundException($"Kullanıcı bulunamadı (id: {targetUserId}).");
+
+        var oldRole = targetUser.Roles.FirstOrDefault() ?? "(rol yok)";
+
+        await identityService.SetRoleAsync(targetUserId, role, cancellationToken);
+
+        // A3: Rol değiştirme audit kaydı
+        await WriteUserAuditAsync(
+            targetUserId,
+            AuditAction.Updated,
+            changes: $"Rol: {oldRole} → {role}",
+            cancellationToken);
+    }
+
+    public async Task<AccountCredentialDto> ResetUserPasswordAsync(Guid targetUserId, CancellationToken cancellationToken = default)
+    {
+        // Hedef kullanıcının e-posta adresini al
+        var targetUser = await identityService.GetByIdAsync(targetUserId, cancellationToken)
+            ?? throw new NotFoundException($"Kullanıcı bulunamadı (id: {targetUserId}).");
+
+        var newPassword = await identityService.ResetPasswordAsync(targetUserId, cancellationToken);
+
+        // A3: Parola sıfırlama audit kaydı
+        await WriteUserAuditAsync(
+            targetUserId,
+            AuditAction.Updated,
+            changes: "Parola sıfırlandı",
+            cancellationToken);
+
+        return new AccountCredentialDto(targetUser.Email, newPassword);
+    }
+
+    public async Task DeleteUserAsync(Guid targetUserId, CancellationToken cancellationToken = default)
+    {
+        var actorId = currentUser.UserId ?? throw new UnauthorizedAppException("Oturum bulunamadı.");
+
+        await identityService.DeleteUserAsync(targetUserId, actorId, cancellationToken);
+
+        // A3: Kullanıcı silme audit kaydı
+        await WriteUserAuditAsync(
+            targetUserId,
+            AuditAction.Deleted,
+            changes: "Kullanıcı silindi",
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// A3: Kimlik (ApplicationUser) işlemleri için explicit AuditLog kaydı oluşturur.
+    /// AuditSaveChangesInterceptor yalnızca BaseEntity alt türlerini kapsadığından
+    /// ApplicationUser (IdentityUser) için açık kayıt zorunludur.
+    /// </summary>
+    private Task WriteUserAuditAsync(
+        Guid targetUserId,
+        AuditAction action,
+        string? changes,
+        CancellationToken cancellationToken) =>
+        auditLogWriter.WriteAsync(
+            entityName: "ApplicationUser",
+            entityId: targetUserId.ToString(),
+            action: action,
+            actorUserId: currentUser.UserId,
+            actorUserName: currentUser.Email,
+            changes: changes,
+            cancellationToken: cancellationToken);
 
     private async Task<AuthResponse> IssueTokensAsync(AuthUserInfo user, string? ipAddress, CancellationToken cancellationToken)
     {

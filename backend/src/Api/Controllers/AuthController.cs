@@ -9,6 +9,7 @@ using Oypa.Crm.Application.Common.Options;
 using Oypa.Crm.Application.Features.Auth;
 using Oypa.Crm.Contracts.Auth;
 using Oypa.Crm.Contracts.Common;
+using Oypa.Crm.Contracts.Employees;
 
 namespace Oypa.Crm.Api.Controllers;
 
@@ -17,7 +18,6 @@ namespace Oypa.Crm.Api.Controllers;
 public sealed class AuthController(
     IAuthService authService,
     IIdentityService identityService,
-    ICurrentUser currentUser,
     IDateTimeProvider clock,
     IOptions<JwtOptions> jwtOptions) : ControllerBase
 {
@@ -153,17 +153,41 @@ public sealed class AuthController(
     /// <summary>
     /// Belirtilen kullanıcıyı siler. Kendini silmek 403 döner.
     /// İlişkili Employee kaydı varsa ApplicationUserId null'a düşer (Employee silinmez).
+    /// Silme işlemi audit'e kaydedilir.
     /// </summary>
     [HttpDelete("users/{id:guid}")]
     [Authorize(AuthenticationExtensions.AdminPolicy)]
     [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
     public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken)
     {
-        var actorId = currentUser.UserId
-            ?? throw new Application.Common.Exceptions.UnauthorizedAppException("Oturum bulunamadı.");
-
-        await identityService.DeleteUserAsync(id, actorId, cancellationToken);
+        await authService.DeleteUserAsync(id, cancellationToken);
         return Ok(ApiResponse.Ok("Kullanıcı silindi."));
+    }
+
+    /// <summary>
+    /// Belirtilen kullanıcının rolünü değiştirir. Yalnızca Admin erişebilir.
+    /// Kendi rolünü değiştirmeye çalışmak 403 döner (kendini kilitlenmeyi önler).
+    /// </summary>
+    [HttpPut("users/{id:guid}/role")]
+    [Authorize(AuthenticationExtensions.AdminPolicy)]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
+    public async Task<IActionResult> ChangeUserRole(Guid id, ChangeUserRoleRequest request, CancellationToken cancellationToken)
+    {
+        await authService.ChangeUserRoleAsync(id, request.Role, cancellationToken);
+        return Ok(ApiResponse.Ok("Kullanıcı rolü güncellendi."));
+    }
+
+    /// <summary>
+    /// Belirtilen kullanıcının parolasını sıfırlar ve geçici parolayı döndürür.
+    /// Yalnızca Admin erişebilir.
+    /// </summary>
+    [HttpPost("users/{id:guid}/reset-password")]
+    [Authorize(AuthenticationExtensions.AdminPolicy)]
+    [EnableRateLimiting(RateLimitingExtensions.AdminSensitive)]
+    public async Task<IActionResult> ResetUserPassword(Guid id, CancellationToken cancellationToken)
+    {
+        var credentials = await authService.ResetUserPasswordAsync(id, cancellationToken);
+        return Ok(ApiResponse<AccountCredentialDto>.Ok(credentials, "Parola sıfırlandı."));
     }
 
     private string? ClientIp() => HttpContext.Connection.RemoteIpAddress?.ToString();

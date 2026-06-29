@@ -49,7 +49,7 @@ public sealed class IdentityService(
         string email, string password, string fullName, string role, CancellationToken cancellationToken = default)
     {
         if (await userManager.FindByEmailAsync(email) is not null)
-            return new CreateUserResult(false, null, ["Bu e-posta adresi zaten kayıtlı."]);
+            return new CreateUserResult(false, null, ["Bu e-posta adresi zaten kayıtlıdır."]);
 
         var user = new ApplicationUser
         {
@@ -61,7 +61,7 @@ public sealed class IdentityService(
 
         var result = await userManager.CreateAsync(user, password);
         if (!result.Succeeded)
-            return new CreateUserResult(false, null, result.Errors.Select(e => e.Description).ToList());
+            return new CreateUserResult(false, null, IdentityErrorHelper.Translate(result.Errors));
 
         if (!string.IsNullOrWhiteSpace(role))
             await userManager.AddToRoleAsync(user, role);
@@ -111,7 +111,7 @@ public sealed class IdentityService(
         var result = await userManager.ChangePasswordAsync(user, currentPassword, newPassword);
         return result.Succeeded
             ? (true, [])
-            : (false, result.Errors.Select(e => e.Description).ToList());
+            : (false, IdentityErrorHelper.Translate(result.Errors));
     }
 
     public async Task<(string? Email, string? Token)> GeneratePasswordResetTokenAsync(
@@ -139,7 +139,7 @@ public sealed class IdentityService(
         var result = await userManager.ResetPasswordAsync(user, token, newPassword);
         return result.Succeeded
             ? (true, [])
-            : (false, result.Errors.Select(e => e.Description).ToList());
+            : (false, IdentityErrorHelper.Translate(result.Errors));
     }
 
     public async Task<AuthUserInfo> UpdateProfileAsync(

@@ -1,4 +1,5 @@
 using Oypa.Crm.Contracts.Auth;
+using Oypa.Crm.Contracts.Employees;
 
 namespace Oypa.Crm.Application.Features.Auth;
 
@@ -28,4 +29,23 @@ public interface IAuthService
 
     /// <summary>Kimliği doğrulanmış kullanıcının profil bilgilerini günceller.</summary>
     Task<UserDto> UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Admin tarafından başka bir kullanıcının rolünü değiştirir.
+    /// Actor kendi rolünü değiştiremez (kendini kilitleme engeli).
+    /// </summary>
+    Task ChangeUserRoleAsync(Guid targetUserId, string role, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Admin tarafından başka bir kullanıcının parolasını sıfırlar.
+    /// Yeni geçici parolayı <see cref="AccountCredentialDto"/> içinde döndürür.
+    /// </summary>
+    Task<AccountCredentialDto> ResetUserPasswordAsync(Guid targetUserId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Admin tarafından bir kullanıcıyı siler.
+    /// Kendini silme girişiminde ForbiddenAppException fırlatır.
+    /// Silme işlemi audit'e yazılır.
+    /// </summary>
+    Task DeleteUserAsync(Guid targetUserId, CancellationToken cancellationToken = default);
 }

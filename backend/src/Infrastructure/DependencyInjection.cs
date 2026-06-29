@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IMeetingRepository, MeetingRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<ITenderRepository, TenderRepository>();
+        services.AddScoped<IAuditLogWriter, AuditLogWriter>();
 
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddScoped<IIdentityService, IdentityService>();

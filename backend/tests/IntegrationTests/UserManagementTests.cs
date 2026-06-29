@@ -9,9 +9,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Oypa.Crm.Contracts.Auth;
 using Oypa.Crm.Contracts.Common;
+using Oypa.Crm.Contracts.Employees;
 using Oypa.Crm.Infrastructure.Identity;
 using Oypa.Crm.Infrastructure.Persistence;
 using Shouldly;
@@ -308,5 +310,185 @@ public sealed class UserManagementTests : IClassFixture<CustomWebApplicationFact
         var response = await _client.DeleteAsync($"/api/auth/users/{Guid.NewGuid()}");
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    // -----------------------------------------------------------------------
+    // A2: Register çakışma (409) testi
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task Register_DuplicateEmail_Returns409()
+    {
+        var token = await LoginAsync(CustomWebApplicationFactory.AdminEmail, CustomWebApplicationFactory.AdminPassword);
+        SetBearer(token);
+
+        var email = $"dup-{Guid.NewGuid():N}@oypa.com.tr";
+        var request = new RegisterUserRequest(email, "Admin!23456", "İlk Kullanıcı", "Sales");
+
+        // İlk kayıt başarılı
+        var first = await _client.PostAsJsonAsync("/api/auth/register", request, JsonOptions);
+        first.StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // Aynı e-posta ile ikinci kayıt 409 dönmeli
+        var second = await _client.PostAsJsonAsync("/api/auth/register", request, JsonOptions);
+        second.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    // -----------------------------------------------------------------------
+    // A2: Kendini silme engeli testi (DeleteUser zaten var; açık adlandırma)
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task DeleteUser_Self_Returns403()
+    {
+        var token = await LoginAsync(CustomWebApplicationFactory.AdminEmail, CustomWebApplicationFactory.AdminPassword);
+        SetBearer(token);
+
+        var adminId = await GetUserIdAsync(CustomWebApplicationFactory.AdminEmail);
+
+        var response = await _client.DeleteAsync($"/api/auth/users/{adminId}");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    // -----------------------------------------------------------------------
+    // A2: PUT /api/auth/users/{id}/role testleri
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task ChangeUserRole_AsAdmin_Returns200_AndRoleApplies()
+    {
+        var token = await LoginAsync(CustomWebApplicationFactory.AdminEmail, CustomWebApplicationFactory.AdminPassword);
+        SetBearer(token);
+
+        // Önce Sales rolünde bir kullanıcı oluştur
+        var email = $"role-change-{Guid.NewGuid():N}@oypa.com.tr";
+        var userId = await CreateDeleteableUserAsync(email); // Sales rolünde oluşturulur
+
+        // Rolü Sales → Admin yap
+        var roleRequest = new ChangeUserRoleRequest("Admin");
+        var response = await _client.PutAsJsonAsync($"/api/auth/users/{userId}/role", roleRequest, JsonOptions);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse<object>>(JsonOptions);
+        payload!.Success.ShouldBeTrue();
+
+        // Kullanıcı listesinde rolün değiştiğini doğrula
+        var listResponse = await _client.GetAsync("/api/auth/users");
+        var listPayload = await listResponse.Content.ReadFromJsonAsync<ApiResponse<IReadOnlyList<UserDto>>>(JsonOptions);
+        var changedUser = listPayload!.Data!.FirstOrDefault(u => u.Id == userId);
+        changedUser.ShouldNotBeNull();
+        changedUser!.Roles.ShouldContain("Admin", "Rol değişikliği sonrası kullanıcı Admin rolünde olmalı");
+        changedUser.Roles.ShouldNotContain("Sales", "Eski Sales rolü kaldırılmış olmalı");
+    }
+
+    [Fact]
+    public async Task ChangeOwnRole_AsAdmin_Returns403()
+    {
+        var token = await LoginAsync(CustomWebApplicationFactory.AdminEmail, CustomWebApplicationFactory.AdminPassword);
+        SetBearer(token);
+
+        var adminId = await GetUserIdAsync(CustomWebApplicationFactory.AdminEmail);
+
+        var roleRequest = new ChangeUserRoleRequest("Sales");
+        var response = await _client.PutAsJsonAsync($"/api/auth/users/{adminId}/role", roleRequest, JsonOptions);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden,
+            "Admin kendi rolünü değiştiremez; kendini kilitlemesini engelle");
+    }
+
+    [Fact]
+    public async Task ChangeUserRole_AsNonAdmin_Returns403()
+    {
+        var token = await LoginAsync(SalesEmail, SalesPassword);
+        SetBearer(token);
+
+        var roleRequest = new ChangeUserRoleRequest("Admin");
+        var response = await _client.PutAsJsonAsync($"/api/auth/users/{Guid.NewGuid()}/role", roleRequest, JsonOptions);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    // -----------------------------------------------------------------------
+    // A2: POST /api/auth/users/{id}/reset-password testleri
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task ResetUserPassword_AsAdmin_Returns200_WithNewCredentials_OldPasswordFails()
+    {
+        var token = await LoginAsync(CustomWebApplicationFactory.AdminEmail, CustomWebApplicationFactory.AdminPassword);
+        SetBearer(token);
+
+        // Sıfırlanacak kullanıcıyı oluştur (bilinen parolayla)
+        var email = $"pwd-reset-{Guid.NewGuid():N}@oypa.com.tr";
+        const string originalPassword = "TempUser!23456";
+        await CreateDeleteableUserAsync(email, originalPassword);
+
+        // Kullanıcının id'sini al
+        var userId = await GetUserIdAsync(email);
+
+        // Parolayı sıfırla
+        var response = await _client.PostAsync($"/api/auth/users/{userId}/reset-password", null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse<AccountCredentialDto>>(JsonOptions);
+        payload!.Success.ShouldBeTrue();
+        payload.Data.ShouldNotBeNull();
+        payload.Data!.Email.ShouldBe(email);
+        var newPassword = payload.Data.TempPassword;
+        newPassword.ShouldNotBeNullOrWhiteSpace();
+        newPassword.ShouldNotBe(originalPassword, "Yeni parola eski paroladan farklı olmalı");
+        newPassword.Length.ShouldBeGreaterThanOrEqualTo(12);
+
+        // Eski parola artık çalışmamalı
+        _client.DefaultRequestHeaders.Authorization = null;
+        var oldLogin = await _client.PostAsJsonAsync("/api/auth/login",
+            new LoginRequest(email, originalPassword), JsonOptions);
+        oldLogin.StatusCode.ShouldNotBe(HttpStatusCode.OK,
+            "Eski parola sıfırlandıktan sonra giriş sağlamamalı");
+
+        // Yeni parola çalışmalı
+        var newLogin = await _client.PostAsJsonAsync("/api/auth/login",
+            new LoginRequest(email, newPassword), JsonOptions);
+        newLogin.StatusCode.ShouldBe(HttpStatusCode.OK,
+            "Yeni geçici parola ile giriş yapılabilmeli");
+    }
+
+    [Fact]
+    public async Task ResetUserPassword_AsNonAdmin_Returns403()
+    {
+        var token = await LoginAsync(SalesEmail, SalesPassword);
+        SetBearer(token);
+
+        var response = await _client.PostAsync($"/api/auth/users/{Guid.NewGuid()}/reset-password", null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    // -----------------------------------------------------------------------
+    // A2 (opsiyonel): Audit log — kullanıcı işlemi sonrası AuditLog kaydı doğrulama
+    // -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task Register_AsAdmin_CreatesAuditLogEntry()
+    {
+        var token = await LoginAsync(CustomWebApplicationFactory.AdminEmail, CustomWebApplicationFactory.AdminPassword);
+        SetBearer(token);
+
+        var email = $"audit-test-{Guid.NewGuid():N}@oypa.com.tr";
+        var request = new RegisterUserRequest(email, "Admin!23456", "Audit Test Kullanıcı", "Sales");
+
+        var response = await _client.PostAsJsonAsync("/api/auth/register", request, JsonOptions);
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // AuditLogs tablosunda bu kullanıcı için kayıt oluşmalı
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var auditLogs = await db.AuditLogs
+            .Where(a => a.EntityName == "ApplicationUser" && a.Action == Oypa.Crm.Domain.Enums.AuditAction.Created)
+            .ToListAsync();
+
+        auditLogs.ShouldNotBeEmpty("Kullanıcı oluşturma sonrası AuditLog kaydı oluşmalı");
     }
 }
